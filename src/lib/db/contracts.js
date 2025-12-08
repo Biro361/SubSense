@@ -29,18 +29,25 @@ export async function getContracts() {
  * Einzelnen Vertrag anhand ID abrufen
  */
 export async function getContractById(id) {
-	try {
-		const client = await clientPromise;
-		const db = client.db(DB_NAME);
-		const contract = await db
-			.collection(COLLECTION)
-			.findOne({ _id: new ObjectId(id) });
-		
-		return contract;
-	} catch (error) {
-		console.error('Fehler beim Abrufen des Vertrags:', error);
-		throw error;
-	}
+  const client = await clientPromise;
+  const db = client.db(DB_NAME);
+  
+  try {
+    const contract = await db.collection(COLLECTION_NAME).findOne({
+      _id: new ObjectId(id)
+    });
+    
+    if (!contract) return null;
+    
+    // MongoDB ObjectId in String konvertieren für JSON-Serialisierung
+    return {
+      ...contract,
+      _id: contract._id.toString()
+    };
+  } catch (error) {
+    console.error('Error fetching contract:', error);
+    throw error;
+  }
 }
 
 /**
@@ -74,42 +81,44 @@ export async function createContract(contractData) {
  * Vertrag aktualisieren
  */
 export async function updateContract(id, updates) {
-	try {
-		const client = await clientPromise;
-		const db = client.db(DB_NAME);
-		
-		const result = await db.collection(COLLECTION).updateOne(
-			{ _id: new ObjectId(id) },
-			{ 
-				$set: { 
-					...updates,
-					updatedAt: new Date()
-				}
-			}
-		);
-		
-		return result.modifiedCount > 0;
-	} catch (error) {
-		console.error('Fehler beim Aktualisieren des Vertrags:', error);
-		throw error;
-	}
+  const client = await clientPromise;
+  const db = client.db(DB_NAME);
+  
+  try {
+    const result = await db.collection(COLLECTION_NAME).updateOne(
+      { _id: new ObjectId(id) },
+      {
+        $set: {
+          ...updates,
+          updatedAt: new Date()
+        }
+      }
+    );
+
+    return result.modifiedCount > 0;
+  } catch (error) {
+    console.error('Fehler beim Aktualisieren des Vertrags:', error);
+    throw error;
+  }
 }
 
 /**
  * Vertrag löschen
  */
 export async function deleteContract(id) {
-	try {
-		const client = await clientPromise;
-		const db = client.db(DB_NAME);
-		
-		const result = await db
-			.collection(COLLECTION)
-			.deleteOne({ _id: new ObjectId(id) });
-		
-		return result.deletedCount > 0;
-	} catch (error) {
-		console.error('Fehler beim Löschen des Vertrags:', error);
-		throw error;
-	}
+  const client = await clientPromise;
+  const db = client.db(DB_NAME);
+  
+  try {
+    const result = await db.collection(COLLECTION_NAME).deleteOne({
+      _id: new ObjectId(id)
+    });
+    
+    return result.deletedCount > 0;
+  } catch (error) {
+    console.error('Error deleting contract:', error);
+    throw error;
+  }
 }
+
+
