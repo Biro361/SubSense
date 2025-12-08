@@ -5,7 +5,43 @@ const DB_NAME = 'subsense';
 const COLLECTION_NAME = 'contracts';
 
 /**
- * Alle Verträge abrufen
+ * Hilfsfunktion: Berechnet Erinnerungs-Metadaten für einen Vertrag
+ */
+function calculateReminderMetadata(contract) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  const cancellationDate = new Date(contract.cancellationDate);
+  cancellationDate.setHours(0, 0, 0, 0);
+  
+  // Tage bis zur Kündigungsfrist berechnen
+  const daysUntilCancellation = Math.ceil(
+    (cancellationDate - today) / (1000 * 60 * 60 * 24)
+  );
+  
+  // Erinnerungstage (Standard: 7 Tage vor Kündigungsfrist)
+  const reminderDays = contract.reminderDays ?? 7;
+  
+  // Erinnerungsdatum berechnen
+  const reminderDate = new Date(cancellationDate);
+  reminderDate.setDate(reminderDate.getDate() - reminderDays);
+  
+  // Ist der Vertrag dringend? (Erinnerungszeitraum erreicht und noch aktiv)
+  const isUrgent = 
+    contract.status === 'active' && 
+    daysUntilCancellation <= reminderDays && 
+    daysUntilCancellation >= 0;
+  
+  return {
+    reminderDays,
+    reminderDate,
+    daysUntilCancellation,
+    isUrgent
+  };
+}
+
+/**
+ * Alle Verträge abrufen (mit Erinnerungs-Metadaten)
  */
 export async function getContracts() {
   const client = await clientPromise;
@@ -18,14 +54,21 @@ export async function getContracts() {
       .sort({ cancellationDate: 1 })
       .toArray();
     
-    // MongoDB ObjectIds in Strings konvertieren
-    return contracts.map(contract => ({
-      ...contract,
-      _id: contract._id.toString(),
-      // Standardwerte für Abwärtskompatibilität
-      cost: contract.cost ?? 0,
-      billingCycle: contract.billingCycle ?? 'monthly'
-    }));
+    // MongoDB ObjectIds in Strings konvertieren + Erinnerungs-Metadaten hinzufügen
+    return contracts.map(contract => {
+      const metadata = calculateReminderMetadata(contract);
+      
+      return {
+        ...contract,
+        _id: contract._id.toString(),
+        // Standardwerte für Abwärtskompatibilität
+        cost: contract.cost ?? 0,
+        billingCycle: contract.billingCycle ?? 'monthly',
+        reminderDays: contract.reminderDays ?? 7,
+        // Berechnete Felder
+        ...metadata
+      };
+    });
   } catch (error) {
     console.error('Error fetching contracts:', error);
     throw error;
@@ -33,7 +76,7 @@ export async function getContracts() {
 }
 
 /**
- * Einzelnen Vertrag nach ID abrufen
+ * Einzelnen Vertrag nach ID abrufen (mit Erinnerungs-Metadaten)
  */
 export async function getContractById(id) {
   const client = await clientPromise;
@@ -46,13 +89,18 @@ export async function getContractById(id) {
     
     if (!contract) return null;
     
+    const metadata = calculateReminderMetadata(contract);
+    
     // MongoDB ObjectId in String konvertieren
     return {
       ...contract,
       _id: contract._id.toString(),
       // Standardwerte für Abwärtskompatibilität
       cost: contract.cost ?? 0,
-      billingCycle: contract.billingCycle ?? 'monthly'
+      billingCycle: contract.billingCycle ?? 'monthly',
+      reminderDays: contract.reminderDays ?? 7,
+      // Berechnete Felder
+      ...metadata
     };
   } catch (error) {
     console.error('Error fetching contract:', error);
@@ -61,7 +109,7 @@ export async function getContractById(id) {
 }
 
 /**
- * Neuen Vertrag erstellen
+ * Neuen Vertrag erstellen (mit Erinnerungseinstellung)
  */
 export async function createContract(contractData) {
   const client = await clientPromise;
@@ -71,16 +119,23 @@ export async function createContract(contractData) {
     // Kostenfelder validieren und konvertieren
     const cost = parseFloat(contractData.cost) || 0;
     const billingCycle = contractData.billingCycle || 'monthly';
+    const reminderDays = parseInt(contractData.reminderDays) || 7;
     
     // Validierung: Nur erlaubte Billing-Cycles
     if (!['monthly', 'yearly', 'quarterly'].includes(billingCycle)) {
       throw new Error('Invalid billing cycle');
     }
     
+    // Validierung: Erinnerungstage müssen positiv sein
+    if (reminderDays < 1 || reminderDays > 90) {
+      throw new Error('Reminder days must be between 1 and 90');
+    }
+    
     const result = await db.collection(COLLECTION_NAME).insertOne({
       ...contractData,
       cost,
       billingCycle,
+      reminderDays,
       createdAt: new Date(),
       updatedAt: new Date()
     });
@@ -89,7 +144,8 @@ export async function createContract(contractData) {
       _id: result.insertedId.toString(),
       ...contractData,
       cost,
-      billingCycle
+      billingCycle,
+      reminderDays
     };
   } catch (error) {
     console.error('Error creating contract:', error);
@@ -98,7 +154,7 @@ export async function createContract(contractData) {
 }
 
 /**
- * Vertrag aktualisieren
+ * Vertrag aktualisieren (mit Erinnerungseinstellung)
  */
 export async function updateContract(id, updates) {
   const client = await clientPromise;
@@ -117,6 +173,14 @@ export async function updateContract(id, updates) {
         throw new Error('Invalid billing cycle');
       }
       updateData.billingCycle = updates.billingCycle;
+    }
+    
+    if (updates.reminderDays !== undefined) {
+      const reminderDays = parseInt(updates.reminderDays);
+      if (reminderDays < 1 || reminderDays > 90) {
+        throw new Error('Reminder days must be between 1 and 90');
+      }
+      updateData.reminderDays = reminderDays;
     }
     
     const result = await db.collection(COLLECTION_NAME).updateOne(
@@ -183,4 +247,12 @@ export async function getCostStatistics() {
     activeContractsCount: activeContracts.length,
     totalContractsCount: contracts.length
   };
+}
+
+/**
+ * Dringende Verträge abrufen (im Erinnerungszeitraum)
+ */
+export async function getUrgentContracts() {
+  const allContracts = await getContracts();
+  return allContracts.filter(contract => contract.isUrgent);
 }
