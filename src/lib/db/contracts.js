@@ -1,32 +1,36 @@
-import clientPromise from '$lib/mongodb';
 import { ObjectId } from 'mongodb';
+import clientPromise from '$lib/mongodb';
 
-// Datenbankname und Collection
 const DB_NAME = 'subsense';
-const COLLECTION = 'contracts';
+const COLLECTION_NAME = 'contracts';
 
 /**
- * Alle Verträge aus der Datenbank abrufen
+ * Alle Verträge abrufen
  */
 export async function getContracts() {
-	try {
-		const client = await clientPromise;
-		const db = client.db(DB_NAME);
-		const contracts = await db
-			.collection(COLLECTION)
-			.find({})
-			.sort({ cancellationDate: 1 }) // Sortiert nach Kündigungsdatum
-			.toArray();
-		
-		return contracts;
-	} catch (error) {
-		console.error('Fehler beim Abrufen der Verträge:', error);
-		throw error;
-	}
+  const client = await clientPromise;
+  const db = client.db(DB_NAME);
+  
+  try {
+    const contracts = await db
+      .collection(COLLECTION_NAME)
+      .find({})
+      .sort({ cancellationDate: 1 })
+      .toArray();
+    
+    // MongoDB ObjectIds in Strings konvertieren
+    return contracts.map(contract => ({
+      ...contract,
+      _id: contract._id.toString()
+    }));
+  } catch (error) {
+    console.error('Error fetching contracts:', error);
+    throw error;
+  }
 }
 
 /**
- * Einzelnen Vertrag anhand ID abrufen
+ * Einzelnen Vertrag nach ID abrufen
  */
 export async function getContractById(id) {
   const client = await clientPromise;
@@ -39,7 +43,7 @@ export async function getContractById(id) {
     
     if (!contract) return null;
     
-    // MongoDB ObjectId in String konvertieren für JSON-Serialisierung
+    // MongoDB ObjectId in String konvertieren
     return {
       ...contract,
       _id: contract._id.toString()
@@ -54,27 +58,24 @@ export async function getContractById(id) {
  * Neuen Vertrag erstellen
  */
 export async function createContract(contractData) {
-	try {
-		const client = await clientPromise;
-		const db = client.db(DB_NAME);
-		
-		// Vertragsdaten mit Timestamp
-		const contract = {
-			...contractData,
-			createdAt: new Date(),
-			updatedAt: new Date()
-		};
-		
-		const result = await db.collection(COLLECTION).insertOne(contract);
-		
-		return {
-			...contract,
-			_id: result.insertedId
-		};
-	} catch (error) {
-		console.error('Fehler beim Erstellen des Vertrags:', error);
-		throw error;
-	}
+  const client = await clientPromise;
+  const db = client.db(DB_NAME);
+  
+  try {
+    const result = await db.collection(COLLECTION_NAME).insertOne({
+      ...contractData,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    });
+    
+    return {
+      _id: result.insertedId.toString(),
+      ...contractData
+    };
+  } catch (error) {
+    console.error('Error creating contract:', error);
+    throw error;
+  }
 }
 
 /**
@@ -94,10 +95,10 @@ export async function updateContract(id, updates) {
         }
       }
     );
-
+    
     return result.modifiedCount > 0;
   } catch (error) {
-    console.error('Fehler beim Aktualisieren des Vertrags:', error);
+    console.error('Error updating contract:', error);
     throw error;
   }
 }
@@ -120,5 +121,3 @@ export async function deleteContract(id) {
     throw error;
   }
 }
-
-
