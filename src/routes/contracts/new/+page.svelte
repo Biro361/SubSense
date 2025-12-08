@@ -2,6 +2,14 @@
 	import { enhance } from '$app/forms';
 	
 	let { form } = $props();
+	
+	// Erinnerungstage State für Preset-Buttons
+	let reminderDays = $state(form?.reminderDays || 7);
+	
+	// Preset-Button Handler
+	function setReminderPreset(days) {
+		reminderDays = days;
+	}
 </script>
 
 <div class="min-h-screen bg-gray-50">
@@ -77,7 +85,62 @@
 					</p>
 				</div>
 
-				<!-- NEU: Kosten -->
+				<!-- NEU: Erinnerung -->
+				<div class="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+					<label for="reminderDays" class="block text-sm font-medium text-gray-700 mb-2">
+						🔔 Erinnerung (Tage vorher) *
+					</label>
+					
+					<!-- Preset-Buttons -->
+					<div class="flex gap-2 mb-3">
+						<button
+							type="button"
+							onclick={() => setReminderPreset(3)}
+							class="px-3 py-1 rounded {reminderDays === 3 ? 'bg-blue-600 text-white' : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'}"
+						>
+							3 Tage
+						</button>
+						<button
+							type="button"
+							onclick={() => setReminderPreset(7)}
+							class="px-3 py-1 rounded {reminderDays === 7 ? 'bg-blue-600 text-white' : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'}"
+						>
+							7 Tage
+						</button>
+						<button
+							type="button"
+							onclick={() => setReminderPreset(14)}
+							class="px-3 py-1 rounded {reminderDays === 14 ? 'bg-blue-600 text-white' : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'}"
+						>
+							14 Tage
+						</button>
+						<button
+							type="button"
+							onclick={() => setReminderPreset(30)}
+							class="px-3 py-1 rounded {reminderDays === 30 ? 'bg-blue-600 text-white' : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'}"
+						>
+							30 Tage
+						</button>
+					</div>
+					
+					<input
+						type="number"
+						id="reminderDays"
+						name="reminderDays"
+						bind:value={reminderDays}
+						min="1"
+						max="90"
+						required
+						class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+					/>
+					<p class="text-sm text-gray-600 mt-2">
+						💡 Du wirst <strong>{reminderDays} Tage</strong> vor der Kündigungsfrist erinnert.
+						<br>
+						<span class="text-xs text-gray-500">Perfekt für Test-Abos oder wichtige Fristen!</span>
+					</p>
+				</div>
+
+				<!-- Kosten -->
 				<div class="mb-6">
 					<label for="cost" class="block text-sm font-medium text-gray-700 mb-2">
 						Kosten (CHF) *
@@ -98,7 +161,7 @@
 					</p>
 				</div>
 
-				<!-- NEU: Abrechnungszyklus -->
+				<!-- Abrechnungszyklus -->
 				<div class="mb-6">
 					<label for="billingCycle" class="block text-sm font-medium text-gray-700 mb-2">
 						Abrechnungszyklus *
