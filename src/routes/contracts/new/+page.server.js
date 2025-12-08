@@ -13,6 +13,7 @@ export const actions = {
 		const status = formData.get('status') || 'active';
 		const cost = formData.get('cost');
 		const billingCycle = formData.get('billingCycle') || 'monthly';
+		const reminderDays = formData.get('reminderDays') || '7'; // NEU: Erinnerungstage
 		
 		// Validierung
 		if (!name || !provider || !cancellationDate || !cost) {
@@ -22,7 +23,8 @@ export const actions = {
 				provider,
 				cancellationDate,
 				cost,
-				billingCycle
+				billingCycle,
+				reminderDays
 			});
 		}
 		
@@ -35,7 +37,22 @@ export const actions = {
 				provider,
 				cancellationDate,
 				cost,
-				billingCycle
+				billingCycle,
+				reminderDays
+			});
+		}
+		
+		// Erinnerungstage validieren
+		const parsedReminderDays = parseInt(reminderDays);
+		if (isNaN(parsedReminderDays) || parsedReminderDays < 1 || parsedReminderDays > 90) {
+			return fail(400, {
+				error: 'Erinnerungstage müssen zwischen 1 und 90 liegen',
+				name,
+				provider,
+				cancellationDate,
+				cost,
+				billingCycle,
+				reminderDays
 			});
 		}
 		
@@ -47,7 +64,8 @@ export const actions = {
 				cancellationDate: new Date(cancellationDate.toString()),
 				status: status.toString(),
 				cost: parsedCost,
-				billingCycle: billingCycle.toString()
+				billingCycle: billingCycle.toString(),
+				reminderDays: parsedReminderDays // NEU: Erinnerungstage speichern
 			});
 			
 			// Erfolg: Redirect zum Dashboard
@@ -64,7 +82,8 @@ export const actions = {
 				provider,
 				cancellationDate,
 				cost,
-				billingCycle
+				billingCycle,
+				reminderDays
 			});
 		}
 	}
