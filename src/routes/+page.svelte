@@ -13,6 +13,20 @@
     null
   );
   
+  // Verträge nach Dringlichkeit sortieren (dringend zuerst)
+  let sortedContracts = $derived(
+    [...contracts].sort((a, b) => {
+      // Dringende zuerst
+      if (a.isUrgent && !b.isUrgent) return -1;
+      if (!a.isUrgent && b.isUrgent) return 1;
+      // Dann nach Kündigungsdatum
+      return new Date(a.cancellationDate) - new Date(b.cancellationDate);
+    })
+  );
+  
+  // Dringende Verträge filtern
+  let urgentContracts = $derived(contracts.filter(c => c.isUrgent));
+  
   // Kostenberechnungen - nur aktive Verträge
   let activeContracts = $derived(contracts.filter(c => c.status === 'active'));
   
@@ -42,6 +56,14 @@
       case 'quarterly': return 'Quartal';
       default: return 'Monat';
     }
+  }
+  
+  // Tage-Text formatieren
+  function formatDaysText(days) {
+    if (days === 0) return 'Heute';
+    if (days === 1) return 'Morgen';
+    if (days < 0) return `Überfällig (${Math.abs(days)} Tage)`;
+    return `Noch ${days} Tage`;
   }
 </script>
 
@@ -95,6 +117,74 @@
     </div>
   {/if}
   
+  <!-- NEU: Dringende Verträge Sektion -->
+  {#if urgentContracts.length > 0}
+    <div class="mb-8">
+      <div class="flex items-center gap-2 mb-4">
+        <h2 class="text-xl font-semibold text-red-600">⚠️ Dringende Kündigungen</h2>
+        <span class="bg-red-100 text-red-800 px-2 py-1 rounded-full text-sm font-medium">
+          {urgentContracts.length}
+        </span>
+      </div>
+      
+      <div class="grid gap-4">
+        {#each urgentContracts as contract}
+          <div class="bg-red-50 border-2 border-red-200 rounded-lg shadow p-4">
+            <div class="flex justify-between items-start">
+              <div class="flex-1">
+                <div class="flex items-center gap-2 mb-2">
+                  <h3 class="text-lg font-semibold">{contract.name}</h3>
+                  <span class="bg-red-600 text-white px-3 py-1 rounded-full text-xs font-bold">
+                    DRINGEND
+                  </span>
+                </div>
+                <p class="text-gray-700 font-medium">Anbieter: {contract.provider}</p>
+                
+                <!-- Countdown-Anzeige -->
+                <div class="mt-3 p-3 bg-white rounded border border-red-300">
+                  <p class="text-sm text-gray-600">Kündigungsfrist:</p>
+                  <p class="text-lg font-bold text-red-600">
+                    {formatDaysText(contract.daysUntilCancellation)}
+                  </p>
+                  <p class="text-xs text-gray-500">
+                    bis {new Date(contract.cancellationDate).toLocaleDateString('de-DE')}
+                  </p>
+                </div>
+                
+                {#if contract.cost && contract.cost > 0}
+                  <p class="text-sm font-medium text-blue-600 mt-3">
+                    {contract.cost.toFixed(2)} CHF / {formatBillingCycle(contract.billingCycle)}
+                  </p>
+                {/if}
+              </div>
+              
+              <span class="{contract.status === 'active' 
+                ? 'bg-green-100 text-green-800' 
+                : 'bg-gray-100 text-gray-800'} px-3 py-1 rounded-full text-sm h-fit">
+                {contract.status === 'active' ? 'Aktiv' : 'Gekündigt'}
+              </span>
+            </div>
+            
+            <div class="flex gap-2 mt-4 pt-4 border-t border-red-200">
+              <a
+                href="/contracts/{contract._id}/edit"
+                class="text-blue-600 hover:text-blue-800 text-sm font-medium"
+              >
+                Bearbeiten
+              </a>
+              <a
+                href="/contracts/{contract._id}/delete"
+                class="text-red-600 hover:text-red-800 text-sm font-medium"
+              >
+                Löschen
+              </a>
+            </div>
+          </div>
+        {/each}
+      </div>
+    </div>
+  {/if}
+  
   <h2 class="text-xl font-semibold mb-4">Alle Verträge ({contracts.length})</h2>
   
   {#if contracts.length === 0}
@@ -109,17 +199,27 @@
     </div>
   {:else}
     <div class="grid gap-4">
-      {#each contracts as contract}
-        <div class="bg-white rounded-lg shadow p-4">
+      {#each sortedContracts as contract}
+        <div class="bg-white rounded-lg shadow p-4 {contract.isUrgent ? 'opacity-50' : ''}">
           <div class="flex justify-between items-start">
             <div class="flex-1">
               <h3 class="text-lg font-semibold">{contract.name}</h3>
               <p class="text-gray-600">Anbieter: {contract.provider}</p>
-              <p class="text-sm text-gray-500">
-                Kündigung möglich bis: {new Date(contract.cancellationDate).toLocaleDateString('de-DE')}
-              </p>
               
-              <!-- NEU: Kostenanzeige -->
+              <!-- Erinnerungs-Info -->
+              <div class="mt-2">
+                <p class="text-sm text-gray-500">
+                  Kündigung möglich bis: {new Date(contract.cancellationDate).toLocaleDateString('de-DE')}
+                </p>
+                {#if !contract.isUrgent && contract.status === 'active'}
+                  <p class="text-xs text-gray-400 mt-1">
+                    🔔 Erinnerung {contract.reminderDays} Tage vorher 
+                    ({new Date(contract.reminderDate).toLocaleDateString('de-DE')})
+                  </p>
+                {/if}
+              </div>
+              
+              <!-- Kostenanzeige -->
               {#if contract.cost && contract.cost > 0}
                 <p class="text-sm font-medium text-blue-600 mt-2">
                   {contract.cost.toFixed(2)} CHF / {formatBillingCycle(contract.billingCycle)}
