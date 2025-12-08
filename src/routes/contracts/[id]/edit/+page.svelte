@@ -64,6 +64,40 @@
       />
     </div>
     
+    <!-- NEU: Kosten -->
+    <div>
+      <label for="cost" class="block text-sm font-medium mb-1">
+        Kosten (CHF) *
+      </label>
+      <input
+        type="number"
+        id="cost"
+        name="cost"
+        value={contract.cost || 0}
+        step="0.01"
+        min="0"
+        required
+        class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+      />
+    </div>
+    
+    <!-- NEU: Abrechnungszyklus -->
+    <div>
+      <label for="billingCycle" class="block text-sm font-medium mb-1">
+        Abrechnungszyklus *
+      </label>
+      <select
+        id="billingCycle"
+        name="billingCycle"
+        value={contract.billingCycle || 'monthly'}
+        class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+      >
+        <option value="monthly">Monatlich</option>
+        <option value="quarterly">Vierteljährlich</option>
+        <option value="yearly">Jährlich</option>
+      </select>
+    </div>
+    
     <div>
       <label for="status" class="block text-sm font-medium mb-1">
         Status *

@@ -11,14 +11,31 @@ export const actions = {
 		const provider = formData.get('provider');
 		const cancellationDate = formData.get('cancellationDate');
 		const status = formData.get('status') || 'active';
+		const cost = formData.get('cost');
+		const billingCycle = formData.get('billingCycle') || 'monthly';
 		
 		// Validierung
-		if (!name || !provider || !cancellationDate) {
+		if (!name || !provider || !cancellationDate || !cost) {
 			return fail(400, {
 				error: 'Bitte fülle alle Pflichtfelder aus',
 				name,
 				provider,
-				cancellationDate
+				cancellationDate,
+				cost,
+				billingCycle
+			});
+		}
+		
+		// Kosten validieren
+		const parsedCost = parseFloat(cost);
+		if (isNaN(parsedCost) || parsedCost < 0) {
+			return fail(400, {
+				error: 'Bitte gib gültige Kosten ein (mindestens 0)',
+				name,
+				provider,
+				cancellationDate,
+				cost,
+				billingCycle
 			});
 		}
 		
@@ -28,11 +45,13 @@ export const actions = {
 				name: name.toString(),
 				provider: provider.toString(),
 				cancellationDate: new Date(cancellationDate.toString()),
-				status: status.toString()
+				status: status.toString(),
+				cost: parsedCost,
+				billingCycle: billingCycle.toString()
 			});
 			
 			// Erfolg: Redirect zum Dashboard
-			throw redirect(303, '/?success=created');
+			throw redirect(303, '/?message=created');
 			
 		} catch (error) {
 			// Falls redirect, weiterwerfen
@@ -43,7 +62,9 @@ export const actions = {
 				error: 'Vertrag konnte nicht gespeichert werden',
 				name,
 				provider,
-				cancellationDate
+				cancellationDate,
+				cost,
+				billingCycle
 			});
 		}
 	}

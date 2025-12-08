@@ -21,7 +21,10 @@ export async function getContracts() {
     // MongoDB ObjectIds in Strings konvertieren
     return contracts.map(contract => ({
       ...contract,
-      _id: contract._id.toString()
+      _id: contract._id.toString(),
+      // Standardwerte für Abwärtskompatibilität
+      cost: contract.cost ?? 0,
+      billingCycle: contract.billingCycle ?? 'monthly'
     }));
   } catch (error) {
     console.error('Error fetching contracts:', error);
@@ -46,7 +49,10 @@ export async function getContractById(id) {
     // MongoDB ObjectId in String konvertieren
     return {
       ...contract,
-      _id: contract._id.toString()
+      _id: contract._id.toString(),
+      // Standardwerte für Abwärtskompatibilität
+      cost: contract.cost ?? 0,
+      billingCycle: contract.billingCycle ?? 'monthly'
     };
   } catch (error) {
     console.error('Error fetching contract:', error);
@@ -62,15 +68,28 @@ export async function createContract(contractData) {
   const db = client.db(DB_NAME);
   
   try {
+    // Kostenfelder validieren und konvertieren
+    const cost = parseFloat(contractData.cost) || 0;
+    const billingCycle = contractData.billingCycle || 'monthly';
+    
+    // Validierung: Nur erlaubte Billing-Cycles
+    if (!['monthly', 'yearly', 'quarterly'].includes(billingCycle)) {
+      throw new Error('Invalid billing cycle');
+    }
+    
     const result = await db.collection(COLLECTION_NAME).insertOne({
       ...contractData,
+      cost,
+      billingCycle,
       createdAt: new Date(),
       updatedAt: new Date()
     });
     
     return {
       _id: result.insertedId.toString(),
-      ...contractData
+      ...contractData,
+      cost,
+      billingCycle
     };
   } catch (error) {
     console.error('Error creating contract:', error);
@@ -86,11 +105,25 @@ export async function updateContract(id, updates) {
   const db = client.db(DB_NAME);
   
   try {
+    // Kostenfelder validieren falls vorhanden
+    const updateData = { ...updates };
+    
+    if (updates.cost !== undefined) {
+      updateData.cost = parseFloat(updates.cost) || 0;
+    }
+    
+    if (updates.billingCycle !== undefined) {
+      if (!['monthly', 'yearly', 'quarterly'].includes(updates.billingCycle)) {
+        throw new Error('Invalid billing cycle');
+      }
+      updateData.billingCycle = updates.billingCycle;
+    }
+    
     const result = await db.collection(COLLECTION_NAME).updateOne(
       { _id: new ObjectId(id) },
       {
         $set: {
-          ...updates,
+          ...updateData,
           updatedAt: new Date()
         }
       }
@@ -120,4 +153,34 @@ export async function deleteContract(id) {
     console.error('Error deleting contract:', error);
     throw error;
   }
+}
+
+/**
+ * Kostenstatistiken berechnen
+ * Gibt Gesamtkosten (monatlich/jährlich) zurück
+ */
+export async function getCostStatistics() {
+  const contracts = await getContracts();
+  
+  // Nur aktive Verträge berücksichtigen
+  const activeContracts = contracts.filter(c => c.status === 'active');
+  
+  // Alle Kosten auf monatliche Basis normalisieren
+  const totalMonthlyCost = activeContracts.reduce((sum, contract) => {
+    const cost = contract.cost || 0;
+    const cycle = contract.billingCycle || 'monthly';
+    
+    let monthlyCost = cost;
+    if (cycle === 'yearly') monthlyCost = cost / 12;
+    if (cycle === 'quarterly') monthlyCost = cost / 3;
+    
+    return sum + monthlyCost;
+  }, 0);
+  
+  return {
+    totalMonthlyCost: Math.round(totalMonthlyCost * 100) / 100,
+    totalYearlyCost: Math.round(totalMonthlyCost * 12 * 100) / 100,
+    activeContractsCount: activeContracts.length,
+    totalContractsCount: contracts.length
+  };
 }
