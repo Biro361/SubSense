@@ -140,16 +140,17 @@
                 </div>
                 <p class="text-gray-700 font-medium">Anbieter: {contract.provider}</p>
                 
-                <!-- Countdown-Anzeige -->
-                <div class="mt-3 p-3 bg-white rounded border border-red-300">
-                  <p class="text-sm text-gray-600">Kündigungsfrist:</p>
-                  <p class="text-lg font-bold text-red-600">
-                    {formatDaysText(contract.daysUntilCancellation)}
-                  </p>
-                  <p class="text-xs text-gray-500">
-                    bis {new Date(contract.cancellationDate).toLocaleDateString('de-DE')}
-                  </p>
-                </div>
+                <!-- Countdown-Anzeige - VERBESSERT -->
+<div class="mt-3 p-3 bg-white rounded border border-red-300">
+  <p class="text-sm font-medium text-gray-700 mb-1">Kündigungsfrist:</p>
+  <p class="text-xl font-bold text-red-600">
+    {formatDaysText(contract.daysUntilCancellation)}
+  </p>
+  <p class="text-sm font-medium text-gray-600 mt-1">
+    bis <span class="font-semibold">{new Date(contract.cancellationDate).toLocaleDateString('de-DE')}</span>
+  </p>
+</div>
+
                 
                 {#if contract.cost && contract.cost > 0}
                   <p class="text-sm font-medium text-blue-600 mt-3">
@@ -206,18 +207,18 @@
               <h3 class="text-lg font-semibold">{contract.name}</h3>
               <p class="text-gray-600">Anbieter: {contract.provider}</p>
               
-              <!-- Erinnerungs-Info -->
-              <div class="mt-2">
-                <p class="text-sm text-gray-500">
-                  Kündigung möglich bis: {new Date(contract.cancellationDate).toLocaleDateString('de-DE')}
-                </p>
-                {#if !contract.isUrgent && contract.status === 'active'}
-                  <p class="text-xs text-gray-400 mt-1">
-                    🔔 Erinnerung {contract.reminderDays} Tage vorher 
-                    ({new Date(contract.reminderDate).toLocaleDateString('de-DE')})
-                  </p>
-                {/if}
-              </div>
+              <!-- Erinnerungs-Info - VERBESSERT -->
+    <div class="mt-2">
+        <p class="text-base font-medium text-gray-700">🗓️ Kündigung möglich bis: 
+          <span class="font-semibold">{new Date(contract.cancellationDate).toLocaleDateString('de-DE')}</span>
+        </p>
+      {#if !contract.isUrgent && contract.status === 'active'}
+        <p class="text-sm text-gray-600 mt-1">🔔 Erinnerung {contract.reminderDays} Tage vorher 
+          <span class="font-medium">({new Date(contract.reminderDate).toLocaleDateString('de-DE')})</span>
+        </p>
+      {/if}
+  </div>
+
               
               <!-- Kostenanzeige -->
               {#if contract.cost && contract.cost > 0}
