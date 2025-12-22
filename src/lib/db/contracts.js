@@ -7,6 +7,9 @@ const COLLECTION_NAME = 'contracts';
 /**
  * Hilfsfunktion: Berechnet Erinnerungs-Metadaten für einen Vertrag
  */
+/**
+ * Hilfsfunktion: Berechnet Erinnerungs-Metadaten für einen Vertrag
+ */
 function calculateReminderMetadata(contract) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -26,19 +29,25 @@ function calculateReminderMetadata(contract) {
   const reminderDate = new Date(cancellationDate);
   reminderDate.setDate(reminderDate.getDate() - reminderDays);
   
-  // Ist der Vertrag dringend? (Erinnerungszeitraum erreicht und noch aktiv)
+  // Status-Berechnung
+  const isOverdue = 
+    contract.status === 'active' && 
+    daysUntilCancellation < 0; // Kündigungsfrist bereits verpasst
+  
   const isUrgent = 
     contract.status === 'active' && 
     daysUntilCancellation <= reminderDays && 
-    daysUntilCancellation >= 0;
+    daysUntilCancellation >= 0; // Im Erinnerungszeitraum, aber noch nicht überfällig
   
   return {
     reminderDays,
     reminderDate,
     daysUntilCancellation,
-    isUrgent
+    isUrgent,
+    isOverdue // NEU: Kennzeichnung für verpasste Fristen
   };
 }
+
 
 /**
  * Alle Verträge abrufen (mit Erinnerungs-Metadaten)
