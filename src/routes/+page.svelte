@@ -412,7 +412,7 @@
     <!-- NEU -->
     <div class="grid gap-6">
   {#each sortedContracts as contract}
-    <div class="contract-card rounded-lg shadow-md border border-gray-200 p-4 {contract.status === 'active' ? 'bg-gradient-to-br from-blue-50/30 to-white' : 'bg-gradient-to-br from-gray-50 to-white'}">
+    <div class="contract-card {contract.status === 'active' ? 'contract-card-active' : 'contract-card-inactive'} rounded-lg shadow-md border border-gray-200 p-4">
       <div class="{contract.isUrgent || contract.isOverdue ? 'opacity-50' : ''}">          
         <div class="flex justify-between items-start">
           <div class="flex-1">
@@ -544,5 +544,12 @@
   transform: translateY(-5px);
 }
 
+/* Gradient-Hintergründe für Verträge */
+.contract-card-active {
+  background: linear-gradient(to bottom right, rgba(239, 246, 255, 0.3), white);
+}
 
+.contract-card-inactive {
+  background: linear-gradient(to bottom right, #f9fafb, white);
+}
 </style>
