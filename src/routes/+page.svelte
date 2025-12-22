@@ -412,7 +412,7 @@
     <!-- NEU -->
     <div class="grid gap-6">
       {#each sortedContracts as contract}
-        <div class="bg-white rounded-lg shadow-md hover:shadow-xl border border-gray-100 hover:border-blue-200 p-4 transition-all duration-200 hover:-translate-y-1">
+        <div class="contract-card bg-white rounded-lg shadow-md border border-gray-100 p-4">
           <div class="{contract.isUrgent || contract.isOverdue ? 'opacity-50' : ''}">          
             <div class="flex justify-between items-start">
             <div class="flex-1">
@@ -478,8 +478,8 @@
               🗑️ Löschen
             </a>
           </div>
-        </div>
-      </div>
+          </div> <!-- Schließt Opacity-Wrapper -->
+        </div> <!-- Schließt Card -->
       {/each}
     </div>
 
@@ -531,4 +531,15 @@
   .animate-pulse {
     animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   }
+
+  .contract-card {
+  transition: all 0.2s ease;
+}
+
+.contract-card:hover {
+  box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  border-color: rgb(57, 141, 243);
+  transform: translateY(-5px);
+}
+
 </style>
