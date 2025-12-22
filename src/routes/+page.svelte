@@ -546,10 +546,11 @@
 
 /* Gradient-Hintergründe für Verträge */
 .contract-card-active {
-  background: linear-gradient(to bottom right, rgba(239, 246, 255, 0.3), white);
+  background: linear-gradient(135deg, #dbeafe 0%, #ffffff 70%);
 }
 
 .contract-card-inactive {
-  background: linear-gradient(to bottom right, #f9fafb, white);
+  background: linear-gradient(135deg, #f3f4f6 0%, #ffffff 70%);
 }
+
 </style>
