@@ -411,77 +411,78 @@
   {:else}
     <!-- NEU -->
     <div class="grid gap-6">
-      {#each sortedContracts as contract}
-        <div class="contract-card bg-white rounded-lg shadow-md border border-gray-100 p-4">
-          <div class="{contract.isUrgent || contract.isOverdue ? 'opacity-50' : ''}">          
-            <div class="flex justify-between items-start">
-            <div class="flex-1">
-              <h3 class="text-lg font-semibold">{contract.name}</h3>
-              <p class="text-gray-600">Anbieter: {contract.provider}</p>
+  {#each sortedContracts as contract}
+    <div class="contract-card rounded-lg shadow-md border border-gray-200 p-4 {contract.status === 'active' ? 'bg-gradient-to-br from-blue-50/30 to-white' : 'bg-gradient-to-br from-gray-50 to-white'}">
+      <div class="{contract.isUrgent || contract.isOverdue ? 'opacity-50' : ''}">          
+        <div class="flex justify-between items-start">
+          <div class="flex-1">
+            <h3 class="text-lg font-semibold">{contract.name}</h3>
+            <p class="text-gray-600">Anbieter: {contract.provider}</p>
 
-              <!-- Erinnerungs-Info - VERBESSERT -->
-              <div class="mt-2">
-                <p class="text-base font-medium text-gray-700">
-                  🗓️ Kündigung möglich bis:
-                  <span class="font-semibold"
-                    >{new Date(contract.cancellationDate).toLocaleDateString(
+            <!-- Erinnerungs-Info - VERBESSERT -->
+            <div class="mt-2">
+              <p class="text-base font-medium text-gray-700">
+                🗓️ Kündigung möglich bis:
+                <span class="font-semibold"
+                  >{new Date(contract.cancellationDate).toLocaleDateString(
+                    "de-DE",
+                  )}</span
+                >
+              </p>
+              {#if !contract.isUrgent && contract.status === "active"}
+                <p class="text-sm text-gray-600 mt-1">
+                  🔔 Erinnerung {contract.reminderDays} Tage vorher
+                  <span class="font-medium"
+                    >({new Date(contract.reminderDate).toLocaleDateString(
                       "de-DE",
-                    )}</span
+                    )})</span
                   >
-                </p>
-                {#if !contract.isUrgent && contract.status === "active"}
-                  <p class="text-sm text-gray-600 mt-1">
-                    🔔 Erinnerung {contract.reminderDays} Tage vorher
-                    <span class="font-medium"
-                      >({new Date(contract.reminderDate).toLocaleDateString(
-                        "de-DE",
-                      )})</span
-                    >
-                  </p>
-                {/if}
-              </div>
-
-              <!-- Kostenanzeige -->
-              {#if contract.cost && contract.cost > 0}
-                <p class="text-sm font-medium text-blue-600 mt-2">
-                  {contract.cost.toFixed(2)} CHF / {formatBillingCycle(
-                    contract.billingCycle,
-                  )}
-                </p>
-              {:else}
-                <p class="text-sm text-gray-400 mt-2 italic">
-                  Keine Kosten angegeben
                 </p>
               {/if}
             </div>
 
-            <span
-              class="{contract.status === 'active'
-                ? 'bg-green-100 text-green-800'
-                : 'bg-gray-100 text-gray-800'} px-3 py-1 rounded-full text-sm h-fit"
-            >
-              {contract.status === "active" ? "Aktiv" : "Gekündigt"}
-            </span>
+            <!-- Kostenanzeige -->
+            {#if contract.cost && contract.cost > 0}
+              <p class="text-sm font-medium text-blue-600 mt-2">
+                {contract.cost.toFixed(2)} CHF / {formatBillingCycle(
+                  contract.billingCycle,
+                )}
+              </p>
+            {:else}
+              <p class="text-sm text-gray-400 mt-2 italic">
+                Keine Kosten angegeben
+              </p>
+            {/if}
           </div>
 
-          <div class="flex gap-2 mt-4 pt-4 border-t border-gray-200">
-            <a
-              href="/contracts/{contract._id}/edit"
-              class="text-blue-600 hover:text-blue-800 hover:underline text-sm font-medium transition-colors"
-            >
-              ✏️ Bearbeiten
-            </a>
-            <a
-              href="/contracts/{contract._id}/delete"
-              class="text-red-600 hover:text-red-800 hover:underline text-sm font-medium transition-colors"
-            >
-              🗑️ Löschen
-            </a>
-          </div>
-          </div> <!-- Schließt Opacity-Wrapper -->
-        </div> <!-- Schließt Card -->
-      {/each}
-    </div>
+          <span
+            class="{contract.status === 'active'
+              ? 'bg-green-100 text-green-800'
+              : 'bg-gray-100 text-gray-800'} px-3 py-1 rounded-full text-sm h-fit"
+          >
+            {contract.status === "active" ? "Aktiv" : "Gekündigt"}
+          </span>
+        </div>
+
+        <div class="flex gap-2 mt-4 pt-4 border-t border-gray-200">
+          <a
+            href="/contracts/{contract._id}/edit"
+            class="text-blue-600 hover:text-blue-800 hover:underline text-sm font-medium transition-colors"
+          >
+            ✏️ Bearbeiten
+          </a>
+          <a
+            href="/contracts/{contract._id}/delete"
+            class="text-red-600 hover:text-red-800 hover:underline text-sm font-medium transition-colors"
+          >
+            🗑️ Löschen
+          </a>
+        </div>
+      </div> <!-- Schließt Opacity-Wrapper -->
+    </div> <!-- Schließt Card -->
+  {/each}
+</div>
+
 
   {/if}
 </div>
@@ -538,8 +539,10 @@
 
 .contract-card:hover {
   box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
-  border-color: rgb(57, 141, 243);
+  border-color: rgb(59, 130, 246); /* Etwas kräftigeres Blau (blue-500) */
+  border-width: 2px; /* Border wird beim Hover dicker */
   transform: translateY(-5px);
 }
+
 
 </style>
