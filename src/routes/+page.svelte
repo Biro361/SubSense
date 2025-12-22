@@ -409,9 +409,15 @@
       </a>
     </div>
   {:else}
-    <div class="grid gap-4">
+    <!-- NEU -->
+    <div class="grid gap-6">
       {#each sortedContracts as contract}
-        <div class="bg-white rounded-lg shadow p-4 {contract.isUrgent || contract.isOverdue ? 'opacity-50' : ''}">
+        <div
+          class="bg-white rounded-lg shadow-md hover:shadow-xl border border-gray-100 hover:border-blue-200 p-4 transition-all duration-200 hover:-translate-y-1 {contract.isUrgent ||
+          contract.isOverdue
+            ? 'opacity-50'
+            : ''}"
+        >
           <div class="flex justify-between items-start">
             <div class="flex-1">
               <h3 class="text-lg font-semibold">{contract.name}</h3>
@@ -462,18 +468,18 @@
             </span>
           </div>
 
-          <div class="flex gap-2 mt-4 pt-4 border-t">
+          <div class="flex gap-2 mt-4 pt-4 border-t border-gray-200">
             <a
               href="/contracts/{contract._id}/edit"
-              class="text-blue-600 hover:text-blue-800 text-sm font-medium"
+              class="text-blue-600 hover:text-blue-800 hover:underline text-sm font-medium transition-colors"
             >
-              Bearbeiten
+              ✏️ Bearbeiten
             </a>
             <a
               href="/contracts/{contract._id}/delete"
-              class="text-red-600 hover:text-red-800 text-sm font-medium"
+              class="text-red-600 hover:text-red-800 hover:underline text-sm font-medium transition-colors"
             >
-              Löschen
+              🗑️ Löschen
             </a>
           </div>
         </div>
@@ -513,18 +519,18 @@
     animation: progress 5s linear;
   }
 
- /* Puls-Animation für überfällige Badges */
-@keyframes pulse {
-  0%, 100% {
-    opacity: 1;
+  /* Puls-Animation für überfällige Badges */
+  @keyframes pulse {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.7;
+    }
   }
-  50% {
-    opacity: 0.7;
-  }
-}
 
-.animate-pulse {
-  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
- 
+  .animate-pulse {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
 </style>
