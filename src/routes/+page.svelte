@@ -412,13 +412,9 @@
     <!-- NEU -->
     <div class="grid gap-6">
       {#each sortedContracts as contract}
-        <div
-          class="bg-white rounded-lg shadow-md hover:shadow-xl border border-gray-100 hover:border-blue-200 p-4 transition-all duration-200 hover:-translate-y-1 {contract.isUrgent ||
-          contract.isOverdue
-            ? 'opacity-50'
-            : ''}"
-        >
-          <div class="flex justify-between items-start">
+        <div class="bg-white rounded-lg shadow-md hover:shadow-xl border border-gray-100 hover:border-blue-200 p-4 transition-all duration-200 hover:-translate-y-1">
+          <div class="{contract.isUrgent || contract.isOverdue ? 'opacity-50' : ''}">          
+            <div class="flex justify-between items-start">
             <div class="flex-1">
               <h3 class="text-lg font-semibold">{contract.name}</h3>
               <p class="text-gray-600">Anbieter: {contract.provider}</p>
@@ -483,8 +479,10 @@
             </a>
           </div>
         </div>
+      </div>
       {/each}
     </div>
+
   {/if}
 </div>
 
