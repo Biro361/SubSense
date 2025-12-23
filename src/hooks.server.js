@@ -1,16 +1,16 @@
 // src/hooks.server.js
 import { redirect } from '@sveltejs/kit';
 import jwt from 'jsonwebtoken';
-import { AUTH_SECRET } from '$env/static/private';
+import { JWT_SECRET } from '$env/static/private';
 
 // Session-Cookie signieren/verifizieren
 function signToken(userId, email) {
-	return jwt.sign({ userId, email }, AUTH_SECRET, { expiresIn: '30d' });
+	return jwt.sign({ userId, email }, JWT_SECRET, { expiresIn: '30d' });
 }
 
 function verifyToken(token) {
 	try {
-		return jwt.verify(token, AUTH_SECRET);
+		return jwt.verify(token, JWT_SECRET);
 	} catch {
 		return null;
 	}
@@ -26,7 +26,7 @@ export async function handle({ event, resolve }) {
 		const payload = verifyToken(sessionToken);
 		if (payload) {
 			event.locals.user = {
-				id: payload.userId,
+				userId: payload.userId, // ← WICHTIG: userId (nicht id)
 				email: payload.email
 			};
 		}
@@ -53,7 +53,7 @@ export function setSessionCookie(cookies, userId, email) {
 	cookies.set('session', token, {
 		path: '/',
 		httpOnly: true,
-		secure: false, // Bei Production auf true setzen
+		secure: process.env.NODE_ENV === 'production', // ← Automatisch secure in Produktion
 		sameSite: 'lax',
 		maxAge: 60 * 60 * 24 * 30 // 30 Tage
 	});
