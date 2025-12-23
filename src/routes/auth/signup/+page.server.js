@@ -39,11 +39,13 @@ export const actions = {
 
 			// Erfolg: zum Login weiterleiten
 			throw redirect(303, '/auth/signin?registered=1');
+			
 		} catch (error) {
-			// WICHTIG: Redirect durchlassen
-			if (error instanceof Response && error.status === 303) {
+			// WICHTIG: Redirect durchlassen (SvelteKit wirft Redirects als Error-Objekte)
+			if (error?.status === 303) {
 				throw error;
 			}
+			
 			console.error('Registration error:', error);
 			return fail(500, { error: 'Bei der Registrierung ist ein Fehler aufgetreten.' });
 		}
