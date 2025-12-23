@@ -50,31 +50,31 @@ function calculateReminderMetadata(contract) {
 
 
 /**
- * Alle Verträge abrufen (mit Erinnerungs-Metadaten)
+ * Alle Verträge eines Users abrufen (mit Erinnerungs-Metadaten)
+ * @param {string} userId - Die ID des eingeloggten Users
  */
-export async function getContracts() {
+export async function getContracts(userId) {
   const client = await clientPromise;
   const db = client.db(DB_NAME);
   
   try {
+    // WICHTIG: Nach userId filtern
     const contracts = await db
       .collection(COLLECTION_NAME)
-      .find({})
+      .find({ userId }) // ← NEU: Nur Verträge dieses Users
       .sort({ cancellationDate: 1 })
       .toArray();
     
-    // MongoDB ObjectIds in Strings konvertieren + Erinnerungs-Metadaten hinzufügen
+    // Rest bleibt gleich
     return contracts.map(contract => {
       const metadata = calculateReminderMetadata(contract);
       
       return {
         ...contract,
         _id: contract._id.toString(),
-        // Standardwerte für Abwärtskompatibilität
         cost: contract.cost ?? 0,
         billingCycle: contract.billingCycle ?? 'monthly',
         reminderDays: contract.reminderDays ?? 7,
-        // Berechnete Felder
         ...metadata
       };
     });
@@ -85,30 +85,31 @@ export async function getContracts() {
 }
 
 /**
- * Einzelnen Vertrag nach ID abrufen (mit Erinnerungs-Metadaten)
+ * Einzelnen Vertrag nach ID abrufen (mit User-Check)
+ * @param {string} id - Contract ID
+ * @param {string} userId - User ID (für Sicherheitscheck)
  */
-export async function getContractById(id) {
+export async function getContractById(id, userId) {
   const client = await clientPromise;
   const db = client.db(DB_NAME);
   
   try {
+    // WICHTIG: Nach ID UND userId suchen (Security!)
     const contract = await db.collection(COLLECTION_NAME).findOne({
-      _id: new ObjectId(id)
+      _id: new ObjectId(id),
+      userId // ← NEU: User muss Besitzer sein
     });
     
     if (!contract) return null;
     
     const metadata = calculateReminderMetadata(contract);
     
-    // MongoDB ObjectId in String konvertieren
     return {
       ...contract,
       _id: contract._id.toString(),
-      // Standardwerte für Abwärtskompatibilität
       cost: contract.cost ?? 0,
       billingCycle: contract.billingCycle ?? 'monthly',
       reminderDays: contract.reminderDays ?? 7,
-      // Berechnete Felder
       ...metadata
     };
   } catch (error) {
@@ -118,30 +119,30 @@ export async function getContractById(id) {
 }
 
 /**
- * Neuen Vertrag erstellen (mit Erinnerungseinstellung)
+ * Neuen Vertrag erstellen (mit userId)
+ * @param {object} contractData - Vertragsdaten
+ * @param {string} userId - ID des erstellenden Users
  */
-export async function createContract(contractData) {
+export async function createContract(contractData, userId) {
   const client = await clientPromise;
   const db = client.db(DB_NAME);
   
   try {
-    // Kostenfelder validieren und konvertieren
     const cost = parseFloat(contractData.cost) || 0;
     const billingCycle = contractData.billingCycle || 'monthly';
     const reminderDays = parseInt(contractData.reminderDays) || 7;
     
-    // Validierung: Nur erlaubte Billing-Cycles
     if (!['monthly', 'yearly', 'quarterly'].includes(billingCycle)) {
       throw new Error('Invalid billing cycle');
     }
     
-    // Validierung: Erinnerungstage müssen positiv sein
     if (reminderDays < 1 || reminderDays > 90) {
       throw new Error('Reminder days must be between 1 and 90');
     }
     
     const result = await db.collection(COLLECTION_NAME).insertOne({
       ...contractData,
+      userId, // ← NEU: User zuweisen
       cost,
       billingCycle,
       reminderDays,
@@ -152,6 +153,7 @@ export async function createContract(contractData) {
     return {
       _id: result.insertedId.toString(),
       ...contractData,
+      userId, // ← NEU
       cost,
       billingCycle,
       reminderDays
@@ -163,14 +165,16 @@ export async function createContract(contractData) {
 }
 
 /**
- * Vertrag aktualisieren (mit Erinnerungseinstellung)
+ * Vertrag aktualisieren (mit User-Check)
+ * @param {string} id - Contract ID
+ * @param {object} updates - Zu aktualisierende Felder
+ * @param {string} userId - User ID (Security)
  */
-export async function updateContract(id, updates) {
+export async function updateContract(id, updates, userId) {
   const client = await clientPromise;
   const db = client.db(DB_NAME);
   
   try {
-    // Kostenfelder validieren falls vorhanden
     const updateData = { ...updates };
     
     if (updates.cost !== undefined) {
@@ -192,8 +196,12 @@ export async function updateContract(id, updates) {
       updateData.reminderDays = reminderDays;
     }
     
+    // WICHTIG: Nur updaten wenn User = Besitzer
     const result = await db.collection(COLLECTION_NAME).updateOne(
-      { _id: new ObjectId(id) },
+      { 
+        _id: new ObjectId(id),
+        userId // ← NEU: Security-Check
+      },
       {
         $set: {
           ...updateData,
@@ -210,15 +218,19 @@ export async function updateContract(id, updates) {
 }
 
 /**
- * Vertrag löschen
+ * Vertrag löschen (mit User-Check)
+ * @param {string} id - Contract ID
+ * @param {string} userId - User ID (Security)
  */
-export async function deleteContract(id) {
+export async function deleteContract(id, userId) {
   const client = await clientPromise;
   const db = client.db(DB_NAME);
   
   try {
+    // WICHTIG: Nur löschen wenn User = Besitzer
     const result = await db.collection(COLLECTION_NAME).deleteOne({
-      _id: new ObjectId(id)
+      _id: new ObjectId(id),
+      userId // ← NEU: Security-Check
     });
     
     return result.deletedCount > 0;
@@ -229,16 +241,14 @@ export async function deleteContract(id) {
 }
 
 /**
- * Kostenstatistiken berechnen
- * Gibt Gesamtkosten (monatlich/jährlich) zurück
+ * Kostenstatistiken für einen User berechnen
+ * @param {string} userId - User ID
  */
-export async function getCostStatistics() {
-  const contracts = await getContracts();
+export async function getCostStatistics(userId) {
+  const contracts = await getContracts(userId); // ← NEU: userId übergeben
   
-  // Nur aktive Verträge berücksichtigen
   const activeContracts = contracts.filter(c => c.status === 'active');
   
-  // Alle Kosten auf monatliche Basis normalisieren
   const totalMonthlyCost = activeContracts.reduce((sum, contract) => {
     const cost = contract.cost || 0;
     const cycle = contract.billingCycle || 'monthly';
@@ -259,9 +269,10 @@ export async function getCostStatistics() {
 }
 
 /**
- * Dringende Verträge abrufen (im Erinnerungszeitraum)
+ * Dringende Verträge eines Users abrufen
+ * @param {string} userId - User ID
  */
-export async function getUrgentContracts() {
-  const allContracts = await getContracts();
+export async function getUrgentContracts(userId) {
+  const allContracts = await getContracts(userId); // ← NEU: userId übergeben
   return allContracts.filter(contract => contract.isUrgent);
 }

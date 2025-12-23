@@ -1,12 +1,21 @@
-import { fail, redirect } from '@sveltejs/kit';
+import { fail, redirect, error } from '@sveltejs/kit';
 import { getContractById, updateContract } from '$lib/db/contracts';
 
-// Vertrag laden
-export async function load({ params }) {
-  const contract = await getContractById(params.id);
+// Vertrag laden (mit User-Check)
+export async function load({ params, locals }) {
+  // User aus Session holen
+  const user = locals.user;
   
+  if (!user) {
+    throw redirect(303, '/auth/signin');
+  }
+  
+  // WICHTIG: userId als zweiten Parameter übergeben (Security!)
+  const contract = await getContractById(params.id, user.userId);
+  
+  // Falls null → User ist nicht der Besitzer ODER Vertrag existiert nicht
   if (!contract) {
-    throw redirect(303, '/');
+    throw error(404, 'Vertrag nicht gefunden oder keine Berechtigung');
   }
   
   return {
@@ -14,9 +23,16 @@ export async function load({ params }) {
   };
 }
 
-// Form Action zum Aktualisieren
+// Form Action zum Aktualisieren (mit User-Check)
 export const actions = {
-  default: async ({ request, params }) => {
+  default: async ({ request, params, locals }) => {
+    // User aus Session holen
+    const user = locals.user;
+    
+    if (!user) {
+      return fail(401, { error: 'Nicht eingeloggt' });
+    }
+    
     const formData = await request.formData();
     
     const name = formData.get('name');
@@ -25,7 +41,7 @@ export const actions = {
     const status = formData.get('status');
     const cost = formData.get('cost');
     const billingCycle = formData.get('billingCycle');
-    const reminderDays = formData.get('reminderDays') || '7'; // NEU: Erinnerungstage
+    const reminderDays = formData.get('reminderDays') || '7';
     
     // Validierung
     if (!name || !provider || !cancellationDate || !cost) {
@@ -51,15 +67,23 @@ export const actions = {
     }
     
     try {
-      await updateContract(params.id, {
+      // WICHTIG: userId als dritten Parameter übergeben (Security!)
+      const success = await updateContract(params.id, {
         name: name.toString(),
         provider: provider.toString(),
         cancellationDate: new Date(cancellationDate.toString()),
         status: status.toString(),
         cost: parsedCost,
         billingCycle: billingCycle.toString(),
-        reminderDays: parsedReminderDays // NEU: Erinnerungstage aktualisieren
-      });
+        reminderDays: parsedReminderDays
+      }, user.userId); // ← NEU: User-Check in DB-Funktion
+      
+      // Falls false → User ist nicht der Besitzer
+      if (!success) {
+        return fail(403, {
+          error: 'Keine Berechtigung, diesen Vertrag zu bearbeiten'
+        });
+      }
       
       throw redirect(303, '/?message=updated');
       

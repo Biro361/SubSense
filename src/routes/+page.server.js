@@ -1,14 +1,23 @@
 import { getContracts } from '$lib/db/contracts';
 
-// Lädt alle Verträge beim Seitenaufruf
-export async function load() {
+// Lädt alle Verträge beim Seitenaufruf (gefiltert nach User)
+export async function load({ locals }) {
+	// User aus Session holen (via hooks.server.js)
+	const user = locals.user;
+	
+	// Falls kein User, sollte Hook bereits umgeleitet haben
+	if (!user) {
+		return { contracts: [], error: 'Nicht eingeloggt' };
+	}
+	
 	try {
-		const contracts = await getContracts();
+		// WICHTIG: userId als Parameter übergeben
+		const contracts = await getContracts(user.userId);
 		
 		return {
 			contracts: contracts.map(contract => ({
 				...contract,
-				_id: contract._id.toString() // ObjectId zu String konvertieren
+				_id: contract._id.toString()
 			}))
 		};
 	} catch (error) {

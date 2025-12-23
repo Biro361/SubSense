@@ -1,38 +1,47 @@
+// src/lib/mongodb.js
+// @ts-check
 import { MongoClient } from 'mongodb';
-import { env } from '$env/dynamic/private';
+import { MONGODB_URI } from '$env/static/private';
 
-const uri = env.MONGODB_URI;
+if (!MONGODB_URI) {
+	throw new Error('MONGODB_URI is not defined');
+}
+
+const uri = MONGODB_URI;
+
+/** @type {import('mongodb').MongoClientOptions} */
 const options = {
-    // Optimierungen für Serverless
-    maxPoolSize: 1,          // Maximal 1 Verbindung pro Function-Instanz
-    minPoolSize: 0,
-    connectTimeoutMS: 5000,  // Schnellerer Timeout beim Verbinden
-    socketTimeoutMS: 5000,
-    serverSelectionTimeoutMS: 5000,
+	maxPoolSize: 1,
+	minPoolSize: 0,
+	serverSelectionTimeoutMS: 5000
 };
 
+/** @type {MongoClient} */
 let client;
+
+/** @type {Promise<MongoClient>} */
 let clientPromise;
 
-if (!uri) {
-    throw new Error('Please add your Mongo URI to .env');
-}
-
 if (process.env.NODE_ENV === 'development') {
-    // Im Dev-Modus globale Variable nutzen
-    if (!global._mongoClientPromise) {
-        client = new MongoClient(uri, options);
-        global._mongoClientPromise = client.connect();
-    }
-    clientPromise = global._mongoClientPromise;
+	// Development: Globales Caching
+	if (!global._mongoClientPromise) {
+		client = new MongoClient(uri, options);
+		global._mongoClientPromise = client.connect();
+	}
+	clientPromise = global._mongoClientPromise;
 } else {
-    // Im Production-Modus (Netlify)
-    // WICHTIG: Variable außerhalb des Handlers definieren für Wiederverwendung (Connection Pooling)
-    if (!global._mongoClientPromise) {
-        client = new MongoClient(uri, options);
-        global._mongoClientPromise = client.connect();
-    }
-    clientPromise = global._mongoClientPromise;
+	// Production: Neue Instanz
+	client = new MongoClient(uri, options);
+	clientPromise = client.connect();
 }
 
+// Default Export für Auth.js Adapter
 export default clientPromise;
+
+/**
+ * @returns {Promise<import('mongodb').Db>}
+ */
+export async function getDatabase() {
+	const client = await clientPromise;
+	return client.db('subsense');
+}
