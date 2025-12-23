@@ -1,556 +1,342 @@
+<!-- src/routes/+page.svelte -->
 <script>
-  import { page } from "$app/stores";
-  import { onMount } from "svelte";
+	import { onMount } from 'svelte';
+	import { goto } from '$app/navigation';
 
-  let { data } = $props();
-  let contracts = $derived(data.contracts || []);
+	let { data } = $props();
 
-  let message = $derived($page.url.searchParams.get("message"));
-
-  let successMessage = $derived(
-    message === "created"
-      ? "Vertrag erfolgreich erstellt!"
-      : message === "updated"
-        ? "Vertrag erfolgreich aktualisiert!"
-        : message === "deleted"
-          ? "Vertrag erfolgreich gelöscht!"
-          : null,
-  );
-
-  // Toast-State
-  let showToast = $state(false);
-  let toastMessage = $state("");
-
-  // Toast anzeigen und nach 5 Sekunden auto-dismiss
-  onMount(() => {
-    if (successMessage) {
-      toastMessage = successMessage;
-      showToast = true;
-
-      // Auto-dismiss nach 5 Sekunden
-      setTimeout(() => {
-        showToast = false;
-      }, 5000);
-
-      // URL bereinigen (ohne ?message=...)
-      const url = new URL(window.location.href);
-      url.searchParams.delete("message");
-      window.history.replaceState({}, "", url);
-    }
-  });
-
-  // Manuelles Schließen
-  function closeToast() {
-    showToast = false;
-  }
-
-  // Verträge nach Dringlichkeit sortieren (dringend zuerst)
-  let sortedContracts = $derived(
-    [...contracts].sort((a, b) => {
-      // Dringende zuerst
-      if (a.isUrgent && !b.isUrgent) return -1;
-      if (!a.isUrgent && b.isUrgent) return 1;
-      // Dann nach Kündigungsdatum
-      return new Date(a.cancellationDate) - new Date(b.cancellationDate);
-    }),
-  );
-
-  // Dringende Verträge filtern
-  let urgentContracts = $derived(contracts.filter((c) => c.isUrgent));
-
-  // Überfällige Verträge filtern (höchste Priorität)
-  let overdueContracts = $derived(contracts.filter((c) => c.isOverdue));
-
-  // Kostenberechnungen - nur aktive Verträge
-  let activeContracts = $derived(
-    contracts.filter((c) => c.status === "active"),
-  );
-
-  // Monatliche Gesamtkosten (normalisiert)
-  let totalMonthlyCost = $derived(
-    activeContracts.reduce((sum, contract) => {
-      const cost = contract.cost || 0;
-      const cycle = contract.billingCycle || "monthly";
-
-      // Auf monatliche Kosten normalisieren
-      let monthlyCost = cost;
-      if (cycle === "yearly") monthlyCost = cost / 12;
-      if (cycle === "quarterly") monthlyCost = cost / 3;
-
-      return sum + monthlyCost;
-    }, 0),
-  );
-
-  // Jährliche Gesamtkosten
-  let totalYearlyCost = $derived(totalMonthlyCost * 12);
-
-  // Abrechnungszyklus formatieren
-  function formatBillingCycle(cycle) {
-    switch (cycle) {
-      case "monthly":
-        return "Monat";
-      case "yearly":
-        return "Jahr";
-      case "quarterly":
-        return "Quartal";
-      default:
-        return "Monat";
-    }
-  }
-
-  // Tage-Text formatieren
-  function formatDaysText(days) {
-    if (days === 0) return "Heute";
-    if (days === 1) return "Morgen";
-    if (days < 0) return `Überfällig (${Math.abs(days)} Tage)`;
-    return `Noch ${days} Tage`;
-  }
+	// Wenn User bereits eingeloggt ist, direkt zu Dashboard
+	onMount(() => {
+		if (data?.user) {
+			goto('/dashboard');
+		}
+	});
 </script>
 
-<!-- Toast-Notification (Top-Right, Fixed) -->
-{#if showToast}
-  <div
-    class="fixed top-4 right-4 z-50 animate-slide-in-right"
-    role="alert"
-    aria-live="polite"
-  >
-    <div
-      class="bg-white rounded-lg shadow-2xl border-2 border-green-500 overflow-hidden max-w-md"
-    >
-      <!-- Header mit Icon und Close-Button -->
-      <div class="flex items-start gap-3 p-4">
-        <!-- Checkmark-Icon -->
-        <div
-          class="flex-shrink-0 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center"
-        >
-          <svg
-            class="w-5 h-5 text-white"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="3"
-              d="M5 13l4 4L19 7"
-            ></path>
-          </svg>
-        </div>
+<div class="landing-container">
+	<!-- Background Gradient -->
+	<div class="gradient-bg"></div>
 
-        <!-- Message -->
-        <div class="flex-1 pt-0.5">
-          <p class="text-base font-semibold text-gray-900">Erfolgreich!</p>
-          <p class="text-sm text-gray-600 mt-1">{toastMessage}</p>
-        </div>
+	<!-- Content Card -->
+	<div class="content-card">
+		<!-- Logo/Icon Section -->
+		<div class="logo-section">
+			<div class="icon-circle">
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					class="icon"
+					fill="none"
+					viewBox="0 0 24 24"
+					stroke="currentColor"
+				>
+					<path
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						stroke-width="2"
+						d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+					/>
+				</svg>
+			</div>
+		</div>
 
-        <!-- Close-Button -->
-        <button
-          onclick={closeToast}
-          class="flex-shrink-0 text-gray-400 hover:text-gray-600 transition-colors"
-          aria-label="Schließen"
-        >
-          <svg
-            class="w-5 h-5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M6 18L18 6M6 6l12 12"
-            ></path>
-          </svg>
-        </button>
-      </div>
+		<!-- Title & Tagline -->
+		<div class="text-center mb-8">
+			<h1 class="title">SubSense</h1>
+			<p class="tagline">Dein Vertrags-Radar</p>
+			<p class="description">
+				Behalte den Überblick über deine Abonnements und verpasse keine Kündigungsfrist mehr.
+			</p>
+		</div>
 
-      <!-- Progress-Bar (5 Sekunden Animation) -->
-      <div class="h-1 bg-gray-100">
-        <div class="h-full bg-green-500 animate-progress-bar"></div>
-      </div>
-    </div>
-  </div>
-{/if}
+		<!-- CTA Buttons -->
+		<div class="button-group">
+			<a href="/auth/signin" class="btn btn-primary">
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					class="btn-icon"
+					fill="none"
+					viewBox="0 0 24 24"
+					stroke="currentColor"
+				>
+					<path
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						stroke-width="2"
+						d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"
+					/>
+				</svg>
+				Anmelden
+			</a>
 
-<div class="max-w-4xl mx-auto p-6">
-  <div class="flex justify-between items-center mb-6">
-    <div>
-      <h1 class="text-3xl font-bold">SubSense</h1>
-      <p class="text-gray-600">Dein Vertrags-Radar</p>
-    </div>
-    <a
-      href="/contracts/new"
-      class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2"
-    >
-      <span>+</span>
-      Neuer Vertrag
-    </a>
-  </div>
+			<a href="/auth/signup" class="btn btn-secondary">
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					class="btn-icon"
+					fill="none"
+					viewBox="0 0 24 24"
+					stroke="currentColor"
+				>
+					<path
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						stroke-width="2"
+						d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
+					/>
+				</svg>
+				Registrieren
+			</a>
+		</div>
 
-  <!-- Kosten-Dashboard -->
-  {#if activeContracts.length > 0}
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-      <div class="bg-blue-50 rounded-lg p-4 border border-blue-200">
-        <p class="text-sm text-gray-600 mb-1">Monatliche Kosten</p>
-        <p class="text-2xl font-bold text-blue-600">
-          {totalMonthlyCost.toFixed(2)} CHF
-        </p>
-        <p class="text-xs text-gray-500 mt-1">Durchschnitt pro Monat</p>
-      </div>
-
-      <div class="bg-purple-50 rounded-lg p-4 border border-purple-200">
-        <p class="text-sm text-gray-600 mb-1">Jährliche Kosten</p>
-        <p class="text-2xl font-bold text-purple-600">
-          {totalYearlyCost.toFixed(2)} CHF
-        </p>
-        <p class="text-xs text-gray-500 mt-1">Hochgerechnet aufs Jahr</p>
-      </div>
-
-      <div class="bg-green-50 rounded-lg p-4 border border-green-200">
-        <p class="text-sm text-gray-600 mb-1">Aktive Verträge</p>
-        <p class="text-2xl font-bold text-green-600">
-          {activeContracts.length}
-        </p>
-        <p class="text-xs text-gray-500 mt-1">Von {contracts.length} gesamt</p>
-      </div>
-    </div>
-  {/if}
-
-  <!-- NEU: Überfällige Kündigungen Sektion (Höchste Priorität) -->
-  {#if overdueContracts.length > 0}
-    <div class="mb-8">
-      <div class="flex items-center gap-2 mb-4">
-        <h2 class="text-xl font-semibold text-red-700">
-          🚨 Kündigungsfrist verpasst!
-        </h2>
-        <span
-          class="bg-red-600 text-white px-2 py-1 rounded-full text-sm font-bold animate-pulse"
-        >
-          {overdueContracts.length}
-        </span>
-      </div>
-
-      <div class="grid gap-4">
-        {#each overdueContracts as contract}
-          <div
-            class="bg-red-100 border-2 border-red-500 rounded-lg shadow-lg p-4"
-          >
-            <div class="flex justify-between items-start">
-              <div class="flex-1">
-                <div class="flex items-center gap-2 mb-2">
-                  <h3 class="text-lg font-semibold text-gray-900">
-                    {contract.name}
-                  </h3>
-                  <span
-                    class="bg-red-600 text-white px-3 py-1 rounded-full text-xs font-bold"
-                  >
-                    ÜBERFÄLLIG
-                  </span>
-                </div>
-                <p class="text-gray-800 font-medium">
-                  Anbieter: {contract.provider}
-                </p>
-
-                <!-- Überfällig-Anzeige -->
-                <div class="mt-3 p-3 bg-white rounded border-2 border-red-500">
-                  <p class="text-sm font-semibold text-red-700 mb-1">
-                    ⚠️ Kündigungsfrist überschritten:
-                  </p>
-                  <p class="text-xl font-bold text-red-700">
-                    {formatDaysText(contract.daysUntilCancellation)}
-                  </p>
-                  <p class="text-sm font-medium text-gray-700 mt-2">
-                    Frist war am: <span class="font-semibold"
-                      >{new Date(contract.cancellationDate).toLocaleDateString(
-                        "de-DE",
-                      )}</span
-                    >
-                  </p>
-                  <p class="text-xs text-red-600 mt-2 italic">
-                    💡 Tipp: Prüfe die Vertragsbedingungen. Möglicherweise wurde
-                    der Vertrag automatisch verlängert.
-                  </p>
-                </div>
-
-                {#if contract.cost && contract.cost > 0}
-                  <p class="text-sm font-medium text-blue-600 mt-3">
-                    {contract.cost.toFixed(2)} CHF / {formatBillingCycle(
-                      contract.billingCycle,
-                    )}
-                  </p>
-                {/if}
-              </div>
-
-              <span
-                class="bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm h-fit"
-              >
-                {contract.status === "active" ? "Aktiv" : "Gekündigt"}
-              </span>
-            </div>
-
-            <div class="flex gap-2 mt-4 pt-4 border-t border-red-300">
-              <a
-                href="/contracts/{contract._id}/edit"
-                class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm font-medium"
-              >
-                Status aktualisieren
-              </a>
-              <a
-                href="/contracts/{contract._id}/delete"
-                class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 text-sm font-medium"
-              >
-                Löschen
-              </a>
-            </div>
-          </div>
-        {/each}
-      </div>
-    </div>
-  {/if}
-
-  <!-- NEU: Dringende Verträge Sektion -->
-  {#if urgentContracts.length > 0}
-    <div class="mb-8">
-      <div class="flex items-center gap-2 mb-4">
-        <h2 class="text-xl font-semibold text-red-600">
-          ⚠️ Dringende Kündigungen
-        </h2>
-        <span
-          class="bg-red-100 text-red-800 px-2 py-1 rounded-full text-sm font-medium"
-        >
-          {urgentContracts.length}
-        </span>
-      </div>
-
-      <div class="grid gap-4">
-        {#each urgentContracts as contract}
-          <div class="bg-red-50 border-2 border-red-200 rounded-lg shadow p-4">
-            <div class="flex justify-between items-start">
-              <div class="flex-1">
-                <div class="flex items-center gap-2 mb-2">
-                  <h3 class="text-lg font-semibold">{contract.name}</h3>
-                  <span
-                    class="bg-red-600 text-white px-3 py-1 rounded-full text-xs font-bold"
-                  >
-                    DRINGEND
-                  </span>
-                </div>
-                <p class="text-gray-700 font-medium">
-                  Anbieter: {contract.provider}
-                </p>
-
-                <!-- Countdown-Anzeige - VERBESSERT -->
-                <div class="mt-3 p-3 bg-white rounded border border-red-300">
-                  <p class="text-sm font-medium text-gray-700 mb-1">
-                    Kündigungsfrist:
-                  </p>
-                  <p class="text-xl font-bold text-red-600">
-                    {formatDaysText(contract.daysUntilCancellation)}
-                  </p>
-                  <p class="text-sm font-medium text-gray-600 mt-1">
-                    bis <span class="font-semibold"
-                      >{new Date(contract.cancellationDate).toLocaleDateString(
-                        "de-DE",
-                      )}</span
-                    >
-                  </p>
-                </div>
-
-                {#if contract.cost && contract.cost > 0}
-                  <p class="text-sm font-medium text-blue-600 mt-3">
-                    {contract.cost.toFixed(2)} CHF / {formatBillingCycle(
-                      contract.billingCycle,
-                    )}
-                  </p>
-                {/if}
-              </div>
-
-              <span
-                class="{contract.status === 'active'
-                  ? 'bg-green-100 text-green-800'
-                  : 'bg-gray-100 text-gray-800'} px-3 py-1 rounded-full text-sm h-fit"
-              >
-                {contract.status === "active" ? "Aktiv" : "Gekündigt"}
-              </span>
-            </div>
-
-            <div class="flex gap-2 mt-4 pt-4 border-t border-red-200">
-              <a
-                href="/contracts/{contract._id}/edit"
-                class="text-blue-600 hover:text-blue-800 text-sm font-medium"
-              >
-                Bearbeiten
-              </a>
-              <a
-                href="/contracts/{contract._id}/delete"
-                class="text-red-600 hover:text-red-800 text-sm font-medium"
-              >
-                Löschen
-              </a>
-            </div>
-          </div>
-        {/each}
-      </div>
-    </div>
-  {/if}
-
-  <h2 class="text-xl font-semibold mb-4">Alle Verträge ({contracts.length})</h2>
-
-  {#if contracts.length === 0}
-    <div class="text-center py-12 bg-gray-50 rounded-lg">
-      <p class="text-gray-600 mb-4">Noch keine Verträge vorhanden.</p>
-      <a
-        href="/contracts/new"
-        class="text-blue-600 hover:text-blue-800 font-medium"
-      >
-        Ersten Vertrag erstellen
-      </a>
-    </div>
-  {:else}
-    <!-- NEU -->
-    <div class="grid gap-6">
-  {#each sortedContracts as contract}
-    <div class="contract-card {contract.status === 'active' ? 'contract-card-active' : 'contract-card-inactive'} rounded-lg shadow-md border border-gray-200 p-4">
-      <div class="{contract.isUrgent || contract.isOverdue ? 'opacity-50' : ''}">          
-        <div class="flex justify-between items-start">
-          <div class="flex-1">
-            <h3 class="text-lg font-semibold">{contract.name}</h3>
-            <p class="text-gray-600">Anbieter: {contract.provider}</p>
-
-            <!-- Erinnerungs-Info - VERBESSERT -->
-            <div class="mt-2">
-              <p class="text-base font-medium text-gray-700">
-                🗓️ Kündigung möglich bis:
-                <span class="font-semibold"
-                  >{new Date(contract.cancellationDate).toLocaleDateString(
-                    "de-DE",
-                  )}</span
-                >
-              </p>
-              {#if !contract.isUrgent && contract.status === "active"}
-                <p class="text-sm text-gray-600 mt-1">
-                  🔔 Erinnerung {contract.reminderDays} Tage vorher
-                  <span class="font-medium"
-                    >({new Date(contract.reminderDate).toLocaleDateString(
-                      "de-DE",
-                    )})</span
-                  >
-                </p>
-              {/if}
-            </div>
-
-            <!-- Kostenanzeige -->
-            {#if contract.cost && contract.cost > 0}
-              <p class="text-sm font-medium text-blue-600 mt-2">
-                {contract.cost.toFixed(2)} CHF / {formatBillingCycle(
-                  contract.billingCycle,
-                )}
-              </p>
-            {:else}
-              <p class="text-sm text-gray-400 mt-2 italic">
-                Keine Kosten angegeben
-              </p>
-            {/if}
-          </div>
-
-          <span
-            class="{contract.status === 'active'
-              ? 'bg-green-100 text-green-800'
-              : 'bg-gray-100 text-gray-800'} px-3 py-1 rounded-full text-sm h-fit"
-          >
-            {contract.status === "active" ? "Aktiv" : "Gekündigt"}
-          </span>
-        </div>
-
-        <div class="flex gap-2 mt-4 pt-4 border-t border-gray-200">
-          <a
-            href="/contracts/{contract._id}/edit"
-            class="text-blue-600 hover:text-blue-800 hover:underline text-sm font-medium transition-colors"
-          >
-            ✏️ Bearbeiten
-          </a>
-          <a
-            href="/contracts/{contract._id}/delete"
-            class="text-red-600 hover:text-red-800 hover:underline text-sm font-medium transition-colors"
-          >
-            🗑️ Löschen
-          </a>
-        </div>
-      </div> <!-- Schließt Opacity-Wrapper -->
-    </div> <!-- Schließt Card -->
-  {/each}
-</div>
-
-
-  {/if}
+		<!-- Optional: Feature-Hinweis -->
+		<div class="feature-hint">
+			<div class="feature-item">
+				<span class="feature-icon">🔔</span>
+				<span>Rechtzeitige Erinnerungen</span>
+			</div>
+			<div class="feature-item">
+				<span class="feature-icon">💰</span>
+				<span>Kostenübersicht</span>
+			</div>
+			<div class="feature-item">
+				<span class="feature-icon">📊</span>
+				<span>Alle Verträge im Blick</span>
+			</div>
+		</div>
+	</div>
 </div>
 
 <style>
-  /* Slide-In-Animation von rechts */
-  @keyframes slide-in-right {
-    from {
-      transform: translateX(100%);
-      opacity: 0;
-    }
-    to {
-      transform: translateX(0);
-      opacity: 1;
-    }
-  }
+	/* Container & Background */
+	.landing-container {
+		min-height: 100vh;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding: 2rem;
+		position: relative;
+		overflow: hidden;
+	}
 
-  .animate-slide-in-right {
-    animation: slide-in-right 0.3s ease-out;
-  }
+	.gradient-bg {
+		position: absolute;
+		inset: 0;
+		background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #60a5fa 100%);
+		z-index: -1;
+	}
 
-  /* Progress-Bar Animation (5 Sekunden) */
-  @keyframes progress {
-    from {
-      width: 100%;
-    }
-    to {
-      width: 0%;
-    }
-  }
+	/* Animated gradient effect */
+	.gradient-bg::before {
+		content: '';
+		position: absolute;
+		inset: 0;
+		background: linear-gradient(
+			45deg,
+			rgba(255, 255, 255, 0.1) 0%,
+			transparent 50%,
+			rgba(255, 255, 255, 0.1) 100%
+		);
+		animation: gradient-shift 8s ease infinite;
+	}
 
-  .animate-progress-bar {
-    animation: progress 5s linear;
-  }
+	@keyframes gradient-shift {
+		0%,
+		100% {
+			transform: translateX(-50%) translateY(-50%) rotate(0deg);
+		}
+		50% {
+			transform: translateX(50%) translateY(50%) rotate(180deg);
+		}
+	}
 
-  /* Puls-Animation für überfällige Badges */
-  @keyframes pulse {
-    0%,
-    100% {
-      opacity: 1;
-    }
-    50% {
-      opacity: 0.7;
-    }
-  }
+	/* Content Card */
+	.content-card {
+		background: white;
+		border-radius: 24px;
+		padding: 3rem 2.5rem;
+		max-width: 480px;
+		width: 100%;
+		box-shadow:
+			0 25px 50px -12px rgba(0, 0, 0, 0.25),
+			0 0 0 1px rgba(255, 255, 255, 0.1);
+		animation: fade-in-up 0.6s ease-out;
+		position: relative;
+		z-index: 1;
+	}
 
-  .animate-pulse {
-    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-  }
+	@keyframes fade-in-up {
+		from {
+			opacity: 0;
+			transform: translateY(20px);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
 
-  .contract-card {
-  transition: all 0.2s ease;
-}
+	/* Logo Section */
+	.logo-section {
+		display: flex;
+		justify-content: center;
+		margin-bottom: 2rem;
+	}
 
-.contract-card:hover {
-  box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
-  border-color: rgb(59, 130, 246); /* Etwas kräftigeres Blau (blue-500) */
-  border-width: 2px; /* Border wird beim Hover dicker */
-  transform: translateY(-5px);
-}
+	.icon-circle {
+		width: 80px;
+		height: 80px;
+		background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+		border-radius: 50%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		box-shadow:
+			0 10px 25px rgba(59, 130, 246, 0.3),
+			0 0 0 4px rgba(59, 130, 246, 0.1);
+		animation: pulse-glow 3s ease-in-out infinite;
+	}
 
-/* Gradient-Hintergründe für Verträge */
-.contract-card-active {
-  background: linear-gradient(135deg, #dbeafe 0%, #ffffff 70%);
-}
+	@keyframes pulse-glow {
+		0%,
+		100% {
+			box-shadow:
+				0 10px 25px rgba(59, 130, 246, 0.3),
+				0 0 0 4px rgba(59, 130, 246, 0.1);
+		}
+		50% {
+			box-shadow:
+				0 15px 35px rgba(59, 130, 246, 0.4),
+				0 0 0 8px rgba(59, 130, 246, 0.15);
+		}
+	}
 
-.contract-card-inactive {
-  background: linear-gradient(135deg, #f3f4f6 0%, #ffffff 70%);
-}
+	.icon {
+		width: 48px;
+		height: 48px;
+		color: white;
+	}
 
+	/* Text Styles */
+	.title {
+		font-size: 2.5rem;
+		font-weight: 800;
+		color: #1e293b;
+		margin-bottom: 0.5rem;
+		letter-spacing: -0.025em;
+	}
+
+	.tagline {
+		font-size: 1.125rem;
+		color: #3b82f6;
+		font-weight: 600;
+		margin-bottom: 1rem;
+	}
+
+	.description {
+		font-size: 0.95rem;
+		color: #64748b;
+		line-height: 1.6;
+	}
+
+	/* Buttons */
+	.button-group {
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+		margin-bottom: 2rem;
+	}
+
+	.btn {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 0.5rem;
+		padding: 1rem 1.5rem;
+		border-radius: 12px;
+		font-size: 1rem;
+		font-weight: 600;
+		text-decoration: none;
+		transition: all 0.2s ease;
+		cursor: pointer;
+	}
+
+	.btn-icon {
+		width: 20px;
+		height: 20px;
+	}
+
+	.btn-primary {
+		background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+		color: white;
+		box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+	}
+
+	.btn-primary:hover {
+		box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4);
+		transform: translateY(-2px);
+	}
+
+	.btn-primary:active {
+		transform: translateY(0);
+	}
+
+	.btn-secondary {
+		background: white;
+		color: #3b82f6;
+		border: 2px solid #3b82f6;
+	}
+
+	.btn-secondary:hover {
+		background: #eff6ff;
+		border-color: #2563eb;
+		color: #2563eb;
+		transform: translateY(-2px);
+	}
+
+	.btn-secondary:active {
+		transform: translateY(0);
+	}
+
+	/* Feature Hints */
+	.feature-hint {
+		display: flex;
+		justify-content: space-around;
+		padding-top: 2rem;
+		border-top: 1px solid #e2e8f0;
+		gap: 1rem;
+	}
+
+	.feature-item {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 0.5rem;
+		text-align: center;
+		font-size: 0.8rem;
+		color: #64748b;
+	}
+
+	.feature-icon {
+		font-size: 1.5rem;
+	}
+
+	/* Responsive */
+	@media (max-width: 640px) {
+		.content-card {
+			padding: 2rem 1.5rem;
+		}
+
+		.title {
+			font-size: 2rem;
+		}
+
+		.feature-hint {
+			flex-direction: column;
+			gap: 1rem;
+		}
+
+		.feature-item {
+			flex-direction: row;
+			justify-content: center;
+		}
+	}
 </style>

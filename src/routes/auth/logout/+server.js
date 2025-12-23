@@ -1,8 +1,11 @@
 // src/routes/auth/logout/+server.js
 import { redirect } from '@sveltejs/kit';
-import { clearSessionCookie } from '../../hooks.server.js';
+import { clearSessionCookie } from '$lib/server/auth.js';
 
-export async function POST({ cookies }) {
+export async function GET({ cookies }) {
+	// Session-Cookie löschen
 	clearSessionCookie(cookies);
-	throw redirect(303, '/auth/signin');
+
+	// Redirect zur Landing-Page
+	throw redirect(303, '/');
 }

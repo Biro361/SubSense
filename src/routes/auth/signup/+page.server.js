@@ -1,11 +1,11 @@
 // src/routes/auth/signup/+page.server.js
 import { fail, redirect } from '@sveltejs/kit';
 import { createUser } from '$lib/db/users';
+import { setSessionCookie } from '$lib/server/auth.js';
 
 export const actions = {
-	default: async ({ request }) => {
+	default: async ({ request, cookies }) => {
 		const formData = await request.formData();
-
 		const rawEmail = formData.get('email');
 		const rawPassword = formData.get('password');
 		const rawName = formData.get('name');
@@ -31,21 +31,20 @@ export const actions = {
 
 		try {
 			const userId = await createUser({ email, password, name });
-
 			if (!userId) {
-				// Email existiert bereits
 				return fail(400, { error: 'Diese Email-Adresse ist bereits registriert.' });
 			}
 
-			// Erfolg: zum Login weiterleiten
-			throw redirect(303, '/auth/signin?registered=1');
-			
+			// Session-Cookie setzen (Auto-Login)
+			setSessionCookie(cookies, userId, email);
+
+			// Redirect zu Dashboard
+			throw redirect(303, '/dashboard');
 		} catch (error) {
-			// WICHTIG: Redirect durchlassen (SvelteKit wirft Redirects als Error-Objekte)
 			if (error?.status === 303) {
 				throw error;
 			}
-			
+
 			console.error('Registration error:', error);
 			return fail(500, { error: 'Bei der Registrierung ist ein Fehler aufgetreten.' });
 		}

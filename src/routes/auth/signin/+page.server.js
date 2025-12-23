@@ -1,7 +1,7 @@
 // src/routes/auth/signin/+page.server.js
 import { fail, redirect } from '@sveltejs/kit';
 import { getUserByEmail } from '$lib/db/users';
-import { setSessionCookie } from '../../../hooks.server.js';
+import { setSessionCookie } from '$lib/server/auth.js';
 import bcrypt from 'bcryptjs';
 
 export const actions = {
@@ -29,11 +29,10 @@ export const actions = {
 			// Session-Cookie setzen
 			setSessionCookie(cookies, user._id.toString(), user.email);
 
-			// Erfolgreicher Login → Redirect
-			throw redirect(303, '/');
+			// Erfolgreicher Login → Redirect zu Dashboard
+			throw redirect(303, '/dashboard');
 		} catch (error) {
 			// WICHTIG: Prüfen, ob es ein Redirect ist
-			// SvelteKit wirft Redirects als Error-Objekte mit Status/Location
 			if (error?.status === 303 || error instanceof Response) {
 				throw error; // Redirect durchlassen!
 			}

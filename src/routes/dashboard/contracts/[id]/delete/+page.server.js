@@ -46,7 +46,7 @@ export const actions = {
         });
       }
       
-      throw redirect(303, '/?message=deleted');
+      throw redirect(303, '/dashboard?message=created');
       
     } catch (err) {
       if (err.status === 303) throw err;

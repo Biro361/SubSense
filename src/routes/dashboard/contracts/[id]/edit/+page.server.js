@@ -85,7 +85,7 @@ export const actions = {
         });
       }
       
-      throw redirect(303, '/?message=updated');
+      throw redirect(303, '/dashboard?message=created');
       
     } catch (error) {
       if (error.status === 303) throw error;

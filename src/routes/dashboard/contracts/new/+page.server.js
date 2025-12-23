@@ -57,7 +57,7 @@ export const actions = {
 				reminderDays: parsedReminderDays
 			}, user.userId); // ← NEU: User zuweisen
 			
-			throw redirect(303, '/?message=created');
+			throw redirect(303, '/dashboard?message=created');
 			
 		} catch (error) {
 			if (error.status === 303) throw error;
