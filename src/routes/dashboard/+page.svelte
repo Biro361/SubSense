@@ -2,6 +2,7 @@
 <script>
   import { page } from "$app/stores";
   import { onMount } from "svelte";
+  import { CATEGORIES, getCategoryByValue } from "$lib/constants";
 
   let { data } = $props();
   let contracts = $derived(data.contracts || []);
@@ -16,6 +17,16 @@
         : message === "deleted"
           ? "Vertrag erfolgreich gelöscht!"
           : null,
+  );
+
+  // Filter-State
+  let selectedCategory = $state("all"); // 'all' = keine Filterung
+
+  // Gefilterte Verträge (WICHTIG: Vor sortedContracts einfügen!)
+  let filteredContracts = $derived(
+    selectedCategory === "all"
+      ? contracts
+      : contracts.filter((c) => c.category === selectedCategory),
   );
 
   // Toast-State
@@ -47,7 +58,7 @@
 
   // Verträge nach Dringlichkeit sortieren (dringend zuerst)
   let sortedContracts = $derived(
-    [...contracts].sort((a, b) => {
+    [...filteredContracts].sort((a, b) => {
       // Dringende zuerst
       if (a.isUrgent && !b.isUrgent) return -1;
       if (!a.isUrgent && b.isUrgent) return 1;
@@ -106,6 +117,32 @@
     if (days < 0) return `Überfällig (${Math.abs(days)} Tage)`;
     return `Noch ${days} Tage`;
   }
+
+  // Statistiken pro Kategorie
+  let categoryStats = $derived(
+    CATEGORIES.map((cat) => {
+      const categoryContracts = contracts.filter(
+        (c) => c.category === cat.value,
+      );
+      const count = categoryContracts.length;
+      const monthlyCost = categoryContracts
+        .filter((c) => c.status === "active")
+        .reduce((sum, c) => {
+          const cost = c.cost || 0;
+          const cycle = c.billingCycle || "monthly";
+          let monthly = cost;
+          if (cycle === "yearly") monthly = cost / 12;
+          if (cycle === "quarterly") monthly = cost / 3;
+          return sum + monthly;
+        }, 0);
+
+      return {
+        ...cat,
+        count,
+        monthlyCost: monthlyCost.toFixed(2),
+      };
+    }),
+  );
 </script>
 
 <!-- Toast-Notification (Top-Right, Fixed) -->
@@ -175,13 +212,13 @@
   </div>
 {/if}
 
+<!-- Dashboard-Header -->
 <div class="max-w-4xl mx-auto p-6">
   <div class="flex justify-between items-center mb-6">
     <div>
       <h1 class="text-3xl font-bold">SubSense</h1>
       <p class="text-gray-600">Dein Vertrags-Radar</p>
     </div>
-    <!-- ✅ GEÄNDERT: Link zu /dashboard/contracts/new -->
     <a
       href="/dashboard/contracts/new"
       class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2"
@@ -189,6 +226,45 @@
       <span>+</span>
       Neuer Vertrag
     </a>
+  </div>
+
+  <!-- Kategorie-Filter -->
+  <div class="mb-6">
+    <h2 class="text-lg font-semibold mb-3">Nach Kategorie filtern</h2>
+    <div class="flex flex-wrap gap-2">
+      <!-- "Alle"-Button -->
+      <button
+        onclick={() => (selectedCategory = "all")}
+        class="filter-button {selectedCategory === 'all'
+          ? 'filter-button-active'
+          : 'filter-button-inactive'}"
+      >
+        <span class="text-lg">📋</span>
+        <span class="font-medium">Alle</span>
+        <span class="filter-badge">{contracts.length}</span>
+      </button>
+
+      <!-- Kategorie-Buttons -->
+      {#each categoryStats as cat}
+        {#if cat.count > 0}
+          <button
+            onclick={() => (selectedCategory = cat.value)}
+            class="filter-button {selectedCategory === cat.value
+              ? 'filter-button-active'
+              : 'filter-button-inactive'}"
+          >
+            <span class="text-lg">{cat.icon}</span>
+            <span class="font-medium">{cat.label}</span>
+            <span class="filter-badge">{cat.count}</span>
+            {#if parseFloat(cat.monthlyCost) > 0}
+              <span class="text-xs text-gray-500">
+                {cat.monthlyCost} CHF/M
+              </span>
+            {/if}
+          </button>
+        {/if}
+      {/each}
+    </div>
   </div>
 
   <!-- Kosten-Dashboard -->
@@ -414,11 +490,31 @@
   {:else}
     <div class="grid gap-6">
       {#each sortedContracts as contract}
-        <div class="contract-card {contract.status === 'active' ? 'contract-card-active' : 'contract-card-inactive'} rounded-lg shadow-md border border-gray-200 p-4">
-          <div class="{contract.isUrgent || contract.isOverdue ? 'opacity-50' : ''}">          
+        <div
+          class="contract-card {contract.status === 'active'
+            ? 'contract-card-active'
+            : 'contract-card-inactive'} rounded-lg shadow-md border border-gray-200 p-4"
+        >
+          <div
+            class={contract.isUrgent || contract.isOverdue ? "opacity-50" : ""}
+          >
             <div class="flex justify-between items-start">
               <div class="flex-1">
-                <h3 class="text-lg font-semibold">{contract.name}</h3>
+                <div class="flex items-center gap-2 mb-2">
+                  <h3 class="text-lg font-semibold">{contract.name}</h3>
+
+                  <!-- Kategorie-Badge -->
+                  {#if contract.category}
+                    {@const cat = getCategoryByValue(contract.category)}
+                    {#if cat}
+                      <span class="category-badge category-badge-{cat.color}">
+                        {cat.icon}
+                        {cat.label}
+                      </span>
+                    {/if}
+                  {/if}
+                </div>
+
                 <p class="text-gray-600">Anbieter: {contract.provider}</p>
 
                 <div class="mt-2">
@@ -537,7 +633,9 @@
   }
 
   .contract-card:hover {
-    box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+    box-shadow:
+      0 20px 25px -5px rgb(0 0 0 / 0.1),
+      0 8px 10px -6px rgb(0 0 0 / 0.1);
     border-color: rgb(59, 130, 246);
     border-width: 2px;
     transform: translateY(-5px);
@@ -550,4 +648,93 @@
   .contract-card-inactive {
     background: linear-gradient(135deg, #f3f4f6 0%, #ffffff 70%);
   }
+
+/* === Kategorie-Filter === */
+.filter-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1rem;
+  border-radius: 0.75rem;
+  border: 2px solid transparent;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  background: white;
+  font-size: 0.875rem;
+}
+
+.filter-button-inactive {
+  border-color: #e5e7eb;
+  color: #6b7280;
+}
+
+.filter-button-inactive:hover {
+  border-color: #3b82f6;
+  background: #eff6ff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.15);
+}
+
+.filter-button-active {
+  border-color: #3b82f6;
+  background: linear-gradient(135deg, #dbeafe 0%, #eff6ff 100%);
+  color: #1e40af;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+}
+
+.filter-badge {
+  background: #3b82f6;
+  color: white;
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+/* === Kategorie-Badges in Cards === */
+.category-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: 1px solid;
+}
+
+.category-badge-purple {
+  background: #f3e8ff;
+  color: #7c3aed;
+  border-color: #c4b5fd;
+}
+
+.category-badge-green {
+  background: #d1fae5;
+  color: #059669;
+  border-color: #a7f3d0;
+}
+
+.category-badge-blue {
+  background: #dbeafe;
+  color: #2563eb;
+  border-color: #bfdbfe;
+}
+
+.category-badge-yellow {
+  background: #fef3c7;
+  color: #d97706;
+  border-color: #fde68a;
+}
+
+.category-badge-red {
+  background: #fee2e2;
+  color: #dc2626;
+  border-color: #fecaca;
+}
+
+.category-badge-gray {
+  background: #f3f4f6;
+  color: #6b7280;
+  border-color: #d1d5db;
+}
+  
+
 </style>

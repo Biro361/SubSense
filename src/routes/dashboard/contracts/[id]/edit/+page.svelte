@@ -1,19 +1,23 @@
 <script>
-  import { enhance } from '$app/forms';
-  
+  import { enhance } from "$app/forms";
+  import { CATEGORIES } from "$lib/constants";
+
   let { data, form } = $props();
   let contract = $derived(data.contract);
-  
+
   // Datum für Input-Feld formatieren (YYYY-MM-DD)
   let formattedDate = $derived(
-    contract.cancellationDate 
-      ? new Date(contract.cancellationDate).toISOString().split('T')[0]
-      : ''
+    contract.cancellationDate
+      ? new Date(contract.cancellationDate).toISOString().split("T")[0]
+      : "",
   );
-  
+
   // Erinnerungstage State
   let reminderDays = $state(contract.reminderDays || 7);
-  
+
+  // Kategorie State
+  let category = $state(contract.category || "other");
+
   // Preset-Button Handler
   function setReminderPreset(days) {
     reminderDays = days;
@@ -22,13 +26,15 @@
 
 <div class="max-w-2xl mx-auto p-6">
   <h1 class="text-2xl font-bold mb-6">Vertrag bearbeiten</h1>
-  
+
   {#if form?.error}
-    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+    <div
+      class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4"
+    >
       {form.error}
     </div>
   {/if}
-  
+
   <form method="POST" use:enhance class="space-y-4">
     <div>
       <label for="name" class="block text-sm font-medium mb-1">
@@ -43,7 +49,7 @@
         class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
       />
     </div>
-    
+
     <div>
       <label for="provider" class="block text-sm font-medium mb-1">
         Anbieter *
@@ -57,7 +63,24 @@
         class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
       />
     </div>
-    
+
+    <div>
+      <label for="category" class="block text-sm font-medium mb-1">
+        Kategorie *
+      </label>
+      <select
+        id="category"
+        name="category"
+        bind:value={category}
+        required
+        class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+      >
+        {#each CATEGORIES as cat}
+          <option value={cat.value}>{cat.icon} {cat.label}</option>
+        {/each}
+      </select>
+    </div>
+
     <div>
       <label for="cancellationDate" class="block text-sm font-medium mb-1">
         Kündigungsfrist *
@@ -71,45 +94,56 @@
         class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
       />
     </div>
-    
+
     <!-- NEU: Erinnerung -->
     <div class="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-      <label for="reminderDays" class="block text-sm font-medium text-gray-700 mb-2">
+      <label
+        for="reminderDays"
+        class="block text-sm font-medium text-gray-700 mb-2"
+      >
         🔔 Erinnerung (Tage vorher) *
       </label>
-      
+
       <!-- Preset-Buttons -->
       <div class="flex gap-2 mb-3">
         <button
           type="button"
           onclick={() => setReminderPreset(3)}
-          class="px-3 py-1 rounded {reminderDays === 3 ? 'bg-blue-600 text-white' : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'}"
+          class="px-3 py-1 rounded {reminderDays === 3
+            ? 'bg-blue-600 text-white'
+            : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'}"
         >
           3 Tage
         </button>
         <button
           type="button"
           onclick={() => setReminderPreset(7)}
-          class="px-3 py-1 rounded {reminderDays === 7 ? 'bg-blue-600 text-white' : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'}"
+          class="px-3 py-1 rounded {reminderDays === 7
+            ? 'bg-blue-600 text-white'
+            : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'}"
         >
           7 Tage
         </button>
         <button
           type="button"
           onclick={() => setReminderPreset(14)}
-          class="px-3 py-1 rounded {reminderDays === 14 ? 'bg-blue-600 text-white' : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'}"
+          class="px-3 py-1 rounded {reminderDays === 14
+            ? 'bg-blue-600 text-white'
+            : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'}"
         >
           14 Tage
         </button>
         <button
           type="button"
           onclick={() => setReminderPreset(30)}
-          class="px-3 py-1 rounded {reminderDays === 30 ? 'bg-blue-600 text-white' : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'}"
+          class="px-3 py-1 rounded {reminderDays === 30
+            ? 'bg-blue-600 text-white'
+            : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'}"
         >
           30 Tage
         </button>
       </div>
-      
+
       <input
         type="number"
         id="reminderDays"
@@ -121,10 +155,11 @@
         class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
       />
       <p class="text-sm text-gray-600 mt-2">
-        💡 Du wirst <strong>{reminderDays} Tage</strong> vor der Kündigungsfrist erinnert.
+        💡 Du wirst <strong>{reminderDays} Tage</strong> vor der Kündigungsfrist
+        erinnert.
       </p>
     </div>
-    
+
     <!-- Kosten -->
     <div>
       <label for="cost" class="block text-sm font-medium mb-1">
@@ -141,7 +176,7 @@
         class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
       />
     </div>
-    
+
     <!-- Abrechnungszyklus -->
     <div>
       <label for="billingCycle" class="block text-sm font-medium mb-1">
@@ -150,7 +185,7 @@
       <select
         id="billingCycle"
         name="billingCycle"
-        value={contract.billingCycle || 'monthly'}
+        value={contract.billingCycle || "monthly"}
         class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
       >
         <option value="monthly">Monatlich</option>
@@ -158,7 +193,7 @@
         <option value="yearly">Jährlich</option>
       </select>
     </div>
-    
+
     <div>
       <label for="status" class="block text-sm font-medium mb-1">
         Status *
@@ -173,7 +208,7 @@
         <option value="cancelled">Gekündigt</option>
       </select>
     </div>
-    
+
     <div class="flex gap-3 pt-4">
       <button
         type="submit"
