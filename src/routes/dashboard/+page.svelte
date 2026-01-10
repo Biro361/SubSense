@@ -212,22 +212,8 @@
   </div>
 {/if}
 
-<!-- Dashboard-Header -->
+<!-- Dashboard-Content (Header ist jetzt im Layout) -->
 <div class="max-w-4xl mx-auto p-6">
-  <div class="flex justify-between items-center mb-6">
-    <div>
-      <h1 class="text-3xl font-bold">SubSense</h1>
-      <p class="text-gray-600">Dein Vertrags-Radar</p>
-    </div>
-    <a
-      href="/dashboard/contracts/new"
-      class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2"
-    >
-      <span>+</span>
-      Neuer Vertrag
-    </a>
-  </div>
-
   <!-- Kategorie-Filter -->
   <div class="mb-6">
     <h2 class="text-lg font-semibold mb-3">Nach Kategorie filtern</h2>
@@ -368,7 +354,6 @@
             </div>
 
             <div class="flex gap-2 mt-4 pt-4 border-t border-red-300">
-              <!-- ✅ GEÄNDERT: Links zu /dashboard/contracts/... -->
               <a
                 href="/dashboard/contracts/{contract._id}/edit"
                 class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm font-medium"
@@ -454,7 +439,6 @@
             </div>
 
             <div class="flex gap-2 mt-4 pt-4 border-t border-red-200">
-              <!-- ✅ GEÄNDERT: Links zu /dashboard/contracts/... -->
               <a
                 href="/dashboard/contracts/{contract._id}/edit"
                 class="text-blue-600 hover:text-blue-800 text-sm font-medium"
@@ -479,7 +463,6 @@
   {#if contracts.length === 0}
     <div class="text-center py-12 bg-gray-50 rounded-lg">
       <p class="text-gray-600 mb-4">Noch keine Verträge vorhanden.</p>
-      <!-- ✅ GEÄNDERT: Link zu /dashboard/contracts/new -->
       <a
         href="/dashboard/contracts/new"
         class="text-blue-600 hover:text-blue-800 font-medium"
@@ -561,7 +544,6 @@
             </div>
 
             <div class="flex gap-2 mt-4 pt-4 border-t border-gray-200">
-              <!-- ✅ GEÄNDERT: Links zu /dashboard/contracts/... -->
               <a
                 href="/dashboard/contracts/{contract._id}/edit"
                 class="text-blue-600 hover:text-blue-800 hover:underline text-sm font-medium transition-colors"
@@ -735,6 +717,4 @@
   color: #6b7280;
   border-color: #d1d5db;
 }
-  
-
 </style>
