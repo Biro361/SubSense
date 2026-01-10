@@ -2,16 +2,111 @@
 <script>
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
+	import { page } from '$app/stores';
 
 	let { data } = $props();
+
+	// Toast-State für Logout-Feedback
+	let showToast = $state(false);
+	let toastMessage = $state('');
 
 	// Wenn User bereits eingeloggt ist, direkt zu Dashboard
 	onMount(() => {
 		if (data?.user) {
 			goto('/dashboard');
+			return;
+		}
+
+		// Logout-Message prüfen
+		const message = $page.url.searchParams.get('message');
+		if (message === 'logged_out') {
+			toastMessage = 'Du wurdest erfolgreich abgemeldet.';
+			showToast = true;
+
+			// Auto-dismiss nach 5 Sekunden
+			setTimeout(() => {
+				showToast = false;
+			}, 5000);
+
+			// URL bereinigen
+			const url = new URL(window.location.href);
+			url.searchParams.delete('message');
+			window.history.replaceState({}, '', url);
 		}
 	});
+
+	// Manuelles Schliessen
+	function closeToast() {
+		showToast = false;
+	}
 </script>
+
+<!-- Logout-Toast (Top-Right, Fixed) -->
+{#if showToast}
+	<div
+		class="fixed top-4 right-4 z-50 animate-slide-in-right"
+		role="alert"
+		aria-live="polite"
+	>
+		<div
+			class="bg-white rounded-lg shadow-2xl border-2 border-green-500 overflow-hidden max-w-md"
+		>
+			<!-- Header mit Icon und Close-Button -->
+			<div class="flex items-start gap-3 p-4">
+				<!-- Checkmark-Icon -->
+				<div
+					class="flex-shrink-0 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center"
+				>
+					<svg
+						class="w-5 h-5 text-white"
+						fill="none"
+						stroke="currentColor"
+						viewBox="0 0 24 24"
+					>
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							stroke-width="3"
+							d="M5 13l4 4L19 7"
+						></path>
+					</svg>
+				</div>
+
+				<!-- Message -->
+				<div class="flex-1 pt-0.5">
+					<p class="text-base font-semibold text-gray-900">Erfolgreich abgemeldet!</p>
+					<p class="text-sm text-gray-600 mt-1">{toastMessage}</p>
+				</div>
+
+				<!-- Close-Button -->
+				<button
+					onclick={closeToast}
+					class="flex-shrink-0 text-gray-400 hover:text-gray-600 transition-colors"
+					aria-label="Schliessen"
+				>
+					<svg
+						class="w-5 h-5"
+						fill="none"
+						stroke="currentColor"
+						viewBox="0 0 24 24"
+					>
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							stroke-width="2"
+							d="M6 18L18 6M6 6l12 12"
+						></path>
+					</svg>
+				</button>
+			</div>
+
+			<!-- Progress-Bar (5 Sekunden Animation) -->
+			<div class="h-1 bg-gray-100">
+				<div class="h-full bg-green-500 animate-progress-bar"></div>
+			</div>
+		</div>
+	</div>
+{/if}
 
 <div class="landing-container">
 	<!-- Background Gradient -->
@@ -106,6 +201,37 @@
 </div>
 
 <style>
+	/* ===== TOAST ANIMATIONS ===== */
+	/* Slide-In-Animation von rechts */
+	@keyframes slide-in-right {
+		from {
+			transform: translateX(100%);
+			opacity: 0;
+		}
+		to {
+			transform: translateX(0);
+			opacity: 1;
+		}
+	}
+
+	.animate-slide-in-right {
+		animation: slide-in-right 0.3s ease-out;
+	}
+
+	/* Progress-Bar Animation (5 Sekunden) */
+	@keyframes progress {
+		from {
+			width: 100%;
+		}
+		to {
+			width: 0%;
+		}
+	}
+
+	.animate-progress-bar {
+		animation: progress 5s linear;
+	}
+
 	/* Container & Background */
 	.landing-container {
 		min-height: 100vh;
