@@ -1,6 +1,6 @@
 // src/lib/server/auth.js
 import jwt from 'jsonwebtoken';
-import { JWT_SECRET } from '$env/static/private';
+import { env } from '$env/dynamic/private';
 
 // Session-Cookie signieren
 export function signToken(userId, email) {
