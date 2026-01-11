@@ -43,6 +43,8 @@ export const actions = {
     const cost = formData.get('cost');
     const billingCycle = formData.get('billingCycle');
     const reminderDays = formData.get('reminderDays') || '7';
+    // NEU: URL auslesen
+    const cancellationUrl = formData.get('cancellationUrl');
 
     // Validierung
     if (!name || !provider || !cancellationDate || !cost) {
@@ -77,7 +79,8 @@ export const actions = {
         status: status.toString(),
         cost: parsedCost,
         billingCycle: billingCycle.toString(),
-        reminderDays: parsedReminderDays
+        reminderDays: parsedReminderDays,
+        cancellationUrl: cancellationUrl ? cancellationUrl.toString() : null // NEU: URL übergeben
       }, user.userId);
 
 
