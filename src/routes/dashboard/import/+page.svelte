@@ -2,8 +2,8 @@
   import { enhance } from '$app/forms';
   import { CATEGORIES, getCategoryByValue } from '$lib/constants';
 
-  /** @type {import('./$types').ActionData} */
-  export let form;
+  /** @type {{ form: import('./$types').ActionData }} */
+  let { form } = $props();
 
   let uploading = $state(false);
   let showPreview = $derived(form?.preview === true);
