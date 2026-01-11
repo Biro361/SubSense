@@ -1,19 +1,19 @@
-// src/lib/server/auth.js
 import jwt from 'jsonwebtoken';
 import { env } from '$env/dynamic/private';
 
-// Session-Cookie signieren
+const JWT_SECRET = env.JWT_SECRET;
+if (!JWT_SECRET) throw new Error('JWT_SECRET is missing');
+
 export function signToken(userId, email) {
-	const token = jwt.sign({ userId: user._id }, env.JWT_SECRET, { expiresIn: '7d' });
+  return jwt.sign({ userId, email }, JWT_SECRET, { expiresIn: '30d' });
 }
 
-// Session-Cookie verifizieren
 export function verifyToken(token) {
-	try {
-		return jwt.verify(token, JWT_SECRET);
-	} catch {
-		return null;
-	}
+  try {
+    return jwt.verify(token, JWT_SECRET);
+  } catch {
+    return null;
+  }
 }
 
 // Session-Cookie setzen
