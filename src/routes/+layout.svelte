@@ -3,6 +3,11 @@
 	import favicon from '$lib/assets/favicon.svg';
 
 	let { children, data } = $props();
+	
+	// Prüfe, ob wir im Dashboard sind (hat eigenes Layout)
+	let isDashboard = $derived(
+		typeof window !== 'undefined' && window.location.pathname.startsWith('/dashboard')
+	);
 </script>
 
 <svelte:head>
@@ -10,8 +15,8 @@
 </svelte:head>
 
 <div class="min-h-screen bg-gray-50">
-	<!-- Navigation Header -->
-	{#if data.user}
+	<!-- Navigation Header (nur ausserhalb Dashboard) -->
+	{#if data.user && !isDashboard}
 		<header class="bg-blue-600 text-white shadow-lg">
 			<nav class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
 				<a href="/dashboard" class="text-2xl font-bold hover:text-blue-200 transition">
