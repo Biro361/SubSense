@@ -29,9 +29,16 @@
 			showUserMenu = false;
 		}
 	}
+	
+	// Keyboard-Handler für Modal (Escape-Taste)
+	function handleKeydown(event) {
+		if (event.key === 'Escape' && showLogoutConfirm) {
+			cancelLogout();
+		}
+	}
 </script>
 
-<svelte:window onclick={handleClickOutside} />
+<svelte:window onclick={handleClickOutside} onkeydown={handleKeydown} />
 
 <!-- Fixed Header -->
 <header class="dashboard-header">
@@ -138,8 +145,17 @@
 
 <!-- Logout-Bestätigung Modal -->
 {#if showLogoutConfirm}
-	<div class="modal-overlay" onclick={cancelLogout}>
-		<div class="modal-content" onclick={(e) => e.stopPropagation()}>
+	<!-- svelte-ignore a11y_click_events_have_key_events -->
+	<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+	<div
+		class="modal-overlay"
+		onclick={cancelLogout}
+		role="dialog"
+		aria-modal="true"
+		aria-labelledby="logout-modal-title"
+	>
+		<!-- svelte-ignore a11y_click_events_have_key_keys -->
+		<div class="modal-content" onclick={(e) => e.stopPropagation()} role="document">
 			<!-- Modal-Header -->
 			<div class="modal-header">
 				<div class="modal-icon">
@@ -147,7 +163,7 @@
 						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
 					</svg>
 				</div>
-				<h3 class="modal-title">Wirklich abmelden?</h3>
+				<h3 id="logout-modal-title" class="modal-title">Wirklich abmelden?</h3>
 				<p class="modal-description">
 					Du wirst zur Startseite weitergeleitet und musst dich erneut anmelden, um deine Verträge zu verwalten.
 				</p>
