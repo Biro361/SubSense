@@ -78,6 +78,7 @@ export async function getContracts(userId) {
         billingCycle: contract.billingCycle ?? 'monthly',
         reminderDays: contract.reminderDays ?? 7,
         category: contract.category ?? 'other',
+        cancellationUrl: contract.cancellationUrl ?? null, // NEU
         ...metadata
       };
 
@@ -115,6 +116,7 @@ export async function getContractById(id, userId) {
       billingCycle: contract.billingCycle ?? 'monthly',
       reminderDays: contract.reminderDays ?? 7,
       category: contract.category ?? 'other',
+      cancellationUrl: contract.cancellationUrl ?? null, // NEU
       ...metadata
     };
 
@@ -144,6 +146,12 @@ export async function createContract(contractData, userId) {
       throw new Error('Invalid category');
     }
 
+    // ✅ NEU: Kündigungs-URL validieren
+    const cancellationUrl = contractData.cancellationUrl?.trim() || null;
+    if (cancellationUrl && !/^https?:\/\/.+/.test(cancellationUrl)) {
+      throw new Error('Invalid cancellation URL format (must start with http:// or https://)');
+    }
+
     if (!['monthly', 'yearly', 'quarterly'].includes(billingCycle)) {
       throw new Error('Invalid billing cycle');
     }
@@ -160,6 +168,7 @@ export async function createContract(contractData, userId) {
       billingCycle,
       reminderDays,
       category,
+      cancellationUrl, // NEU
       createdAt: new Date(),
       updatedAt: new Date()
     });
@@ -172,7 +181,8 @@ export async function createContract(contractData, userId) {
       cost,
       billingCycle,
       reminderDays,
-      category
+      category,
+      cancellationUrl // NEU
     };
 
   } catch (error) {
@@ -219,6 +229,15 @@ export async function updateContract(id, updates, userId) {
         throw new Error('Invalid category');
       }
       updateData.category = updates.category;
+    }
+
+    // ✅ NEU: Kündigungs-URL validieren
+    if (updates.cancellationUrl !== undefined) {
+      const url = updates.cancellationUrl?.trim() || null;
+      if (url && !/^https?:\/\/.+/.test(url)) {
+        throw new Error('Invalid cancellation URL format');
+      }
+      updateData.cancellationUrl = url;
     }
 
 
