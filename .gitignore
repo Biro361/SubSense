@@ -20,3 +20,6 @@ Thumbs.db
 # Vite
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# Local Uploads (Development only - Production uses Netlify Blobs)
+static/uploads/
