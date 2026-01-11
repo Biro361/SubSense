@@ -8,7 +8,8 @@ import { contractsToCSV, generateExportFilename } from '$lib/utils/csv';
  */
 /** @type {import('./$types').RequestHandler} */
 export async function GET({ locals }) {
-  const userId = locals.userId;
+  // Auth-Check: hooks.server.js setzt locals.user
+  const userId = locals.user?.userId;
 
   // Auth-Check
   if (!userId) {
