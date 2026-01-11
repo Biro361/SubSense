@@ -20,12 +20,11 @@
   );
 
   // Filter-State
-  let selectedCategory = $state("all"); // 'all' = keine Filterung
+  let selectedCategory = $state("all");
   // Suchfilter-State
   let searchQuery = $state("");
 
   // Gefilterte Verträge (kombiniert Kategorie + Suche)
-  // WICHTIG: $derived.by() verwenden für komplexe Logik
   let filteredContracts = $derived.by(() => {
     // 1. Kategorie-Filter anwenden
     let result = selectedCategory === "all"
@@ -406,7 +405,6 @@
                   Anbieter: {contract.provider}
                 </p>
 
-                <!-- NEU: Kündigungs-Link anzeigen -->
                 {#if contract.cancellationUrl}
                   <a
                     href={contract.cancellationUrl}
@@ -469,6 +467,12 @@
 
             <div class="flex gap-2 mt-4 pt-4 border-t border-red-300">
               <a
+                href="/dashboard/contracts/{contract._id}"
+                class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 text-sm font-medium"
+              >
+                Details anzeigen
+              </a>
+              <a
                 href="/dashboard/contracts/{contract._id}/edit"
                 class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm font-medium"
               >
@@ -518,7 +522,6 @@
                   Anbieter: {contract.provider}
                 </p>
 
-                <!-- NEU: Kündigungs-Link anzeigen -->
                 {#if contract.cancellationUrl}
                   <a
                     href={contract.cancellationUrl}
@@ -579,16 +582,22 @@
 
             <div class="flex gap-2 mt-4 pt-4 border-t border-red-200">
               <a
+                href="/dashboard/contracts/{contract._id}"
+                class="text-gray-600 hover:text-gray-800 text-sm font-medium"
+              >
+                👁️ Details
+              </a>
+              <a
                 href="/dashboard/contracts/{contract._id}/edit"
                 class="text-blue-600 hover:text-blue-800 text-sm font-medium"
               >
-                Bearbeiten
+                ✏️ Bearbeiten
               </a>
               <a
                 href="/dashboard/contracts/{contract._id}/delete"
                 class="text-red-600 hover:text-red-800 text-sm font-medium"
               >
-                Löschen
+                🗑️ Löschen
               </a>
             </div>
           </div>
@@ -618,10 +627,12 @@
   {:else}
     <div class="grid gap-6">
       {#each sortedContracts as contract}
-        <div
+        <!-- NEU: Gesamte Card ist klickbar -->
+        <a
+          href="/dashboard/contracts/{contract._id}"
           class="contract-card {contract.status === 'active'
             ? 'contract-card-active'
-            : 'contract-card-inactive'} rounded-lg shadow-md border border-gray-200 p-4"
+            : 'contract-card-inactive'} rounded-lg shadow-md border border-gray-200 p-4 block cursor-pointer"
         >
           <div
             class={contract.isUrgent || contract.isOverdue ? "opacity-50" : ""}
@@ -645,13 +656,9 @@
 
                 <p class="text-gray-600">Anbieter: {contract.provider}</p>
 
-                <!-- NEU: Kündigungs-Link anzeigen -->
                 {#if contract.cancellationUrl}
-                  <a
-                    href={contract.cancellationUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 hover:underline mt-1"
+                  <span
+                    class="inline-flex items-center gap-1 text-sm text-blue-600 mt-1"
                   >
                     <svg
                       class="w-4 h-4"
@@ -666,8 +673,8 @@
                         d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
                       ></path>
                     </svg>
-                    Zur Kündigungsseite
-                  </a>
+                    Kündigungslink verfügbar
+                  </span>
                 {/if}
 
                 <div class="mt-2">
@@ -713,22 +720,32 @@
               </span>
             </div>
 
+            <!-- NEU: Buttons mit Event-Propagation stoppen -->
             <div class="flex gap-2 mt-4 pt-4 border-t border-gray-200">
               <a
+                href="/dashboard/contracts/{contract._id}"
+                onclick={(e) => e.stopPropagation()}
+                class="text-gray-600 hover:text-gray-800 hover:underline text-sm font-medium transition-colors"
+              >
+                👁️ Details
+              </a>
+              <a
                 href="/dashboard/contracts/{contract._id}/edit"
+                onclick={(e) => e.stopPropagation()}
                 class="text-blue-600 hover:text-blue-800 hover:underline text-sm font-medium transition-colors"
               >
                 ✏️ Bearbeiten
               </a>
               <a
                 href="/dashboard/contracts/{contract._id}/delete"
+                onclick={(e) => e.stopPropagation()}
                 class="text-red-600 hover:text-red-800 hover:underline text-sm font-medium transition-colors"
               >
                 🗑️ Löschen
               </a>
             </div>
           </div>
-        </div>
+        </a>
       {/each}
     </div>
   {/if}
