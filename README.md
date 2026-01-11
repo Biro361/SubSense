@@ -397,47 +397,59 @@ Basierend auf der Evaluation wurden folgende Massnahmen priorisiert:
 - Link-Icon (🔗) neben Anbieter-Name im Dashboard
 
 
-
-## 5. Erweiterungen [Optional]
-Dokumentiert Erweiterungen über den Mindestumfang hinaus.
-- **Beschreibung & Nutzen:** _[Was wurde erweitert? Warum?]_  
-- **Umsetzung in Kürze:** _[Wie wurde es gemacht?]_  
-- **Abgrenzung zum Mindestumfang:** _[klar darstellen]_  
-
-## 6. Projektorganisation [Optional]
-Beispiele:
-- **Repository & Struktur:** _[Link; kurze Strukturübersicht]_  
-- **Issue‑Management:** _[Vorgehen kurz beschreiben]_  
-- **Commit‑Praxis:** _[z. B. sprechende Commits]_
-
 ## 7. KI‑Deklaration
 Die folgende Deklaration ist verpflichtend und beschreibt den Einsatz von KI im Projekt.
 
 ### Eingesetzte KI‑Werkzeuge
-_[z. B. Copilot, ChatGPT, Claude, lokale Modelle; Version/Variante wenn bekannt]_
+Perplexity AI (Sonar / Claude 3.5 Sonnet): Fungierte als "Prototyping Coach" über den gesamten Projektverlauf.
+
+GitHub Copilot: Integriert in VS Code für Code-Autovervollständigung.
+
+ChatGPT (o1/4o): Für spezifische Refactoring-Aufgaben und Erklärung komplexer Svelte-5-Konzepte (Runes).
 
 ### Zweck & Umfang
-_[**wie, wofür und in welchem Ausmass** wurde KI eingesetzt (z. B. Textentwürfe, Codevorschläge, Tests, Refactoring) sowie **Überlegungen** zu Qualität, Urheberrecht/Quellen und Prompt‑Vorgehen]_
+KI wurde im Projekt als effizienzsteigernder Assistent und Tutor eingesetzt, nicht als alleiniger Ersteller.
+
+Konzeption (Phase 1-3): Sparringspartner für die Schärfung der "How Might We"-Fragen, Generierung von Szenarien für die Personas und Feedback zu den Lösungsvarianten.
+
+Entwicklung (Phase 4):
+
+Massive Unterstützung bei der Migration und korrekten Syntax-Anwendung von Svelte 5 Runes ($state, $derived, $props), da die offizielle Dokumentation noch sehr neu ist.
+
+Erstellung von Boilerplate-Code für API-Handler und die MongoDB-Anbindung.
+
+Fehlersuche (Debugging) bei Serverless-Timeouts auf Netlify.
+
+Dokumentation: Formulierungshilfe bei Statusberichten und Zusammenfassungen für die README.
 
 ### Art der Beiträge
-_[konkret: welche Teile stammen (ganz/teilweise) aus KI‑Unterstützung?]_
+Code-Strukturen: Die Grundstruktur der +page.server.js Load-Functions und Actions stammt aus KI-Vorschlägen, wurde aber manuell angepasst.
+
+Datenbank-Logik: Die Implementierung des Connection Pooling Workarounds für MongoDB in einer Serverless-Umgebung basiert auf einem KI-Lösungsvorschlag.
+
+Feature-Logik: Die Berechnungslogik für die "Dringlichkeit" (Urgency-Score) der Verträge sowie die CSV-Import/Export-Funktion wurden durch KI vorstrukturiert.
 
 ### Eigene Leistung (Abgrenzung)
-_[was ist eigenständig erarbeitet/überarbeitet worden?]_
+KI wurde im Projekt als effizienzsteigernder Assistent und Tutor eingesetzt, nicht als alleiniger Ersteller.
+
+Konzeption (Phase 1-3): Sparringspartner für die Schärfung der "How Might We"-Fragen, Generierung von Szenarien für die Personas und Feedback zu den Lösungsvarianten.
+
+Entwicklung (Phase 4):
+
+Massive Unterstützung bei der Migration und korrekten Syntax-Anwendung von Svelte 5 Runes ($state, $derived, $props), da die offizielle Dokumentation noch sehr neu ist.
+
+Erstellung von Boilerplate-Code für API-Handler und die MongoDB-Anbindung.
+
+Fehlersuche (Debugging) bei Serverless-Timeouts auf Netlify.
+
+Dokumentation: Formulierungshilfe bei Statusberichten und Zusammenfassungen für die README.
 
 ### Reflexion
-_[Nutzen, Grenzen, Risiken/Qualitätssicherung]_
+_Nutzen: Ohne KI-Support wäre der Einstieg in das ganz neue Svelte 5 und die Lösung der spezifischen Serverless-Datenbank-Probleme in der kurzen Zeit kaum möglich gewesen. Es fungierte als "Senior Developer" an meiner Seite.
 
-### Prompt‑Vorgehen [Optional]
-_[wichtige Prompts/Workflows in Kürze]_
+Grenzen & Risiken: Eine grosse Herausforderung war, dass viele KI-Modelle noch veralteten Svelte-4-Code generierten oder Tailwind-Klassen halluzinierten, die in v4 nicht mehr existieren. Dies erforderte ein tiefes eigenes Verständnis der Dokumentation, um "falschen" Code zu erkennen und zu korrigieren. Blindes Copy-Paste hätte zu einer nicht funktionierenden Anwendung geführt.
 
-### Quellen & Rechte [Optional]
-_[verwendete Vorlagen/Assets/Modelle; Lizenz/Urheberrecht; Zitierweise]_
 
-## 8. Anhang [Optional]
-Beispiele:
-- **Testskript & Materialien:** _[Link/Datei]_  
-- **Rohdaten/Auswertung:** _[Link/Datei]_  
 
 ---
 
