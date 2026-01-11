@@ -9,7 +9,8 @@ import { createContract } from '$lib/db/contracts';
 export const actions = {
   // Step 1: Datei hochladen und Preview generieren
   preview: async ({ request, locals }) => {
-    const userId = locals.userId;
+    // Auth-Check: Der Hook setzt `locals.user` mit { userId, email }
+    const userId = locals.user?.userId;
     if (!userId) {
       return fail(401, { error: 'Nicht autorisiert' });
     }
@@ -69,7 +70,7 @@ export const actions = {
 
   // Step 2: Bestätigter Import
   import: async ({ request, locals }) => {
-    const userId = locals.userId;
+    const userId = locals.user?.userId;
     if (!userId) {
       return fail(401, { error: 'Nicht autorisiert' });
     }
