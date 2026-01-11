@@ -3,6 +3,7 @@
   import { page } from "$app/stores";
   import { onMount } from "svelte";
   import { CATEGORIES, getCategoryByValue } from "$lib/constants";
+  import { goto } from '$app/navigation';
 
   let { data } = $props();
   let contracts = $derived(data.contracts || []);
@@ -162,6 +163,11 @@
       };
     }),
   );
+  
+  // Navigation zur Detailansicht
+  function navigateToDetails(contractId) {
+    goto(`/dashboard/contracts/${contractId}`);
+  }
 </script>
 
 <!-- Toast-Notification (Top-Right, Fixed) -->
@@ -627,12 +633,15 @@
   {:else}
     <div class="grid gap-6">
       {#each sortedContracts as contract}
-        <!-- NEU: Gesamte Card ist klickbar -->
-        <a
-          href="/dashboard/contracts/{contract._id}"
+        <!-- Card mit onclick-Handler statt <a>-Tag -->
+        <div
+          onclick={() => navigateToDetails(contract._id)}
           class="contract-card {contract.status === 'active'
             ? 'contract-card-active'
-            : 'contract-card-inactive'} rounded-lg shadow-md border border-gray-200 p-4 block cursor-pointer"
+            : 'contract-card-inactive'} rounded-lg shadow-md border border-gray-200 p-4 cursor-pointer"
+          role="button"
+          tabindex="0"
+          onkeydown={(e) => e.key === 'Enter' && navigateToDetails(contract._id)}
         >
           <div
             class={contract.isUrgent || contract.isOverdue ? "opacity-50" : ""}
@@ -720,7 +729,7 @@
               </span>
             </div>
 
-            <!-- NEU: Buttons mit Event-Propagation stoppen -->
+            <!-- Buttons mit Event-Propagation stoppen -->
             <div class="flex gap-2 mt-4 pt-4 border-t border-gray-200">
               <a
                 href="/dashboard/contracts/{contract._id}"
@@ -745,7 +754,7 @@
               </a>
             </div>
           </div>
-        </a>
+        </div>
       {/each}
     </div>
   {/if}
