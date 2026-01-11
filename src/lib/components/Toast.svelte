@@ -1,8 +1,6 @@
 <!-- src/lib/components/Toast.svelte -->
 <script>
-	export let message = '';
-	export let type = 'success'; // 'success' | 'error' | 'info'
-	export let onClose = () => {};
+	let { message = '', type = 'success', onClose = () => {} } = $props();
 
 	let visible = $state(true);
 
