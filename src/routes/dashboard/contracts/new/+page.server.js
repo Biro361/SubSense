@@ -21,12 +21,14 @@ export const actions = {
 		const cost = formData.get('cost');
 		const billingCycle = formData.get('billingCycle') || 'monthly';
 		const reminderDays = formData.get('reminderDays') || '7';
+		// NEU: URL auslesen
+		const cancellationUrl = formData.get('cancellationUrl');
 
 		// Validierung 
 		if (!name || !provider || !cancellationDate || !cost || !category) {
 			return fail(400, {
 				error: 'Bitte fülle alle Pflichtfelder aus',
-				name, provider, category, cancellationDate, cost, billingCycle, reminderDays
+				name, provider, category, cancellationDate, cost, billingCycle, reminderDays, cancellationUrl
 			});
 		}
 
@@ -35,7 +37,7 @@ export const actions = {
 		if (isNaN(parsedCost) || parsedCost < 0) {
 			return fail(400, {
 				error: 'Bitte gib gültige Kosten ein (mindestens 0)',
-				name, provider, cancellationDate, cost, billingCycle, reminderDays
+				name, provider, cancellationDate, cost, billingCycle, reminderDays, cancellationUrl
 			});
 		}
 
@@ -43,7 +45,7 @@ export const actions = {
 		if (isNaN(parsedReminderDays) || parsedReminderDays < 1 || parsedReminderDays > 90) {
 			return fail(400, {
 				error: 'Erinnerungstage müssen zwischen 1 und 90 liegen',
-				name, provider, cancellationDate, cost, billingCycle, reminderDays
+				name, provider, cancellationDate, cost, billingCycle, reminderDays, cancellationUrl
 			});
 		}
 
@@ -57,7 +59,8 @@ export const actions = {
 				status: status.toString(),
 				cost: parsedCost,
 				billingCycle: billingCycle.toString(),
-				reminderDays: parsedReminderDays
+				reminderDays: parsedReminderDays,
+				cancellationUrl: cancellationUrl ? cancellationUrl.toString() : null // NEU: URL übergeben
 			}, user.userId);
 
 
@@ -69,7 +72,7 @@ export const actions = {
 			console.error('Fehler beim Erstellen:', error);
 			return fail(500, {
 				error: 'Vertrag konnte nicht gespeichert werden',
-				name, provider, cancellationDate, cost, billingCycle, reminderDays
+				name, provider, cancellationDate, cost, billingCycle, reminderDays, cancellationUrl
 			});
 		}
 	}
