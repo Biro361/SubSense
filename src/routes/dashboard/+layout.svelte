@@ -8,8 +8,37 @@
 	// Logout-Bestätigung State
 	let showLogoutConfirm = $state(false);
 	
+	// CSV-Export State
+	let isExporting = $state(false);
+	
 	// User-Email extrahieren
 	let userEmail = $derived(data.user?.email || 'Nutzer');
+	
+	// CSV-Export Handler
+	async function handleExport() {
+		isExporting = true;
+		try {
+			const response = await fetch('/api/export');
+			
+			if (!response.ok) {
+				throw new Error('Export fehlgeschlagen');
+			}
+			
+			const blob = await response.blob();
+			const url = window.URL.createObjectURL(blob);
+			const a = document.createElement('a');
+			a.href = url;
+			const date = new Date().toISOString().split('T')[0];
+			a.download = `subsense_export_${date}.csv`;
+			a.click();
+			window.URL.revokeObjectURL(url);
+		} catch (error) {
+			console.error('Export error:', error);
+			alert('Export fehlgeschlagen. Bitte versuche es erneut.');
+		} finally {
+			isExporting = false;
+		}
+	}
 	
 	// Logout-Flow starten
 	function handleLogoutClick() {
@@ -59,6 +88,43 @@
 			
 			<!-- Navigation -->
 			<nav class="nav-section">
+				<!-- CSV-Import/Export-Buttons -->
+				<div class="csv-actions">
+					<!-- Export-Button -->
+					<button
+						onclick={handleExport}
+						disabled={isExporting}
+						class="btn-csv btn-export"
+						aria-label="CSV exportieren"
+						title="Alle Verträge als CSV exportieren"
+					>
+						{#if isExporting}
+							<svg class="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
+								<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+								<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+							</svg>
+						{:else}
+							<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+							</svg>
+						{/if}
+						<span class="btn-text">Export</span>
+					</button>
+					
+					<!-- Import-Button -->
+					<a
+						href="/dashboard/import"
+						class="btn-csv btn-import"
+						aria-label="CSV importieren"
+						title="Verträge aus CSV importieren"
+					>
+						<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+						</svg>
+						<span class="btn-text">Import</span>
+					</a>
+				</div>
+				
 				<!-- Neuer Vertrag Button -->
 				<a href="/dashboard/contracts/new" class="btn-new-contract">
 					<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -261,7 +327,69 @@
 	.nav-section {
 		display: flex;
 		align-items: center;
-		gap: 1rem;
+		gap: 0.75rem;
+	}
+	
+	/* CSV-Actions Container */
+	.csv-actions {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		padding-right: 0.5rem;
+		border-right: 1px solid #e5e7eb;
+	}
+	
+	/* CSV-Import/Export-Buttons */
+	.btn-csv {
+		display: flex;
+		align-items: center;
+		gap: 0.375rem;
+		padding: 0.5rem 0.875rem;
+		border-radius: 0.625rem;
+		font-size: 0.875rem;
+		font-weight: 500;
+		border: 1px solid;
+		cursor: pointer;
+		transition: all 0.2s;
+		text-decoration: none;
+	}
+	
+	.btn-export {
+		background: white;
+		color: #059669;
+		border-color: #d1fae5;
+	}
+	
+	.btn-export:hover:not(:disabled) {
+		background: #d1fae5;
+		border-color: #059669;
+		transform: translateY(-1px);
+	}
+	
+	.btn-export:disabled {
+		opacity: 0.6;
+		cursor: not-allowed;
+	}
+	
+	.btn-import {
+		background: white;
+		color: #7c3aed;
+		border-color: #e9d5ff;
+	}
+	
+	.btn-import:hover {
+		background: #e9d5ff;
+		border-color: #7c3aed;
+		transform: translateY(-1px);
+	}
+	
+	/* Spinner-Animation */
+	@keyframes spin {
+		to { transform: rotate(360deg); }
+	}
+	
+	.animate-spin {
+		animation: spin 1s linear infinite;
 	}
 	
 	/* Neuer Vertrag Button */
@@ -569,6 +697,12 @@
 	}
 	
 	/* ===== RESPONSIVE ===== */
+	@media (max-width: 768px) {
+		.csv-actions {
+			display: none; /* Auf Tablet/Mobile verstecken für bessere UX */
+		}
+	}
+	
 	@media (max-width: 640px) {
 		.header-container {
 			padding: 0 1rem;
