@@ -4,7 +4,7 @@ import { env } from '$env/dynamic/private';
 
 // Session-Cookie signieren
 export function signToken(userId, email) {
-	return jwt.sign({ userId, email }, JWT_SECRET, { expiresIn: '30d' });
+	const token = jwt.sign({ userId: user._id }, env.JWT_SECRET, { expiresIn: '7d' });
 }
 
 // Session-Cookie verifizieren
