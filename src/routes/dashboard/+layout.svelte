@@ -107,7 +107,7 @@
 							
 							<!-- Menü-Items -->
 							<a
-								href="/profile"
+								href="/dashboard/profile"
 								class="dropdown-item"
 								onclick={() => showUserMenu = false}
 							>
