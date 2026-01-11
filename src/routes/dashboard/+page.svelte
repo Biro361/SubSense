@@ -21,13 +21,32 @@
 
   // Filter-State
   let selectedCategory = $state("all"); // 'all' = keine Filterung
+  // Suchfilter-State
+  let searchQuery = $state("");
 
-  // Gefilterte Verträge (WICHTIG: Vor sortedContracts einfügen!)
-  let filteredContracts = $derived(
-    selectedCategory === "all"
+  // Gefilterte Verträge (kombiniert Kategorie + Suche)
+  let filteredContracts = $derived(() => {
+    // 1. Kategorie-Filter anwenden
+    let result = selectedCategory === "all"
       ? contracts
-      : contracts.filter((c) => c.category === selectedCategory),
-  );
+      : contracts.filter((c) => c.category === selectedCategory);
+
+    // 2. Suchfilter anwenden (nur wenn searchQuery nicht leer)
+    if (searchQuery.trim() !== "") {
+      const query = searchQuery.toLowerCase().trim();
+      
+      result = result.filter((contract) => {
+        // Suche in: Name, Anbieter, Status
+        const nameMatch = contract.name?.toLowerCase().includes(query);
+        const providerMatch = contract.provider?.toLowerCase().includes(query);
+        const statusMatch = (contract.status === "active" ? "aktiv" : "gekündigt").includes(query);
+        
+        return nameMatch || providerMatch || statusMatch;
+      });
+    }
+
+    return result;
+  });
 
   // Toast-State
   let showToast = $state(false);
@@ -214,6 +233,75 @@
 
 <!-- Dashboard-Content (Header ist jetzt im Layout) -->
 <div class="max-w-4xl mx-auto p-6">
+  <!-- Suchleiste -->
+  <div class="mb-6">
+    <label for="search" class="block text-lg font-semibold mb-3">
+      Verträge durchsuchen
+    </label>
+    <div class="relative">
+      <!-- Lupe-Icon (links) -->
+      <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+        <svg
+          class="w-5 h-5 text-gray-400"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+          ></path>
+        </svg>
+      </div>
+
+      <!-- Eingabefeld -->
+      <input
+        id="search"
+        type="text"
+        bind:value={searchQuery}
+        placeholder="Suche nach Name, Anbieter oder Status..."
+        class="w-full pl-10 pr-10 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+      />
+
+      <!-- Clear-Button (rechts, nur sichtbar wenn Text vorhanden) -->
+      {#if searchQuery.trim() !== ""}
+        <button
+          onclick={() => (searchQuery = "")}
+          class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
+          aria-label="Suche löschen"
+        >
+          <svg
+            class="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M6 18L18 6M6 6l12 12"
+            ></path>
+          </svg>
+        </button>
+      {/if}
+    </div>
+
+    <!-- Suchergebnis-Anzeige -->
+    {#if searchQuery.trim() !== ""}
+      <p class="text-sm text-gray-600 mt-2">
+        📊 {filteredContracts.length} von {contracts.length} Verträgen gefunden
+        {#if filteredContracts.length === 0}
+          <span class="text-red-600 font-medium">
+            – Keine Treffer für "{searchQuery}"
+          </span>
+        {/if}
+      </p>
+    {/if}
+  </div>
+
   <!-- Kategorie-Filter -->
   <div class="mb-6">
     <h2 class="text-lg font-semibold mb-3">Nach Kategorie filtern</h2>
@@ -458,7 +546,13 @@
     </div>
   {/if}
 
-  <h2 class="text-xl font-semibold mb-4">Alle Verträge ({contracts.length})</h2>
+  <h2 class="text-xl font-semibold mb-4">
+    {#if searchQuery.trim() !== "" || selectedCategory !== "all"}
+      Gefilterte Verträge ({sortedContracts.length})
+    {:else}
+      Alle Verträge ({contracts.length})
+    {/if}
+  </h2>
 
   {#if contracts.length === 0}
     <div class="text-center py-12 bg-gray-50 rounded-lg">
