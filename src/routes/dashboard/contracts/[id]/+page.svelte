@@ -48,6 +48,13 @@
     if (mimeType?.includes('word')) return '📝';
     return '📎';
   }
+  
+  // Lösch-Bestätigung für Dokumente
+  function confirmDelete(e) {
+    if (!confirm('Dokument wirklich löschen?')) {
+      e.preventDefault();
+    }
+  }
 </script>
 
 <div class="max-w-4xl mx-auto p-6">
@@ -345,7 +352,7 @@
                         <button
                           type="submit"
                           class="px-3 py-1 text-sm text-red-600 hover:bg-red-50 rounded transition-colors"
-                          onclick="return confirm('Dokument wirklich löschen?')"
+                          onclick={confirmDelete}
                         >
                           🗑️ Löschen
                         </button>
