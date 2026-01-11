@@ -9,9 +9,6 @@ const COLLECTION_NAME = 'contracts';
 /**
  * Hilfsfunktion: Berechnet Erinnerungs-Metadaten für einen Vertrag
  */
-/**
- * Hilfsfunktion: Berechnet Erinnerungs-Metadaten für einen Vertrag
- */
 function calculateReminderMetadata(contract) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -46,7 +43,7 @@ function calculateReminderMetadata(contract) {
     reminderDate,
     daysUntilCancellation,
     isUrgent,
-    isOverdue // NEU: Kennzeichnung für verpasste Fristen
+    isOverdue
   };
 }
 
@@ -60,14 +57,12 @@ export async function getContracts(userId) {
   const db = client.db(DB_NAME);
 
   try {
-    // WICHTIG: Nach userId filtern
     const contracts = await db
       .collection(COLLECTION_NAME)
-      .find({ userId }) // ← NEU: Nur Verträge dieses Users
+      .find({ userId })
       .sort({ cancellationDate: 1 })
       .toArray();
 
-    // Rest bleibt gleich
     return contracts.map(contract => {
       const metadata = calculateReminderMetadata(contract);
 
@@ -78,7 +73,10 @@ export async function getContracts(userId) {
         billingCycle: contract.billingCycle ?? 'monthly',
         reminderDays: contract.reminderDays ?? 7,
         category: contract.category ?? 'other',
-        cancellationUrl: contract.cancellationUrl ?? null, // NEU
+        cancellationUrl: contract.cancellationUrl ?? null,
+        notes: contract.notes ?? '',
+        cancellationInstructions: contract.cancellationInstructions ?? '',
+        documents: contract.documents ?? [],
         ...metadata
       };
 
@@ -99,10 +97,9 @@ export async function getContractById(id, userId) {
   const db = client.db(DB_NAME);
 
   try {
-    // WICHTIG: Nach ID UND userId suchen (Security!)
     const contract = await db.collection(COLLECTION_NAME).findOne({
       _id: new ObjectId(id),
-      userId // ← NEU: User muss Besitzer sein
+      userId
     });
 
     if (!contract) return null;
@@ -116,7 +113,10 @@ export async function getContractById(id, userId) {
       billingCycle: contract.billingCycle ?? 'monthly',
       reminderDays: contract.reminderDays ?? 7,
       category: contract.category ?? 'other',
-      cancellationUrl: contract.cancellationUrl ?? null, // NEU
+      cancellationUrl: contract.cancellationUrl ?? null,
+      notes: contract.notes ?? '',
+      cancellationInstructions: contract.cancellationInstructions ?? '',
+      documents: contract.documents ?? [],
       ...metadata
     };
 
@@ -140,13 +140,11 @@ export async function createContract(contractData, userId) {
     const billingCycle = contractData.billingCycle || 'monthly';
     const reminderDays = parseInt(contractData.reminderDays) || 7;
 
-    // ✅ NEU: Kategorie-Validierung
     const category = contractData.category || 'other';
     if (!VALID_CATEGORIES.includes(category)) {
       throw new Error('Invalid category');
     }
 
-    // ✅ NEU: Kündigungs-URL validieren
     const cancellationUrl = contractData.cancellationUrl?.trim() || null;
     if (cancellationUrl && !/^https?:\/\/.+/.test(cancellationUrl)) {
       throw new Error('Invalid cancellation URL format (must start with http:// or https://)');
@@ -155,7 +153,6 @@ export async function createContract(contractData, userId) {
     if (!['monthly', 'yearly', 'quarterly'].includes(billingCycle)) {
       throw new Error('Invalid billing cycle');
     }
-
 
     if (reminderDays < 1 || reminderDays > 90) {
       throw new Error('Reminder days must be between 1 and 90');
@@ -168,11 +165,13 @@ export async function createContract(contractData, userId) {
       billingCycle,
       reminderDays,
       category,
-      cancellationUrl, // NEU
+      cancellationUrl,
+      notes: '',
+      cancellationInstructions: '',
+      documents: [],
       createdAt: new Date(),
       updatedAt: new Date()
     });
-
 
     return {
       _id: result.insertedId.toString(),
@@ -182,7 +181,10 @@ export async function createContract(contractData, userId) {
       billingCycle,
       reminderDays,
       category,
-      cancellationUrl // NEU
+      cancellationUrl,
+      notes: '',
+      cancellationInstructions: '',
+      documents: []
     };
 
   } catch (error) {
@@ -223,7 +225,6 @@ export async function updateContract(id, updates, userId) {
       updateData.reminderDays = reminderDays;
     }
 
-    // Kategorie-Validierung
     if (updates.category !== undefined) {
       if (!VALID_CATEGORIES.includes(updates.category)) {
         throw new Error('Invalid category');
@@ -231,7 +232,6 @@ export async function updateContract(id, updates, userId) {
       updateData.category = updates.category;
     }
 
-    // ✅ NEU: Kündigungs-URL validieren
     if (updates.cancellationUrl !== undefined) {
       const url = updates.cancellationUrl?.trim() || null;
       if (url && !/^https?:\/\/.+/.test(url)) {
@@ -240,12 +240,10 @@ export async function updateContract(id, updates, userId) {
       updateData.cancellationUrl = url;
     }
 
-
-    // WICHTIG: Nur updaten wenn User = Besitzer
     const result = await db.collection(COLLECTION_NAME).updateOne(
       {
         _id: new ObjectId(id),
-        userId // ← NEU: Security-Check
+        userId
       },
       {
         $set: {
@@ -272,10 +270,9 @@ export async function deleteContract(id, userId) {
   const db = client.db(DB_NAME);
 
   try {
-    // WICHTIG: Nur löschen wenn User = Besitzer
     const result = await db.collection(COLLECTION_NAME).deleteOne({
       _id: new ObjectId(id),
-      userId // ← NEU: Security-Check
+      userId
     });
 
     return result.deletedCount > 0;
@@ -285,12 +282,156 @@ export async function deleteContract(id, userId) {
   }
 }
 
+// ========================================
+// NEU: Erweiterte Funktionen für Detailansicht
+// ========================================
+
+/**
+ * Notizen zu einem Vertrag hinzufügen/aktualisieren
+ * @param {string} contractId - Vertrags-ID
+ * @param {string} notes - Notiztext
+ * @param {string} userId - User ID (Security)
+ */
+export async function updateNotes(contractId, notes, userId) {
+  const client = await clientPromise;
+  const db = client.db(DB_NAME);
+
+  try {
+    const result = await db.collection(COLLECTION_NAME).updateOne(
+      { 
+        _id: new ObjectId(contractId),
+        userId 
+      },
+      { 
+        $set: { 
+          notes: notes || '',
+          updatedAt: new Date()
+        }
+      }
+    );
+
+    return result.modifiedCount > 0;
+  } catch (error) {
+    console.error('Error updating notes:', error);
+    throw error;
+  }
+}
+
+/**
+ * Kündigungsanweisungen zu einem Vertrag hinzufügen/aktualisieren
+ * @param {string} contractId - Vertrags-ID
+ * @param {string} instructions - Kündigungsanweisungen
+ * @param {string} url - URL zur Kündigungsseite (optional)
+ * @param {string} userId - User ID (Security)
+ */
+export async function updateCancellationInstructions(contractId, instructions, url, userId) {
+  const client = await clientPromise;
+  const db = client.db(DB_NAME);
+
+  try {
+    // URL validieren falls vorhanden
+    const cancellationUrl = url?.trim() || null;
+    if (cancellationUrl && !/^https?:\/\/.+/.test(cancellationUrl)) {
+      throw new Error('Invalid cancellation URL format');
+    }
+
+    const result = await db.collection(COLLECTION_NAME).updateOne(
+      { 
+        _id: new ObjectId(contractId),
+        userId 
+      },
+      { 
+        $set: { 
+          cancellationInstructions: instructions || '',
+          cancellationUrl,
+          updatedAt: new Date()
+        }
+      }
+    );
+
+    return result.modifiedCount > 0;
+  } catch (error) {
+    console.error('Error updating cancellation instructions:', error);
+    throw error;
+  }
+}
+
+/**
+ * Dokument zu einem Vertrag hinzufügen
+ * @param {string} contractId - Vertrags-ID
+ * @param {object} documentData - Dokument-Metadaten
+ * @param {string} userId - User ID (Security)
+ */
+export async function addDocument(contractId, documentData, userId) {
+  const client = await clientPromise;
+  const db = client.db(DB_NAME);
+
+  try {
+    const result = await db.collection(COLLECTION_NAME).updateOne(
+      { 
+        _id: new ObjectId(contractId),
+        userId 
+      },
+      { 
+        $push: { 
+          documents: {
+            _id: new ObjectId(),
+            ...documentData,
+            uploadDate: new Date()
+          }
+        },
+        $set: { updatedAt: new Date() }
+      }
+    );
+
+    return result.modifiedCount > 0;
+  } catch (error) {
+    console.error('Error adding document:', error);
+    throw error;
+  }
+}
+
+/**
+ * Dokument aus einem Vertrag löschen
+ * @param {string} contractId - Vertrags-ID
+ * @param {string} documentId - Dokument-ID
+ * @param {string} userId - User ID (Security)
+ */
+export async function removeDocument(contractId, documentId, userId) {
+  const client = await clientPromise;
+  const db = client.db(DB_NAME);
+
+  try {
+    const result = await db.collection(COLLECTION_NAME).updateOne(
+      { 
+        _id: new ObjectId(contractId),
+        userId 
+      },
+      { 
+        $pull: { 
+          documents: { _id: new ObjectId(documentId) } 
+        },
+        $set: { updatedAt: new Date() }
+      }
+    );
+
+    return result.modifiedCount > 0;
+  } catch (error) {
+    console.error('Error removing document:', error);
+    throw error;
+  }
+}
+
+// ========================================
+// Bestehende Funktionen (unverändert)
+// ========================================
+
 /**
  * Kostenstatistiken für einen User berechnen
  * @param {string} userId - User ID
  */
 export async function getCostStatistics(userId) {
-  const contracts = await getContracts(userId); // ← NEU: userId übergeben
+  const contracts = await getContracts(userId);
 
   const activeContracts = contracts.filter(c => c.status === 'active');
 
@@ -318,6 +459,6 @@ export async function getCostStatistics(userId) {
  * @param {string} userId - User ID
  */
 export async function getUrgentContracts(userId) {
-  const allContracts = await getContracts(userId); // ← NEU: userId übergeben
+  const allContracts = await getContracts(userId);
   return allContracts.filter(contract => contract.isUrgent);
 }
