@@ -396,6 +396,50 @@ Basierend auf der Evaluation wurden folgende Massnahmen priorisiert:
 - Optionales Feld "Kündigungs-URL" im Formular
 - Link-Icon (🔗) neben Anbieter-Name im Dashboard
 
+## 5. Erweiterungen [Optional]
+
+Über den geforderten Mindestumfang hinaus wurden signifikante funktionale und technische Erweiterungen implementiert, um den Produktnutzen zu maximieren und moderne Web-Standards anzuwenden.
+
+### 5.1 Funktionale Erweiterungen (Feature-Scope)
+
+Die Anwendung wurde um Features ergänzt, die den Nutzern volle Datenhoheit und erweitertes Vertragsmanagement bieten:
+
+- **Daten-Portabilität (CSV Import/Export):**
+Nutzer können ihre gesamten Vertragsdaten als CSV-Datei exportieren (Backup) und externe Daten via CSV-Upload importieren. Der Import beinhaltet eine Validierung der Datenstruktur und eine Vorschau vor dem Speichern.
+- **Dokumenten-Management (File Uploads):**
+Integration von **Netlify Blobs** zur Speicherung von Dateien. Nutzer können Kündigungsschreiben oder Vertragsdokumente (PDF/Bilder) direkt am jeweiligen Vertrag hochladen und verwalten. Dies macht die App zu einem vollständigen digitalen Vertragsordner.
+- **Detaillierte Vertragsansicht \& Notizen:**
+Implementierung einer Detailseite (`/dashboard/contracts/[id]`) mit Tab-Navigation. Hier können spezifische Notizen und Kündigungsanweisungen hinterlegt werden, die in der Übersicht keinen Platz hätten.
+- **Smarte Kündigungs-Logik:**
+Erweiterung des Datenmodells um eine direkte `cancellationUrl`. Wenn vorhanden, bietet das Dashboard einen "Direkt Kündigen"-Button, der Nutzer mit einem Klick zur korrekten Unterseite des Anbieters führt.
+
+
+### 5.2 Technische Exzellenz (Quality-Scope)
+
+Das Projekt setzt auf "Bleeding Edge"-Technologie und optimierte Architektur:
+
+- **Svelte 5 \& Runes:**
+Statt des (im Unterricht behandelten) Svelte 4 Standards wurde die Anwendung komplett mit der neuesten **Svelte 5 Syntax (Runes)** entwickelt.
+    - Einsatz von `$state()` für lokales State-Management statt `let`.
+    - Nutzung von `$derived.by()` für komplexe, reaktive Filter- und Sortierlogik im Dashboard.
+    - Typensichere Props-Definition mittels `$props()`.
+- **Serverless Database Optimization:**
+Um die Latenzprobleme (Cold Starts) von MongoDB in einer Serverless-Umgebung (Netlify Functions) zu lösen, wurde ein **Custom Connection Pooling** implementiert.
+    - Globales Caching des Datenbank-Clients zwischen Function-Invocations.
+    - Aggressives Timeout-Management (5s) statt Standard-Wartezeiten, um \"Hanging Requests\" zu vermeiden.
+
+
+## 6. Projektorganisation [Optional]
+
+Um die Wartbarkeit und Nachvollziehbarkeit des Codes während der Entwicklung sicherzustellen, wurden professionelle Entwicklungsstandards etabliert.
+
+- **Conventional Commits:**
+Die gesamte Commit-Historie folgt der *Conventional Commits* Spezifikation (z.B. `feat:`, `fix:`, `chore:`, `refactor:`). Dies ermöglicht eine automatische Generierung von Changelogs und erhöht die Lesbarkeit des Projektverlaufs signifikant.
+- **Strukturierte Architektur:**
+Strikte Trennung von Verantwortlichkeiten im Code:
+    - `src/lib/db/`: Reine Datenbank-Logik und CRUD-Operationen (vom UI entkoppelt).
+    - `src/lib/server/`: Server-Only Module (z.B. Blob Storage Logik), die nicht ins Client-Bundle gelangen dürfen.
+    - `src/routes/`: UI-Komponenten und Page-Server-Loaders.
 
 ## 7. KI‑Deklaration
 Die folgende Deklaration ist verpflichtend und beschreibt den Einsatz von KI im Projekt.
