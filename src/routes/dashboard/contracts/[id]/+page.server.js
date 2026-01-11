@@ -12,13 +12,14 @@ import { uploadDocument, deleteDocument as deleteStorageDocument } from '$lib/st
 
 /** @type {import('./$types').PageServerLoad} */
 export async function load({ params, locals }) {
-  const session = locals.session;
+  // User aus locals.user verwenden (nicht locals.session)
+  const user = locals.user;
   
-  if (!session?.user?.id) {
+  if (!user?.userId) {
     throw redirect(302, '/auth/signin');
   }
 
-  const contract = await getContractById(params.id, session.user.id);
+  const contract = await getContractById(params.id, user.userId);
   
   if (!contract) {
     throw error(404, 'Vertrag nicht gefunden oder keine Berechtigung');
@@ -45,9 +46,9 @@ export async function load({ params, locals }) {
 export const actions = {
   // Notiz speichern
   updateNote: async ({ request, params, locals }) => {
-    const session = locals.session;
+    const user = locals.user;
     
-    if (!session?.user?.id) {
+    if (!user?.userId) {
       throw redirect(302, '/auth/signin');
     }
 
@@ -55,7 +56,7 @@ export const actions = {
     const notes = data.get('notes')?.toString() || '';
     
     try {
-      await updateNotes(params.id, notes, session.user.id);
+      await updateNotes(params.id, notes, user.userId);
       return { success: true, message: 'Notiz gespeichert' };
     } catch (err) {
       console.error('Fehler beim Speichern der Notiz:', err);
@@ -65,9 +66,9 @@ export const actions = {
   
   // Kündigungsanweisungen speichern
   updateInstructions: async ({ request, params, locals }) => {
-    const session = locals.session;
+    const user = locals.user;
     
-    if (!session?.user?.id) {
+    if (!user?.userId) {
       throw redirect(302, '/auth/signin');
     }
 
@@ -76,7 +77,7 @@ export const actions = {
     const url = data.get('cancellationUrl')?.toString() || '';
     
     try {
-      await updateCancellationInstructions(params.id, instructions, url, session.user.id);
+      await updateCancellationInstructions(params.id, instructions, url, user.userId);
       return { success: true, message: 'Kündigungsanweisungen gespeichert' };
     } catch (err) {
       console.error('Fehler beim Speichern:', err);
@@ -86,9 +87,9 @@ export const actions = {
   
   // Dokument hochladen
   uploadDocument: async ({ request, params, locals }) => {
-    const session = locals.session;
+    const user = locals.user;
     
-    if (!session?.user?.id) {
+    if (!user?.userId) {
       throw redirect(302, '/auth/signin');
     }
 
@@ -134,7 +135,7 @@ export const actions = {
         url
       };
       
-      await addDocument(params.id, documentData, session.user.id);
+      await addDocument(params.id, documentData, user.userId);
       
       return { success: true, message: 'Dokument hochgeladen' };
     } catch (err) {
@@ -145,9 +146,9 @@ export const actions = {
   
   // Dokument löschen
   deleteDocument: async ({ request, params, locals }) => {
-    const session = locals.session;
+    const user = locals.user;
     
-    if (!session?.user?.id) {
+    if (!user?.userId) {
       throw redirect(302, '/auth/signin');
     }
 
@@ -164,7 +165,7 @@ export const actions = {
       await deleteStorageDocument(filename);
       
       // Aus MongoDB löschen
-      await removeDocument(params.id, documentId, session.user.id);
+      await removeDocument(params.id, documentId, user.userId);
       
       return { success: true, message: 'Dokument gelöscht' };
     } catch (err) {
