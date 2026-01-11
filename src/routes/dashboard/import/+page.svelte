@@ -348,6 +348,7 @@
           </thead>
           <tbody>
             {#each form.contracts as contract, index}
+              {@const cat = getCategoryByValue(contract.category)}
               <tr class="border-b border-gray-200 hover:bg-gray-50">
                 <td class="px-4 py-3 text-gray-600">{index + 1}</td>
                 <td class="px-4 py-3 font-medium">{contract.name}</td>
@@ -376,7 +377,6 @@
                   {/if}
                 </td>
                 <td class="px-4 py-3">
-                  {@const cat = getCategoryByValue(contract.category)}
                   {#if cat}
                     <span class="text-xs">{cat.icon} {cat.label}</span>
                   {:else}
