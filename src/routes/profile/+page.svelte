@@ -2,10 +2,8 @@
 	import { enhance } from '$app/forms';
 
 	/** @type {import('./$types').PageData} */
-	let { data } = $props();
-
 	/** @type {import('./$types').ActionData} */
-	let { form } = $props();
+	let { data, form } = $props();
 
 	let showPasswordForm = $state(false);
 	let showDeleteForm = $state(false);
