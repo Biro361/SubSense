@@ -25,7 +25,8 @@
   let searchQuery = $state("");
 
   // Gefilterte Verträge (kombiniert Kategorie + Suche)
-  let filteredContracts = $derived(() => {
+  // WICHTIG: $derived.by() verwenden für komplexe Logik
+  let filteredContracts = $derived.by(() => {
     // 1. Kategorie-Filter anwenden
     let result = selectedCategory === "all"
       ? contracts
