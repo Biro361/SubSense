@@ -15,7 +15,7 @@ export async function load({ params, locals }) {
   const session = locals.session;
   
   if (!session?.user?.id) {
-    throw redirect(302, '/auth/login');
+    throw redirect(302, '/auth/signin');
   }
 
   const contract = await getContractById(params.id, session.user.id);
@@ -48,7 +48,7 @@ export const actions = {
     const session = locals.session;
     
     if (!session?.user?.id) {
-      throw redirect(302, '/auth/login');
+      throw redirect(302, '/auth/signin');
     }
 
     const data = await request.formData();
@@ -68,7 +68,7 @@ export const actions = {
     const session = locals.session;
     
     if (!session?.user?.id) {
-      throw redirect(302, '/auth/login');
+      throw redirect(302, '/auth/signin');
     }
 
     const data = await request.formData();
@@ -89,7 +89,7 @@ export const actions = {
     const session = locals.session;
     
     if (!session?.user?.id) {
-      throw redirect(302, '/auth/login');
+      throw redirect(302, '/auth/signin');
     }
 
     const data = await request.formData();
@@ -148,7 +148,7 @@ export const actions = {
     const session = locals.session;
     
     if (!session?.user?.id) {
-      throw redirect(302, '/auth/login');
+      throw redirect(302, '/auth/signin');
     }
 
     const data = await request.formData();
