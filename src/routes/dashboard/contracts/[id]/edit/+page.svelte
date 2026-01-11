@@ -64,6 +64,25 @@
       />
     </div>
 
+    <!-- NEU: Kündigungs-URL -->
+    <div>
+      <label for="cancellationUrl" class="block text-sm font-medium mb-1">
+        🔗 Kündigungs-Link (Optional)
+      </label>
+      <input
+        type="url"
+        id="cancellationUrl"
+        name="cancellationUrl"
+        value={form?.cancellationUrl || contract.cancellationUrl || ''}
+        placeholder="https://www.netflix.com/cancelplan"
+        pattern="https?://.+"
+        class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+      />
+      <p class="text-sm text-gray-500 mt-1">
+        💡 Direkter Link zur Kündigungsseite – spart Zeit beim Kündigen!
+      </p>
+    </div>
+
     <div>
       <label for="category" class="block text-sm font-medium mb-1">
         Kategorie *
