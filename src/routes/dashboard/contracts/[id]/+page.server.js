@@ -56,7 +56,9 @@ export const actions = {
     const notes = data.get('notes')?.toString() || '';
     
     try {
-      await updateNotes(params.id, notes, user.userId);
+      if (!(await updateNotes(params.id, notes, user.userId))) {
+        return { success: false, message: 'Vertrag nicht gefunden oder keine Berechtigung' };
+      }
       return { success: true, message: 'Notiz gespeichert' };
     } catch (err) {
       console.error('Fehler beim Speichern der Notiz:', err);
@@ -77,7 +79,9 @@ export const actions = {
     const url = data.get('cancellationUrl')?.toString() || '';
     
     try {
-      await updateCancellationInstructions(params.id, instructions, url, user.userId);
+      if (!(await updateCancellationInstructions(params.id, instructions, url, user.userId))) {
+        return { success: false, message: 'Vertrag nicht gefunden oder keine Berechtigung' };
+      }
       return { success: true, message: 'Kündigungsanweisungen gespeichert' };
     } catch (err) {
       console.error('Fehler beim Speichern:', err);

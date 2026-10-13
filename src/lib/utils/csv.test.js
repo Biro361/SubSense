@@ -78,6 +78,16 @@ describe('CSV Round-Trip', () => {
     expect(contracts[0].provider).toBe('Netflix Inc.');
   });
 
+  it('liest Semikolon-CSV aus Excel und lässt Kommas im Feld stehen', () => {
+    const csv = 'name;provider;cancellationDate;status;cost\r\nNetflix, Premium;Netflix Inc.;2026-03-15;active;15,90';
+
+    const { contracts, errors } = parseCSV(csv);
+
+    expect(errors).toEqual([]);
+    expect(contracts[0].name).toBe('Netflix, Premium');
+    expect(contracts[0].cost).toBe(15.9);
+  });
+
   it('liest Dateien mit CRLF', () => {
     const { contracts, errors } = parseCSV(
       'name,provider,cancellationDate,status\r\nNetflix,Netflix Inc.,2026-03-15,active\r\n'

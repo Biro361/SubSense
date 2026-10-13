@@ -1,6 +1,6 @@
 import { ObjectId } from 'mongodb';
 import clientPromise from '$lib/mongodb';
-import { validateContract } from '$lib/validation.js';
+import { validateContract, URL_SHAPE } from '$lib/validation.js';
 import { calculateReminderMetadata } from '$lib/reminders.js';
 
 const DB_NAME = 'subsense';
@@ -316,7 +316,7 @@ export async function updateCancellationInstructions(contractId, instructions, u
   try {
     // URL validieren falls vorhanden
     const cancellationUrl = url?.trim() || null;
-    if (cancellationUrl && !/^https?:\/\/.+/.test(cancellationUrl)) {
+    if (cancellationUrl && !URL_SHAPE.test(cancellationUrl)) {
       throw new Error('Invalid cancellation URL format');
     }
 
