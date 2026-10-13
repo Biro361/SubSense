@@ -104,9 +104,9 @@ export const actions = {
       return { success: false, message: 'Keine Datei ausgewählt' };
     }
     
-    // Dateigrösse limitieren (5 MB)
-    if (file.size > 5 * 1024 * 1024) {
-      return { success: false, message: 'Datei zu gross (max. 5 MB)' };
+    // 4 MB: Netlify nimmt pro Request rund 6 MB an, Uploads wachsen unterwegs um ein Drittel
+    if (file.size > 4 * 1024 * 1024) {
+      return { success: false, message: 'Datei zu gross (max. 4 MB)' };
     }
     
     // Dateityp-Validierung
