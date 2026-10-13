@@ -4,8 +4,10 @@
 
 	let visible = $state(true);
 
-	// Auto-Hide nach 5 Sekunden
+	// Auto-Hide nach 5 Sekunden; Fehler bleiben stehen, bis sie gelesen/geschlossen sind
 	$effect(() => {
+		if (type === 'error') return;
+
 		const timer = setTimeout(() => {
 			visible = false;
 			setTimeout(onClose, 300); // Warte auf Animation
@@ -35,8 +37,7 @@
 {#if visible}
 	<div
 		class="toast {typeStyles[type]}"
-		role="alert"
-		aria-live="polite"
+		role={type === 'error' ? 'alert' : 'status'}
 	>
 		<div class="toast-icon">
 			<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

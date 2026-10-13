@@ -515,9 +515,7 @@
           tabindex="0"
           onkeydown={(e) => e.key === 'Enter' && navigateToDetails(contract._id)}
         >
-          <div
-            class={contract.isUrgent || contract.isOverdue ? "opacity-50" : ""}
-          >
+          <div>
             <div class="flex justify-between items-start">
               <div class="flex-1">
                 <div class="flex items-center gap-2 mb-2">
