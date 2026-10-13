@@ -47,7 +47,8 @@ export function contractsToCSV(contracts, fields = null) {
     'reminderDays',
     'category',
     'cancellationUrl',
-    'notes'
+    'notes',
+    'cancellationInstructions'
   ];
 
   const exportFields = fields || defaultFields;
@@ -94,7 +95,11 @@ export function parseCSV(csvContent) {
   // BOM entfernen falls vorhanden
   const cleanContent = csvContent.replace(/^\uFEFF/, '').trim();
 
-  const rows = parseCSVRows(cleanContent);
+  // Excel mit Schweizer oder deutschen Einstellungen trennt mit Semikolon
+  const headerLine = cleanContent.split(/\r?\n/, 1)[0];
+  const delimiter = headerLine.includes(';') && !headerLine.includes(',') ? ';' : ',';
+
+  const rows = parseCSVRows(cleanContent, delimiter);
 
   if (rows.length < 2) {
     return {
@@ -114,7 +119,7 @@ export function parseCSV(csvContent) {
       contracts: [],
       errors: [
         `Fehlende Pflichtfelder im CSV-Header: ${missingFields.join(', ')}`,
-        `Erwarteter Header: name,provider,cancellationDate,status,cost,billingCycle,reminderDays,category,cancellationUrl,notes`
+        `Erwarteter Header: name,provider,cancellationDate,status,cost,billingCycle,reminderDays,category,cancellationUrl,notes,cancellationInstructions`
       ],
       warnings: []
     };
@@ -164,9 +169,10 @@ export function parseCSV(csvContent) {
  * Gequotete Felder dürfen Kommas und Zeilenumbrüche enthalten und bleiben
  * zeichengenau; nicht gequotete werden getrimmt (handgeschriebenes "a, b").
  * @param {string} text - Kompletter CSV-Inhalt
+ * @param {string} delimiter - Feldtrenner (',' oder ';')
  * @returns {Array<Array<string>>} Zeilen mit ihren Feldern
  */
-function parseCSVRows(text) {
+function parseCSVRows(text, delimiter) {
   const rows = [];
   /** @type {string[]} */
   let row = [];
@@ -199,7 +205,7 @@ function parseCSVRows(text) {
     if (char === '"') {
       insideQuotes = true;
       wasQuoted = true;
-    } else if (char === ',') {
+    } else if (char === delimiter) {
       endField();
     } else if (char === '\n' || char === '\r') {
       if (char === '\r' && text[i + 1] === '\n') i++; // CRLF als ein Umbruch
@@ -223,7 +229,7 @@ function parseCSVRows(text) {
  * @returns {string} CSV-String für Template-Download
  */
 export function generateTemplateCSV() {
-  const header = 'name,provider,cancellationDate,status,cost,billingCycle,reminderDays,category,cancellationUrl,notes';
+  const header = 'name,provider,cancellationDate,status,cost,billingCycle,reminderDays,category,cancellationUrl,notes,cancellationInstructions';
   const examples = [
     'Netflix Premium,Netflix Inc.,2026-03-15,active,15.90,monthly,7,streaming,https://netflix.com/cancel,Test-Abo läuft noch',
     'Spotify Family,Spotify AB,2026-06-30,cancelled,16.90,monthly,14,streaming,,Bereits gekündigt am 01.12.2025',

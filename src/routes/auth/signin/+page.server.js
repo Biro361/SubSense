@@ -5,6 +5,7 @@ import {
 	recordAttempt,
 	clearAttempts,
 	LOGIN_MAX_ATTEMPTS,
+	LOGIN_IP_MAX_ATTEMPTS,
 	LOGIN_WINDOW_MINUTES
 } from '$lib/db/rateLimit.js';
 import { setSessionCookie } from '$lib/server/auth.js';
@@ -28,9 +29,9 @@ export const actions = {
 
 		try {
 			// Vor bcrypt prüfen: der Hash-Vergleich ist der teure Teil
-			const attempts = await recordAttempt(limitKeys, LOGIN_WINDOW_MINUTES);
+			const [ipAttempts, mailAttempts] = await recordAttempt(limitKeys, LOGIN_WINDOW_MINUTES);
 
-			if (attempts > LOGIN_MAX_ATTEMPTS) {
+			if (ipAttempts > LOGIN_IP_MAX_ATTEMPTS || mailAttempts > LOGIN_MAX_ATTEMPTS) {
 				return fail(429, {
 					error: `Zu viele Anmeldeversuche. Bitte in ${LOGIN_WINDOW_MINUTES} Minuten erneut versuchen.`
 				});

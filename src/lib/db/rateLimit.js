@@ -5,7 +5,12 @@ const COLLECTION_NAME = 'rate_limits';
 
 // Grenzwerte für den Login; die Forgot-Password-Form nutzt eigene (5 pro Stunde)
 export const LOGIN_MAX_ATTEMPTS = 10;
+// Höher als pro Email: hinter einem Campus-WLAN teilen sich viele User eine IP
+export const LOGIN_IP_MAX_ATTEMPTS = 100;
 export const LOGIN_WINDOW_MINUTES = 15;
+
+export const SIGNUP_IP_MAX_ATTEMPTS = 20;
+export const SIGNUP_WINDOW_MINUTES = 60;
 
 /**
  * Der Schlüssel ist die _id, deshalb ein eigener Dokumenttyp (Default wäre ObjectId)
@@ -32,11 +37,11 @@ async function getCollection() {
 }
 
 /**
- * Zählt einen Versuch auf allen Schlüsseln und gibt den höchsten Stand zurück.
+ * Zählt einen Versuch auf allen Schlüsseln und gibt den Stand pro Schlüssel zurück.
  * Das Fenster startet beim ersten Versuch und wird durch weitere nicht verlängert.
  * @param {string[]} keys - z.B. ['login:ip:1.2.3.4', 'login:mail:a@b.c']
  * @param {number} windowMinutes - Lebensdauer des Zählers
- * @returns {Promise<number>} höchste Anzahl Versuche über alle Schlüssel
+ * @returns {Promise<number[]>} Anzahl Versuche, in der Reihenfolge von keys
  */
 export async function recordAttempt(keys, windowMinutes) {
   const collection = await getCollection();
@@ -56,7 +61,8 @@ export async function recordAttempt(keys, windowMinutes) {
     .find({ _id: { $in: keys } }, { projection: { attempts: 1 } })
     .toArray();
 
-  return Math.max(0, ...counters.map((counter) => counter.attempts ?? 0));
+  const byKey = new Map(counters.map((counter) => [counter._id, counter.attempts ?? 0]));
+  return keys.map((key) => byKey.get(key) ?? 0);
 }
 
 /**

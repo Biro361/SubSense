@@ -306,7 +306,7 @@
                 📎 Dokument hochladen
               </span>
               <span class="mt-1 block text-xs text-gray-500">
-                PDF, Word, JPG, PNG, WebP (max. 5 MB)
+                PDF, Word, JPG, PNG, WebP (max. 4 MB)
               </span>
             </label>
           </div>

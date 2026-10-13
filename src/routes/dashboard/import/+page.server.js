@@ -30,11 +30,11 @@ export const actions = {
       return fail(400, { error: 'Nur CSV-Dateien erlaubt (.csv)' });
     }
 
-    // Dateigröße limitieren (5 MB)
-    const MAX_SIZE = 5 * 1024 * 1024;
+    // 4 MB: Netlify nimmt pro Request rund 6 MB an, Uploads wachsen unterwegs um ein Drittel
+    const MAX_SIZE = 4 * 1024 * 1024;
     if (file.size > MAX_SIZE) {
       return fail(400, {
-        error: `Datei zu groß (${(file.size / 1024 / 1024).toFixed(2)} MB). Maximum: 5 MB`
+        error: `Datei zu groß (${(file.size / 1024 / 1024).toFixed(2)} MB). Maximum: 4 MB`
       });
     }
 

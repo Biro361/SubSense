@@ -1,11 +1,16 @@
 // src/routes/auth/signup/+page.server.js
 import { fail, redirect } from '@sveltejs/kit';
 import { createUser } from '$lib/db/users';
+import {
+	recordAttempt,
+	SIGNUP_IP_MAX_ATTEMPTS,
+	SIGNUP_WINDOW_MINUTES
+} from '$lib/db/rateLimit.js';
 import { validatePassword } from '$lib/constants.js';
 import { setSessionCookie } from '$lib/server/auth.js';
 
 export const actions = {
-	default: async ({ request, cookies }) => {
+	default: async ({ request, cookies, getClientAddress }) => {
 		const formData = await request.formData();
 		const rawEmail = formData.get('email');
 		const rawPassword = formData.get('password');
@@ -32,6 +37,18 @@ export const actions = {
 		}
 
 		try {
+			// Vor createUser: der Passwort-Hash ist der teure Teil
+			const [attempts] = await recordAttempt(
+				[`signup:ip:${getClientAddress()}`],
+				SIGNUP_WINDOW_MINUTES
+			);
+
+			if (attempts > SIGNUP_IP_MAX_ATTEMPTS) {
+				return fail(429, {
+					error: 'Zu viele Registrierungen. Bitte später erneut versuchen.'
+				});
+			}
+
 			const userId = await createUser({ email, password, name });
 			if (!userId) {
 				return fail(400, { error: 'Diese Email-Adresse ist bereits registriert.' });

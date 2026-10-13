@@ -167,7 +167,7 @@
         />
 
         <p class="mt-4 text-sm text-gray-600">
-          Maximal 5 MB | Nur .csv-Dateien | UTF-8 Kodierung
+          Maximal 4 MB | Nur .csv-Dateien | UTF-8 Kodierung
         </p>
       </div>
 

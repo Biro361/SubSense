@@ -100,4 +100,21 @@ describe('CSV Round-Trip', () => {
     expect(contracts).toHaveLength(1);
     expect(errors[0]).toContain('Zeile 3');
   });
+
+  it('liest Semikolon-CSV aus Excel samt Dezimalkomma', () => {
+    const csv =
+      'name;provider;cancellationDate;status;cost\nNetflix;Netflix Inc.;2026-03-15;active;15,90';
+
+    const { contracts, errors } = parseCSV(csv);
+
+    expect(errors).toEqual([]);
+    expect(contracts[0].provider).toBe('Netflix Inc.');
+    expect(contracts[0].cost).toBe(15.9);
+  });
+
+  it('nimmt Kündigungsanweisungen in den Export und zurück', () => {
+    const csv = contractsToCSV([{ ...base, name: 'Abo', cancellationInstructions: 'per Brief' }]);
+
+    expect(parseCSV(csv).contracts[0].cancellationInstructions).toBe('per Brief');
+  });
 });
