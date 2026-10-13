@@ -1,6 +1,9 @@
 import { fail, redirect } from '@sveltejs/kit';
 import { parseCSV } from '$lib/utils/csv';
-import { createContract } from '$lib/db/contracts';
+import { createContracts } from '$lib/db/contracts';
+
+// Deckel gegen das Zeitlimit der Netlify-Function
+const MAX_IMPORT_ROWS = 500;
 
 /**
  * Server Actions für CSV-Import
@@ -51,6 +54,12 @@ export const actions = {
         });
       }
 
+      if (contracts.length > MAX_IMPORT_ROWS) {
+        return fail(400, {
+          error: `Zu viele Zeilen (${contracts.length}). Maximal ${MAX_IMPORT_ROWS} pro Import - teile die Datei auf.`
+        });
+      }
+
       // Erfolgreiche Vorschau
       return {
         preview: true,
@@ -93,22 +102,20 @@ export const actions = {
         });
       }
 
-      // Verträge in DB importieren
-      let successCount = 0;
-      let failCount = 0;
-      const importErrors = [];
-
-      for (const contract of contracts) {
-        try {
-          await createContract(contract, userId);
-          successCount++;
-        } catch (error) {
-          failCount++;
-          importErrors.push(
-            `${contract.name || 'Unbekannt'}: ${error.message}`
-          );
-        }
+      if (contracts.length > MAX_IMPORT_ROWS) {
+        return fail(400, {
+          error: `Zu viele Zeilen (${contracts.length}). Maximal ${MAX_IMPORT_ROWS} pro Import - teile die Datei auf.`
+        });
       }
+
+      // Alle Zeilen in einem Schreibvorgang
+      const { insertedCount, errors: importErrors } = await createContracts(
+        contracts,
+        userId
+      );
+
+      const successCount = insertedCount;
+      const failCount = importErrors.length;
 
       // Erfolgreich: Redirect zum Dashboard
       if (failCount === 0) {

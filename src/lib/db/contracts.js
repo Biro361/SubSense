@@ -138,6 +138,59 @@ export async function createContract(contractData, userId) {
 }
 
 /**
+ * Mehrere Verträge in einem Schreibvorgang anlegen (CSV-Import).
+ * Ein insertOne pro Zeile sprengt bei grösseren Dateien das Zeitlimit der
+ * Netlify-Function; ungültige Zeilen werden gemeldet, nicht geschrieben.
+ * @param {Array<Record<string, unknown>>} contractsData
+ * @param {string} userId
+ * @returns {Promise<{ insertedCount: number, errors: string[] }>}
+ */
+export async function createContracts(contractsData, userId) {
+  const client = await clientPromise;
+  const db = client.db(DB_NAME);
+
+  const now = new Date();
+  /** @type {Record<string, unknown>[]} */
+  const documents = [];
+  /** @type {string[]} */
+  const errors = [];
+
+  contractsData.forEach((input, index) => {
+    const { contract, errors: rowErrors } = validateContract(input);
+
+    if (!contract) {
+      const label = String(input.name ?? '').trim() || `Zeile ${index + 1}`;
+      errors.push(`${label}: ${rowErrors.join(' ')}`);
+      return;
+    }
+
+    documents.push({
+      ...contract,
+      userId,
+      documents: [],
+      createdAt: now,
+      updatedAt: now
+    });
+  });
+
+  if (documents.length === 0) {
+    return { insertedCount: 0, errors };
+  }
+
+  try {
+    // ordered: false - eine fehlerhafte Zeile stoppt die übrigen nicht
+    const result = await db
+      .collection(COLLECTION_NAME)
+      .insertMany(documents, { ordered: false });
+
+    return { insertedCount: result.insertedCount, errors };
+  } catch (error) {
+    console.error('Error creating contracts:', error);
+    throw error;
+  }
+}
+
+/**
  * Vertrag aktualisieren (mit User-Check)
  * @param {string} id - Contract ID
  * @param {object} updates - Zu aktualisierende Felder
