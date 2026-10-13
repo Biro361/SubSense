@@ -6,7 +6,7 @@ export const VALID_STATUSES = ['active', 'cancelled'];
 export const VALID_BILLING_CYCLES = ['monthly', 'yearly', 'quarterly'];
 
 const DATE_SHAPE = /^\d{4}-\d{2}-\d{2}$/;
-const URL_SHAPE = /^https?:\/\/.+/;
+export const URL_SHAPE = /^https?:\/\/.+/;
 
 /**
  * Wandelt eine Eingabe in ein Datum. Erlaubt sind Date-Objekte und YYYY-MM-DD;
