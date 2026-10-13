@@ -8,7 +8,11 @@ import { deleteAllContractDocuments } from '$lib/storage.js';
 let emailIndex: Promise<string> | null = null;
 
 function ensureEmailIndex(db: Db): Promise<string> {
-	emailIndex ??= db.collection('users').createIndex({ email: 1 }, { unique: true });
+	// Fehlschlag nicht behalten: der nächste Request versucht es neu
+	emailIndex ??= db.collection('users').createIndex({ email: 1 }, { unique: true }).catch((err) => {
+		emailIndex = null;
+		throw err;
+	});
 	return emailIndex;
 }
 

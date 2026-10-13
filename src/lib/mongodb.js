@@ -19,6 +19,8 @@ const options = {
 /** @type {MongoClient} */
 let client;
 
+// Kein connect(): der Treiber verbindet beim ersten Zugriff selbst und versucht es
+// nach einem Fehler erneut. Ein gespeichertes connect() bliebe für immer abgelehnt.
 /** @type {Promise<MongoClient>} */
 let clientPromise;
 
@@ -26,13 +28,13 @@ if (process.env.NODE_ENV === 'development') {
 	// Development: Globales Caching
 	if (!global._mongoClientPromise) {
 		client = new MongoClient(uri, options);
-		global._mongoClientPromise = client.connect();
+		global._mongoClientPromise = Promise.resolve(client);
 	}
 	clientPromise = global._mongoClientPromise;
 } else {
 	// Production: Neue Instanz
 	client = new MongoClient(uri, options);
-	clientPromise = client.connect();
+	clientPromise = Promise.resolve(client);
 }
 
 export default clientPromise;

@@ -21,7 +21,11 @@ async function getCollection() {
     db.collection(COLLECTION_NAME)
   );
 
-  ttlIndex ??= collection.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+  // Fehlschlag nicht behalten: der nächste Request versucht es neu
+  ttlIndex ??= collection.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 }).catch((err) => {
+    ttlIndex = null;
+    throw err;
+  });
   await ttlIndex;
 
   return collection;
