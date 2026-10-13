@@ -25,21 +25,8 @@ export async function load({ params, locals }) {
     throw error(404, 'Vertrag nicht gefunden oder keine Berechtigung');
   }
   
-  return {
-    contract: {
-      ...contract,
-      cancellationDate: contract.cancellationDate instanceof Date 
-        ? contract.cancellationDate.toISOString().split('T')[0]
-        : contract.cancellationDate,
-      documents: contract.documents?.map(doc => ({
-        ...doc,
-        _id: doc._id.toString(),
-        uploadDate: doc.uploadDate instanceof Date
-          ? doc.uploadDate.toISOString()
-          : doc.uploadDate
-      })) || []
-    }
-  };
+  // IDs sind bereits Strings (normalize), Daten überträgt SvelteKit als Date
+  return { contract };
 }
 
 /** @type {import('./$types').Actions} */
