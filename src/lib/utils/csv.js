@@ -5,6 +5,21 @@
 // relativ statt $lib, damit die Datei ohne Vite-Alias testbar bleibt
 import { validateContract } from '../validation.js';
 
+// Eine Liste für Export, Template und Fehlermeldung
+const FIELDS = [
+  'name',
+  'provider',
+  'cancellationDate',
+  'status',
+  'cost',
+  'billingCycle',
+  'reminderDays',
+  'category',
+  'cancellationUrl',
+  'notes',
+  'cancellationInstructions'
+];
+
 // Excel und Sheets führen Werte aus, die mit einem dieser Zeichen beginnen
 const FORMULA_START = /^[=+\-@\t\r]/;
 
@@ -33,32 +48,15 @@ function escapeCSVValue(value) {
 /**
  * Konvertiert Contract-Array zu CSV-String
  * @param {Array} contracts - Array von Contract-Objekten
- * @param {Array} fields - Zu exportierende Felder (Default: alle)
  * @returns {string} CSV-String mit UTF-8 BOM für Excel-Kompatibilität
  */
-export function contractsToCSV(contracts, fields = null) {
-  const defaultFields = [
-    'name',
-    'provider',
-    'cancellationDate',
-    'status',
-    'cost',
-    'billingCycle',
-    'reminderDays',
-    'category',
-    'cancellationUrl',
-    'notes',
-    'cancellationInstructions'
-  ];
-
-  const exportFields = fields || defaultFields;
-
+export function contractsToCSV(contracts) {
   // Header-Zeile
-  const header = exportFields.join(',');
+  const header = FIELDS.join(',');
 
   // Daten-Zeilen
   const rows = contracts.map((contract) => {
-    return exportFields
+    return FIELDS
       .map((field) => {
         let value = contract[field] ?? '';
 
@@ -95,9 +93,9 @@ export function parseCSV(csvContent) {
   // BOM entfernen falls vorhanden
   const cleanContent = csvContent.replace(/^\uFEFF/, '').trim();
 
-  // Excel mit Schweizer oder deutschen Einstellungen trennt mit Semikolon
-  const headerLine = cleanContent.split(/\r?\n/, 1)[0];
-  const delimiter = headerLine.includes(';') && !headerLine.includes(',') ? ';' : ',';
+  // Excel speichert mit Schweizer/deutschen Ländereinstellungen mit Semikolon
+  const headerLine = cleanContent.split(/[\r\n]/, 1)[0];
+  const delimiter = headerLine.split(';').length > headerLine.split(',').length ? ';' : ',';
 
   const rows = parseCSVRows(cleanContent, delimiter);
 
@@ -119,7 +117,7 @@ export function parseCSV(csvContent) {
       contracts: [],
       errors: [
         `Fehlende Pflichtfelder im CSV-Header: ${missingFields.join(', ')}`,
-        `Erwarteter Header: name,provider,cancellationDate,status,cost,billingCycle,reminderDays,category,cancellationUrl,notes,cancellationInstructions`
+        `Erwarteter Header: ${FIELDS.join(',')}`
       ],
       warnings: []
     };
@@ -169,7 +167,7 @@ export function parseCSV(csvContent) {
  * Gequotete Felder dürfen Kommas und Zeilenumbrüche enthalten und bleiben
  * zeichengenau; nicht gequotete werden getrimmt (handgeschriebenes "a, b").
  * @param {string} text - Kompletter CSV-Inhalt
- * @param {string} delimiter - Feldtrenner (',' oder ';')
+ * @param {string} delimiter - Trennzeichen zwischen den Feldern
  * @returns {Array<Array<string>>} Zeilen mit ihren Feldern
  */
 function parseCSVRows(text, delimiter) {
@@ -229,7 +227,7 @@ function parseCSVRows(text, delimiter) {
  * @returns {string} CSV-String für Template-Download
  */
 export function generateTemplateCSV() {
-  const header = 'name,provider,cancellationDate,status,cost,billingCycle,reminderDays,category,cancellationUrl,notes,cancellationInstructions';
+  const header = FIELDS.join(',');
   const examples = [
     'Netflix Premium,Netflix Inc.,2026-03-15,active,15.90,monthly,7,streaming,https://netflix.com/cancel,Test-Abo läuft noch',
     'Spotify Family,Spotify AB,2026-06-30,cancelled,16.90,monthly,14,streaming,,Bereits gekündigt am 01.12.2025',

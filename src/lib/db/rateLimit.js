@@ -3,7 +3,7 @@ import { getDatabase } from '$lib/mongodb';
 
 const COLLECTION_NAME = 'rate_limits';
 
-// Grenzwerte für den Login; die Forgot-Password-Form nutzt eigene (5 pro Stunde)
+// Grenzwerte für den Login
 export const LOGIN_MAX_ATTEMPTS = 10;
 // Höher als pro Email: hinter einem Campus-WLAN teilen sich viele User eine IP
 export const LOGIN_IP_MAX_ATTEMPTS = 100;

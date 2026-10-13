@@ -34,7 +34,7 @@ export const PASSWORD_MIN_LENGTH = 8;
 export const PASSWORD_MAX_BYTES = 72;
 
 /**
- * Gemeinsame Passwortregel für Signup, Passwortwechsel und Reset
+ * Gemeinsame Passwortregel für Signup und Passwortwechsel
  * @param {unknown} password
  * @returns {string|null} Fehlermeldung oder null
  */

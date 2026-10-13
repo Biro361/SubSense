@@ -84,6 +84,19 @@ describe('calculateReminderMetadata', () => {
     expect(result.daysUntilCancellation).toBe(7);
   });
 
+  it('zählt kurz nach Mitternacht Schweizer Zeit schon den neuen Tag', () => {
+    // 22:30 UTC am 20.10. ist 00:30 am 21.10. in Zürich
+    vi.setSystemTime(new Date('2026-10-20T22:30:00.000Z'));
+
+    const result = calculateReminderMetadata({
+      cancellationDate: new Date('2026-10-21T00:00:00.000Z'),
+      reminderDays: 7,
+      status: 'active'
+    });
+
+    expect(result.daysUntilCancellation).toBe(0);
+  });
+
   it('kennzeichnet gekündigte Verträge weder als dringend noch als überfällig', () => {
     const result = calculateReminderMetadata({
       cancellationDate: dayOffset(-5),

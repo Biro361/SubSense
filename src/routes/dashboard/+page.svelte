@@ -4,6 +4,7 @@
   import { onMount } from "svelte";
   import { CATEGORIES, getCategoryByValue } from "$lib/constants";
   import { goto } from '$app/navigation';
+  import Toast from "$lib/components/Toast.svelte";
 
   let { data } = $props();
   let contracts = $derived(data.contracts || []);
@@ -56,16 +57,11 @@
   let showToast = $state(false);
   let toastMessage = $state("");
 
-  // Toast anzeigen und nach 5 Sekunden auto-dismiss
+  // Toast anzeigen; die Komponente blendet sich nach 5 Sekunden selbst aus
   onMount(() => {
     if (successMessage) {
       toastMessage = successMessage;
       showToast = true;
-
-      // Auto-dismiss nach 5 Sekunden
-      setTimeout(() => {
-        showToast = false;
-      }, 5000);
 
       // URL bereinigen (ohne ?message=...)
       const url = new URL(window.location.href);
@@ -74,11 +70,6 @@
       window.history.replaceState({}, "", url);
     }
   });
-
-  // Manuelles Schließen
-  function closeToast() {
-    showToast = false;
-  }
 
   // Verträge nach Dringlichkeit sortieren (dringend zuerst)
   let sortedContracts = $derived(
@@ -174,72 +165,158 @@
   }
 </script>
 
-<!-- Toast-Notification (Top-Right, Fixed) -->
 {#if showToast}
-  <div
-    class="fixed top-4 right-4 z-50 animate-slide-in-right"
-    role="alert"
-    aria-live="polite"
-  >
-    <div
-      class="bg-white rounded-lg shadow-2xl border-2 border-green-500 overflow-hidden max-w-md"
-    >
-      <!-- Header mit Icon und Close-Button -->
-      <div class="flex items-start gap-3 p-4">
-        <!-- Checkmark-Icon -->
-        <div
-          class="flex-shrink-0 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center"
-        >
-          <svg
-            class="w-5 h-5 text-white"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="3"
-              d="M5 13l4 4L19 7"
-            ></path>
-          </svg>
-        </div>
-
-        <!-- Message -->
-        <div class="flex-1 pt-0.5">
-          <p class="text-base font-semibold text-gray-900">Erfolgreich!</p>
-          <p class="text-sm text-gray-600 mt-1">{toastMessage}</p>
-        </div>
-
-        <!-- Close-Button -->
-        <button
-          onclick={closeToast}
-          class="flex-shrink-0 text-gray-400 hover:text-gray-600 transition-colors"
-          aria-label="Schließen"
-        >
-          <svg
-            class="w-5 h-5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M6 18L18 6M6 6l12 12"
-            ></path>
-          </svg>
-        </button>
-      </div>
-
-      <!-- Progress-Bar (5 Sekunden Animation) -->
-      <div class="h-1 bg-gray-100">
-        <div class="h-full bg-green-500 animate-progress-bar"></div>
-      </div>
-    </div>
-  </div>
+  <Toast message={toastMessage} onClose={() => (showToast = false)} />
 {/if}
+
+<!-- Karte für überfällige (overdue) und dringende Verträge -->
+{#snippet alertCard(contract, overdue)}
+  <div
+    class="{overdue
+      ? 'bg-red-100 border-red-500 shadow-lg'
+      : 'bg-red-50 border-red-200 shadow'} border-2 rounded-lg p-4"
+  >
+    <div class="flex justify-between items-start">
+      <div class="flex-1">
+        <div class="flex items-center gap-2 mb-2">
+          <h3 class="text-lg font-semibold {overdue ? 'text-gray-900' : ''}">
+            {contract.name}
+          </h3>
+          <span
+            class="bg-red-600 text-white px-3 py-1 rounded-full text-xs font-bold"
+          >
+            {overdue ? "ÜBERFÄLLIG" : "DRINGEND"}
+          </span>
+        </div>
+        <p class="{overdue ? 'text-gray-800' : 'text-gray-700'} font-medium">
+          Anbieter: {contract.provider}
+        </p>
+
+        {#if contract.cancellationUrl}
+          <a
+            href={contract.cancellationUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 hover:underline mt-1"
+          >
+            <svg
+              class="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+              ></path>
+            </svg>
+            Zur Kündigungsseite
+          </a>
+        {/if}
+
+        {#if overdue}
+          <div class="mt-3 p-3 bg-white rounded border-2 border-red-500">
+            <p class="text-sm font-semibold text-red-700 mb-1">
+              ⚠️ Kündigungsfrist überschritten:
+            </p>
+            <p class="text-xl font-bold text-red-700">
+              {formatDaysText(contract.daysUntilCancellation)}
+            </p>
+            <p class="text-sm font-medium text-gray-700 mt-2">
+              Frist war am: <span class="font-semibold"
+                >{new Date(contract.cancellationDate).toLocaleDateString(
+                  "de-DE",
+                )}</span
+              >
+            </p>
+            <p class="text-xs text-red-600 mt-2 italic">
+              💡 Tipp: Prüfe die Vertragsbedingungen. Möglicherweise wurde
+              der Vertrag automatisch verlängert.
+            </p>
+          </div>
+        {:else}
+          <div class="mt-3 p-3 bg-white rounded border border-red-300">
+            <p class="text-sm font-medium text-gray-700 mb-1">
+              Kündigungsfrist:
+            </p>
+            <p class="text-xl font-bold text-red-600">
+              {formatDaysText(contract.daysUntilCancellation)}
+            </p>
+            <p class="text-sm font-medium text-gray-600 mt-1">
+              bis <span class="font-semibold"
+                >{new Date(contract.cancellationDate).toLocaleDateString(
+                  "de-DE",
+                )}</span
+              >
+            </p>
+          </div>
+        {/if}
+
+        {#if contract.cost && contract.cost > 0}
+          <p class="text-sm font-medium text-blue-600 mt-3">
+            {contract.cost.toFixed(2)} CHF / {formatBillingCycle(
+              contract.billingCycle,
+            )}
+          </p>
+        {/if}
+      </div>
+
+      <span
+        class="{overdue || contract.status !== 'active'
+          ? 'bg-gray-100 text-gray-800'
+          : 'bg-green-100 text-green-800'} px-3 py-1 rounded-full text-sm h-fit"
+      >
+        {contract.status === "active" ? "Aktiv" : "Gekündigt"}
+      </span>
+    </div>
+
+    {#if overdue}
+      <div class="flex gap-2 mt-4 pt-4 border-t border-red-300">
+        <a
+          href="/dashboard/contracts/{contract._id}"
+          class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 text-sm font-medium"
+        >
+          Details anzeigen
+        </a>
+        <a
+          href="/dashboard/contracts/{contract._id}/edit"
+          class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm font-medium"
+        >
+          Status aktualisieren
+        </a>
+        <a
+          href="/dashboard/contracts/{contract._id}/delete"
+          class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 text-sm font-medium"
+        >
+          Löschen
+        </a>
+      </div>
+    {:else}
+      <div class="flex gap-2 mt-4 pt-4 border-t border-red-200">
+        <a
+          href="/dashboard/contracts/{contract._id}"
+          class="text-gray-600 hover:text-gray-800 text-sm font-medium"
+        >
+          👁️ Details
+        </a>
+        <a
+          href="/dashboard/contracts/{contract._id}/edit"
+          class="text-blue-600 hover:text-blue-800 text-sm font-medium"
+        >
+          ✏️ Bearbeiten
+        </a>
+        <a
+          href="/dashboard/contracts/{contract._id}/delete"
+          class="text-red-600 hover:text-red-800 text-sm font-medium"
+        >
+          🗑️ Löschen
+        </a>
+      </div>
+    {/if}
+  </div>
+{/snippet}
 
 <!-- Dashboard-Content (Header ist jetzt im Layout) -->
 <div class="max-w-4xl mx-auto p-6">
@@ -396,106 +473,7 @@
 
       <div class="grid gap-4">
         {#each overdueContracts as contract}
-          <div
-            class="bg-red-100 border-2 border-red-500 rounded-lg shadow-lg p-4"
-          >
-            <div class="flex justify-between items-start">
-              <div class="flex-1">
-                <div class="flex items-center gap-2 mb-2">
-                  <h3 class="text-lg font-semibold text-gray-900">
-                    {contract.name}
-                  </h3>
-                  <span
-                    class="bg-red-600 text-white px-3 py-1 rounded-full text-xs font-bold"
-                  >
-                    ÜBERFÄLLIG
-                  </span>
-                </div>
-                <p class="text-gray-800 font-medium">
-                  Anbieter: {contract.provider}
-                </p>
-
-                {#if contract.cancellationUrl}
-                  <a
-                    href={contract.cancellationUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 hover:underline mt-1"
-                  >
-                    <svg
-                      class="w-4 h-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                      ></path>
-                    </svg>
-                    Zur Kündigungsseite
-                  </a>
-                {/if}
-
-                <div class="mt-3 p-3 bg-white rounded border-2 border-red-500">
-                  <p class="text-sm font-semibold text-red-700 mb-1">
-                    ⚠️ Kündigungsfrist überschritten:
-                  </p>
-                  <p class="text-xl font-bold text-red-700">
-                    {formatDaysText(contract.daysUntilCancellation)}
-                  </p>
-                  <p class="text-sm font-medium text-gray-700 mt-2">
-                    Frist war am: <span class="font-semibold"
-                      >{new Date(contract.cancellationDate).toLocaleDateString(
-                        "de-DE",
-                      )}</span
-                    >
-                  </p>
-                  <p class="text-xs text-red-600 mt-2 italic">
-                    💡 Tipp: Prüfe die Vertragsbedingungen. Möglicherweise wurde
-                    der Vertrag automatisch verlängert.
-                  </p>
-                </div>
-
-                {#if contract.cost && contract.cost > 0}
-                  <p class="text-sm font-medium text-blue-600 mt-3">
-                    {contract.cost.toFixed(2)} CHF / {formatBillingCycle(
-                      contract.billingCycle,
-                    )}
-                  </p>
-                {/if}
-              </div>
-
-              <span
-                class="bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm h-fit"
-              >
-                {contract.status === "active" ? "Aktiv" : "Gekündigt"}
-              </span>
-            </div>
-
-            <div class="flex gap-2 mt-4 pt-4 border-t border-red-300">
-              <a
-                href="/dashboard/contracts/{contract._id}"
-                class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 text-sm font-medium"
-              >
-                Details anzeigen
-              </a>
-              <a
-                href="/dashboard/contracts/{contract._id}/edit"
-                class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm font-medium"
-              >
-                Status aktualisieren
-              </a>
-              <a
-                href="/dashboard/contracts/{contract._id}/delete"
-                class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 text-sm font-medium"
-              >
-                Löschen
-              </a>
-            </div>
-          </div>
+          {@render alertCard(contract, true)}
         {/each}
       </div>
     </div>
@@ -517,100 +495,7 @@
 
       <div class="grid gap-4">
         {#each urgentContracts as contract}
-          <div class="bg-red-50 border-2 border-red-200 rounded-lg shadow p-4">
-            <div class="flex justify-between items-start">
-              <div class="flex-1">
-                <div class="flex items-center gap-2 mb-2">
-                  <h3 class="text-lg font-semibold">{contract.name}</h3>
-                  <span
-                    class="bg-red-600 text-white px-3 py-1 rounded-full text-xs font-bold"
-                  >
-                    DRINGEND
-                  </span>
-                </div>
-                <p class="text-gray-700 font-medium">
-                  Anbieter: {contract.provider}
-                </p>
-
-                {#if contract.cancellationUrl}
-                  <a
-                    href={contract.cancellationUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 hover:underline mt-1"
-                  >
-                    <svg
-                      class="w-4 h-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                      ></path>
-                    </svg>
-                    Zur Kündigungsseite
-                  </a>
-                {/if}
-
-                <div class="mt-3 p-3 bg-white rounded border border-red-300">
-                  <p class="text-sm font-medium text-gray-700 mb-1">
-                    Kündigungsfrist:
-                  </p>
-                  <p class="text-xl font-bold text-red-600">
-                    {formatDaysText(contract.daysUntilCancellation)}
-                  </p>
-                  <p class="text-sm font-medium text-gray-600 mt-1">
-                    bis <span class="font-semibold"
-                      >{new Date(contract.cancellationDate).toLocaleDateString(
-                        "de-DE",
-                      )}</span
-                    >
-                  </p>
-                </div>
-
-                {#if contract.cost && contract.cost > 0}
-                  <p class="text-sm font-medium text-blue-600 mt-3">
-                    {contract.cost.toFixed(2)} CHF / {formatBillingCycle(
-                      contract.billingCycle,
-                    )}
-                  </p>
-                {/if}
-              </div>
-
-              <span
-                class="{contract.status === 'active'
-                  ? 'bg-green-100 text-green-800'
-                  : 'bg-gray-100 text-gray-800'} px-3 py-1 rounded-full text-sm h-fit"
-              >
-                {contract.status === "active" ? "Aktiv" : "Gekündigt"}
-              </span>
-            </div>
-
-            <div class="flex gap-2 mt-4 pt-4 border-t border-red-200">
-              <a
-                href="/dashboard/contracts/{contract._id}"
-                class="text-gray-600 hover:text-gray-800 text-sm font-medium"
-              >
-                👁️ Details
-              </a>
-              <a
-                href="/dashboard/contracts/{contract._id}/edit"
-                class="text-blue-600 hover:text-blue-800 text-sm font-medium"
-              >
-                ✏️ Bearbeiten
-              </a>
-              <a
-                href="/dashboard/contracts/{contract._id}/delete"
-                class="text-red-600 hover:text-red-800 text-sm font-medium"
-              >
-                🗑️ Löschen
-              </a>
-            </div>
-          </div>
+          {@render alertCard(contract, false)}
         {/each}
       </div>
     </div>
@@ -765,36 +650,6 @@
 </div>
 
 <style>
-  /* Slide-In-Animation von rechts */
-  @keyframes slide-in-right {
-    from {
-      transform: translateX(100%);
-      opacity: 0;
-    }
-    to {
-      transform: translateX(0);
-      opacity: 1;
-    }
-  }
-
-  .animate-slide-in-right {
-    animation: slide-in-right 0.3s ease-out;
-  }
-
-  /* Progress-Bar Animation (5 Sekunden) */
-  @keyframes progress {
-    from {
-      width: 100%;
-    }
-    to {
-      width: 0%;
-    }
-  }
-
-  .animate-progress-bar {
-    animation: progress 5s linear;
-  }
-
   /* Puls-Animation für überfällige Badges */
   @keyframes pulse {
     0%,

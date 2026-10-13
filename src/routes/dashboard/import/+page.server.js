@@ -109,29 +109,9 @@ export const actions = {
       }
 
       // Alle Zeilen in einem Schreibvorgang
-      const { insertedCount, errors: importErrors } = await createContracts(
-        contracts,
-        userId
-      );
+      const insertedCount = await createContracts(contracts, userId);
 
-      const successCount = insertedCount;
-      const failCount = importErrors.length;
-
-      // Erfolgreich: Redirect zum Dashboard
-      if (failCount === 0) {
-        throw redirect(
-          303,
-          `/dashboard?message=import_success&count=${successCount}`
-        );
-      } else {
-        // Teilweise erfolgreich: Feedback anzeigen
-        return {
-          partialSuccess: true,
-          successCount,
-          failCount,
-          importErrors
-        };
-      }
+      throw redirect(303, `/dashboard?message=import_success&count=${insertedCount}`);
     } catch (error) {
       // Redirect durchlassen
       if (error?.status === 303) throw error;

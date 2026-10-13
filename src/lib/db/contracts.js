@@ -1,6 +1,6 @@
 import { ObjectId } from 'mongodb';
 import clientPromise from '$lib/mongodb';
-import { validateContract } from '$lib/validation.js';
+import { validateContract, URL_SHAPE } from '$lib/validation.js';
 import { calculateReminderMetadata } from '$lib/reminders.js';
 
 const DB_NAME = 'subsense';
@@ -147,41 +147,35 @@ export async function createContract(contractData, userId) {
 /**
  * Mehrere Verträge in einem Schreibvorgang anlegen (CSV-Import).
  * Ein insertOne pro Zeile sprengt bei grösseren Dateien das Zeitlimit der
- * Netlify-Function; ungültige Zeilen werden gemeldet, nicht geschrieben.
+ * Netlify-Function. Ungültige Zeilen sortiert parseCSV vorher aus; kommt hier
+ * trotzdem eine an, wird wie in createContract nichts geschrieben.
  * @param {Array<Record<string, unknown>>} contractsData
  * @param {string} userId
- * @returns {Promise<{ insertedCount: number, errors: string[] }>}
+ * @returns {Promise<number>} Anzahl geschriebener Verträge
  */
 export async function createContracts(contractsData, userId) {
   const client = await clientPromise;
   const db = client.db(DB_NAME);
 
   const now = new Date();
-  /** @type {Record<string, unknown>[]} */
-  const documents = [];
-  /** @type {string[]} */
-  const errors = [];
-
-  contractsData.forEach((input, index) => {
-    const { contract, errors: rowErrors } = validateContract(input);
-
+  const documents = contractsData.map((input) => {
+    const { contract, errors } = validateContract(input);
     if (!contract) {
-      const label = String(input.name ?? '').trim() || `Zeile ${index + 1}`;
-      errors.push(`${label}: ${rowErrors.join(' ')}`);
-      return;
+      throw new Error(errors.join(' '));
     }
 
-    documents.push({
+    return {
       ...contract,
       userId,
       documents: [],
       createdAt: now,
       updatedAt: now
-    });
+    };
   });
 
+  // insertMany wirft bei einer leeren Liste
   if (documents.length === 0) {
-    return { insertedCount: 0, errors };
+    return 0;
   }
 
   try {
@@ -190,7 +184,7 @@ export async function createContracts(contractsData, userId) {
       .collection(COLLECTION_NAME)
       .insertMany(documents, { ordered: false });
 
-    return { insertedCount: result.insertedCount, errors };
+    return result.insertedCount;
   } catch (error) {
     console.error('Error creating contracts:', error);
     throw error;
@@ -322,7 +316,7 @@ export async function updateCancellationInstructions(contractId, instructions, u
   try {
     // URL validieren falls vorhanden
     const cancellationUrl = url?.trim() || null;
-    if (cancellationUrl && !/^https?:\/\/.+/.test(cancellationUrl)) {
+    if (cancellationUrl && !URL_SHAPE.test(cancellationUrl)) {
       throw new Error('Invalid cancellation URL format');
     }
 
