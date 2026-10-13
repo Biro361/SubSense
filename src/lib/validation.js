@@ -34,6 +34,21 @@ function toDate(value) {
 }
 
 /**
+ * @typedef {object} ValidatedContract
+ * @property {string} name
+ * @property {string} provider
+ * @property {Date} cancellationDate
+ * @property {string} status
+ * @property {number} cost
+ * @property {string} billingCycle
+ * @property {number} reminderDays
+ * @property {string} category
+ * @property {string|null} cancellationUrl
+ * @property {string} notes
+ * @property {string} cancellationInstructions
+ */
+
+/**
  * Prüft und normalisiert Vertragsdaten aus Formular oder CSV.
  *
  * Harte Fehler gibt es für Pflichtfelder, Datum, Status und Kosten. Zyklus,
@@ -43,7 +58,7 @@ function toDate(value) {
  * erreicht die Datenbank also nicht.
  *
  * @param {Record<string, unknown>} input - Rohwerte aus Formular oder CSV
- * @returns {{ contract: object|null, errors: string[], warnings: string[] }}
+ * @returns {{ contract: ValidatedContract|null, errors: string[], warnings: string[] }}
  */
 export function validateContract(input) {
   /** @type {string[]} */
@@ -105,7 +120,7 @@ export function validateContract(input) {
     cancellationUrl = null;
   }
 
-  if (errors.length > 0) {
+  if (errors.length > 0 || !cancellationDate) {
     return { contract: null, errors, warnings };
   }
 

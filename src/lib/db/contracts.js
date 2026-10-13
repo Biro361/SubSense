@@ -1,6 +1,7 @@
 import { ObjectId } from 'mongodb';
 import clientPromise from '$lib/mongodb';
 import { validateContract } from '$lib/validation.js';
+import { calculateReminderMetadata } from '$lib/reminders.js';
 
 const DB_NAME = 'subsense';
 const COLLECTION_NAME = 'contracts';
@@ -19,48 +20,6 @@ function normalizeDocuments(documents) {
     _id: doc._id.toString()
   }));
 }
-
-/**
- * Hilfsfunktion: Berechnet Erinnerungs-Metadaten für einen Vertrag
- */
-function calculateReminderMetadata(contract) {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  const cancellationDate = new Date(contract.cancellationDate);
-  cancellationDate.setHours(0, 0, 0, 0);
-
-  // Tage bis zur Kündigungsfrist berechnen
-  const daysUntilCancellation = Math.ceil(
-    (cancellationDate - today) / (1000 * 60 * 60 * 24)
-  );
-
-  // Erinnerungstage (Standard: 7 Tage vor Kündigungsfrist)
-  const reminderDays = contract.reminderDays ?? 7;
-
-  // Erinnerungsdatum berechnen
-  const reminderDate = new Date(cancellationDate);
-  reminderDate.setDate(reminderDate.getDate() - reminderDays);
-
-  // Status-Berechnung
-  const isOverdue =
-    contract.status === 'active' &&
-    daysUntilCancellation < 0; // Kündigungsfrist bereits verpasst
-
-  const isUrgent =
-    contract.status === 'active' &&
-    daysUntilCancellation <= reminderDays &&
-    daysUntilCancellation >= 0; // Im Erinnerungszeitraum, aber noch nicht überfällig
-
-  return {
-    reminderDays,
-    reminderDate,
-    daysUntilCancellation,
-    isUrgent,
-    isOverdue
-  };
-}
-
 
 /**
  * Alle Verträge eines Users abrufen (mit Erinnerungs-Metadaten)

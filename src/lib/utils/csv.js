@@ -88,7 +88,7 @@ export function generateExportFilename() {
 /**
  * Parst CSV-String zu Contract-Array mit Validierung
  * @param {string} csvContent - CSV-String (mit oder ohne BOM)
- * @returns {object} { contracts: Array, errors: Array, warnings: Array }
+ * @returns {{ contracts: import('../validation.js').ValidatedContract[], errors: string[], warnings: string[] }}
  */
 export function parseCSV(csvContent) {
   // BOM entfernen falls vorhanden
