@@ -143,7 +143,8 @@ export const actions = {
       return { success: true, message: 'Dokument hochgeladen' };
     } catch (err) {
       console.error('Fehler beim Upload:', err);
-      return { success: false, message: 'Upload fehlgeschlagen: ' + err.message };
+      // err.message bleibt im Log: sie enthält Pfade und Zugangsfehler
+      return { success: false, message: 'Upload fehlgeschlagen' };
     }
   },
   
