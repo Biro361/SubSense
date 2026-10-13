@@ -44,6 +44,3 @@ export async function handle({ event, resolve }) {
 
 	return resolve(event);
 }
-
-// Re-export für Backwards-Kompatibilität
-export { setSessionCookie, clearSessionCookie } from '$lib/server/auth.js';

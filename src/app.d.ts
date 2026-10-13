@@ -1,11 +1,14 @@
 // src/app.d.ts
-import type { Session } from '@auth/core/types';
 
 declare global {
 	namespace App {
 		interface Locals {
-			session: Session | null;
-			user: Session['user'] | null;
+			// Wird in hooks.server.js aus dem Session-Cookie gesetzt
+			user: {
+				userId: string;
+				email: string;
+				tokenVersion: number;
+			} | null;
 		}
 	}
 }

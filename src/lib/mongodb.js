@@ -35,7 +35,6 @@ if (process.env.NODE_ENV === 'development') {
 	clientPromise = client.connect();
 }
 
-// Default Export für Auth.js Adapter
 export default clientPromise;
 
 /**
