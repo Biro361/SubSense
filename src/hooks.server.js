@@ -28,9 +28,6 @@ export async function handle({ event, resolve }) {
 		}
 	}
 
-	// Auth-Routes prüfen
-	const isAuthRoute = pathname.startsWith('/auth');
-
 	// Geschützte API-Routes
 	const protectedPrefixes = ['/api'];
 	const isProtected = protectedPrefixes.some(
@@ -38,7 +35,7 @@ export async function handle({ event, resolve }) {
 	);
 
 	// Redirect zu /auth/signin wenn nicht eingeloggt
-	if (isProtected && !isAuthRoute && !event.locals.user) {
+	if (isProtected && !event.locals.user) {
 		throw redirect(303, '/auth/signin');
 	}
 
