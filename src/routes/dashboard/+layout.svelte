@@ -59,10 +59,13 @@
 		}
 	}
 
-	// Keyboard-Handler für Modal (Escape-Taste)
+	// Keyboard-Handler für Modal und Dropdown (Escape-Taste)
 	function handleKeydown(event) {
-		if (event.key === "Escape" && showLogoutConfirm) {
+		if (event.key !== "Escape") return;
+		if (showLogoutConfirm) {
 			cancelLogout();
+		} else if (showUserMenu) {
+			showUserMenu = false;
 		}
 	}
 </script>
@@ -199,6 +202,7 @@
 						onclick={() => (showUserMenu = !showUserMenu)}
 						class="user-button"
 						aria-label="Benutzermenü"
+						aria-haspopup="true"
 						aria-expanded={showUserMenu}
 					>
 						<!-- User-Avatar -->
@@ -501,13 +505,13 @@
 
 	.btn-export {
 		background: white;
-		color: #059669;
+		color: #047857;
 		border-color: #d1fae5;
 	}
 
 	.btn-export:hover:not(:disabled) {
 		background: #d1fae5;
-		border-color: #059669;
+		border-color: #047857;
 		transform: translateY(-1px);
 	}
 
@@ -687,7 +691,7 @@
 
 	.dropdown-status {
 		font-size: 0.75rem;
-		color: #059669;
+		color: #047857;
 		margin: 0;
 	}
 
