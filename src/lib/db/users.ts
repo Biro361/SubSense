@@ -1,8 +1,16 @@
 // src/lib/db/users.ts
 import { getDatabase } from '$lib/mongodb';
-import { ObjectId } from 'mongodb';
+import { ObjectId, MongoServerError, type Db } from 'mongodb';
 import bcrypt from 'bcryptjs';
 import { deleteAllContractDocuments } from '$lib/storage.js';
+
+/** Einmal pro Prozess: ohne den Index sind doppelte Emails nicht verhindert */
+let emailIndex: Promise<string> | null = null;
+
+function ensureEmailIndex(db: Db): Promise<string> {
+	emailIndex ??= db.collection('users').createIndex({ email: 1 }, { unique: true });
+	return emailIndex;
+}
 
 export interface User {
 	_id: ObjectId;
@@ -28,32 +36,34 @@ export async function createUser(data: NewUser): Promise<ObjectId | null> {
 	const db = await getDatabase();
 	const { email, password, name } = data;
 
+	await ensureEmailIndex(db);
+
 	// Email normalisieren
 	const normalizedEmail = email.toLowerCase();
-
-	// Prüfen, ob Email bereits existiert
-	const existing = await db.collection<User>('users').findOne({
-		email: normalizedEmail
-	});
-
-	if (existing) {
-		return null;
-	}
 
 	// Passwort hashen
 	const hashedPassword = await bcrypt.hash(password, 10);
 	const now = new Date();
 
-	const result = await db.collection<User>('users').insertOne({
-		email: normalizedEmail,
-		password: hashedPassword,
-		name: name || normalizedEmail.split('@')[0],
-		tokenVersion: 0,
-		createdAt: now,
-		updatedAt: now
-	});
+	try {
+		const result = await db.collection<User>('users').insertOne({
+			email: normalizedEmail,
+			password: hashedPassword,
+			name: name || normalizedEmail.split('@')[0],
+			tokenVersion: 0,
+			createdAt: now,
+			updatedAt: now
+		});
 
-	return result.insertedId;
+		return result.insertedId;
+	} catch (err) {
+		// Der Index entscheidet, nicht ein vorheriges findOne: dazwischen passt ein Race
+		if (err instanceof MongoServerError && err.code === 11000) {
+			return null;
+		}
+
+		throw err;
+	}
 }
 
 /**
@@ -85,29 +95,30 @@ export async function updateUserEmail(
 	newEmail: string
 ): Promise<boolean> {
 	const db = await getDatabase();
+	await ensureEmailIndex(db);
+
 	const normalizedEmail = newEmail.toLowerCase();
 
-	// Prüfen, ob neue E-Mail bereits existiert (ausser beim aktuellen User)
-	const existing = await db.collection<User>('users').findOne({
-		email: normalizedEmail,
-		_id: { $ne: new ObjectId(userId) }
-	});
-
-	if (existing) {
-		return false;
-	}
-
-	await db.collection<User>('users').updateOne(
-		{ _id: new ObjectId(userId) },
-		{
-			$set: {
-				email: normalizedEmail,
-				updatedAt: new Date()
+	try {
+		await db.collection<User>('users').updateOne(
+			{ _id: new ObjectId(userId) },
+			{
+				$set: {
+					email: normalizedEmail,
+					updatedAt: new Date()
+				}
 			}
-		}
-	);
+		);
 
-	return true;
+		return true;
+	} catch (err) {
+		// Email gehört einem anderen User
+		if (err instanceof MongoServerError && err.code === 11000) {
+			return false;
+		}
+
+		throw err;
+	}
 }
 
 /**
