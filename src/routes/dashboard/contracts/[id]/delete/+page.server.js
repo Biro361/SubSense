@@ -1,4 +1,5 @@
 import { getContractById, deleteContract } from '$lib/db/contracts';
+import { deleteAllContractDocuments } from '$lib/storage.js';
 import { error, redirect, fail } from '@sveltejs/kit';
 
 // Vertrag laden (mit User-Check)
@@ -46,6 +47,14 @@ export const actions = {
         });
       }
       
+      // Nach dem DB-Delete: ein Fehler hier darf die Löschung nicht als
+      // fehlgeschlagen melden, der Vertrag ist bereits weg
+      try {
+        await deleteAllContractDocuments(params.id);
+      } catch (cleanupErr) {
+        console.error('Dokumente konnten nicht gelöscht werden:', cleanupErr);
+      }
+
       throw redirect(303, '/dashboard?message=created');
       
     } catch (err) {
