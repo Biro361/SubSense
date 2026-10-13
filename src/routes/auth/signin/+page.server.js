@@ -47,7 +47,8 @@ export const actions = {
 				return fail(401, { error: 'Email oder Passwort ist falsch.' });
 			}
 
-			await clearAttempts(limitKeys);
+			// Nur den Email-Zähler: sonst setzt ein Login ins eigene Konto das IP-Limit zurück
+			await clearAttempts([limitKeys[1]]);
 
 			// Session-Cookie setzen
 			setSessionCookie(cookies, user._id.toString(), user.email, user.tokenVersion);
