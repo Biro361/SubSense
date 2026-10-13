@@ -123,9 +123,16 @@ export const actions = {
     }
     
     try {
+      // Besitz vor dem Speichern prüfen: params.id wird als Ordnername benutzt
+      const contract = await getContractById(params.id, user.userId);
+
+      if (!contract) {
+        return { success: false, message: 'Vertrag nicht gefunden oder keine Berechtigung' };
+      }
+
       // Upload zu Netlify Blob
       const { url, filename } = await uploadDocument(file, params.id);
-      
+
       // Metadata in MongoDB speichern
       const documentData = {
         filename,
@@ -134,9 +141,15 @@ export const actions = {
         size: file.size,
         url
       };
-      
-      await addDocument(params.id, documentData, user.userId);
-      
+
+      const added = await addDocument(params.id, documentData, user.userId);
+
+      // Vertrag zwischenzeitlich gelöscht: Datei nicht als Waise liegen lassen
+      if (!added) {
+        await deleteStorageDocument(filename);
+        return { success: false, message: 'Vertrag nicht gefunden oder keine Berechtigung' };
+      }
+
       return { success: true, message: 'Dokument hochgeladen' };
     } catch (err) {
       console.error('Fehler beim Upload:', err);
