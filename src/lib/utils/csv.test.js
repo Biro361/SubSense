@@ -37,6 +37,12 @@ describe('CSV Round-Trip', () => {
     });
   });
 
+  it('behält die Kündigungsanweisungen über Export und Import', () => {
+    const csv = contractsToCSV([{ ...base, name: 'Netflix', cancellationInstructions: 'Per Brief, 3 Monate vorher' }]);
+
+    expect(parseCSV(csv).contracts[0].cancellationInstructions).toBe('Per Brief, 3 Monate vorher');
+  });
+
   it('schliesst jedes geöffnete Anführungszeichen', () => {
     const csv = contractsToCSV([{ ...base, name: 'Netflix, Premium', notes: 'mit "Quote"' }]);
     const quotes = csv.match(/"/g) ?? [];
