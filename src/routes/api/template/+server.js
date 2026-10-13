@@ -3,7 +3,7 @@ import { generateTemplateCSV } from '$lib/utils/csv';
 /**
  * GET /api/template
  * Stellt eine Template-CSV mit Beispieldaten zum Download bereit
- * Keine Authentifizierung erforderlich (öffentliche Ressource)
+ * Nur für eingeloggte User: hooks.server.js schützt alle /api-Routen
  */
 /** @type {import('./$types').RequestHandler} */
 export async function GET() {
