@@ -2,6 +2,7 @@
 import { getDatabase } from '$lib/mongodb';
 import { ObjectId } from 'mongodb';
 import bcrypt from 'bcryptjs';
+import { deleteAllContractDocuments } from '$lib/storage.js';
 
 export interface User {
 	_id: ObjectId;
@@ -169,10 +170,18 @@ export async function updateUserName(userId: string, name: string): Promise<void
 export async function deleteUser(userId: string): Promise<void> {
 	const db = await getDatabase();
 
-	// Zuerst alle Verträge des Users löschen
-	await db.collection('contracts').deleteMany({
-		userId: new ObjectId(userId)
-	});
+	// Dateien zuerst: nach dem deleteMany sind die Vertrags-IDs nicht mehr auffindbar
+	const contracts = await db
+		.collection('contracts')
+		.find({ userId }, { projection: { _id: 1 } })
+		.toArray();
+
+	await Promise.all(
+		contracts.map((contract) => deleteAllContractDocuments(contract._id.toString()))
+	);
+
+	// userId liegt in contracts als String, nicht als ObjectId
+	await db.collection('contracts').deleteMany({ userId });
 
 	// Dann User löschen
 	await db.collection<User>('users').deleteOne({
