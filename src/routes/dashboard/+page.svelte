@@ -3,7 +3,6 @@
   import { page } from "$app/stores";
   import { onMount } from "svelte";
   import { CATEGORIES, getCategoryByValue, monthlyCost } from "$lib/constants";
-  import { goto } from '$app/navigation';
   import Toast from "$lib/components/Toast.svelte";
 
   let { data } = $props();
@@ -141,11 +140,6 @@
       };
     }),
   );
-  
-  // Navigation zur Detailansicht
-  function navigateToDetails(contractId) {
-    goto(`/dashboard/contracts/${contractId}`);
-  }
 </script>
 
 {#if showToast}
@@ -505,21 +499,22 @@
   {:else}
     <div class="grid gap-6">
       {#each sortedContracts as contract}
-        <!-- Card mit onclick-Handler statt <a>-Tag -->
+        <!-- Klickbar ueber den Titel-Link (.card-link), der die Karte ueberdeckt -->
         <div
-          onclick={() => navigateToDetails(contract._id)}
           class="contract-card {contract.status === 'active'
             ? 'contract-card-active'
-            : 'contract-card-inactive'} rounded-lg shadow-md border border-gray-200 p-4 cursor-pointer"
-          role="button"
-          tabindex="0"
-          onkeydown={(e) => e.key === 'Enter' && navigateToDetails(contract._id)}
+            : 'contract-card-inactive'} rounded-lg shadow-md border border-gray-200 p-4"
         >
           <div>
             <div class="flex justify-between items-start">
               <div class="flex-1">
                 <div class="flex items-center gap-2 mb-2">
-                  <h3 class="text-lg font-semibold">{contract.name}</h3>
+                  <h3 class="text-lg font-semibold">
+                    <a
+                      href="/dashboard/contracts/{contract._id}"
+                      class="card-link">{contract.name}</a
+                    >
+                  </h3>
 
                   <!-- Kategorie-Badge -->
                   {#if contract.category}
@@ -599,25 +594,24 @@
               </span>
             </div>
 
-            <!-- Buttons mit Event-Propagation stoppen -->
-            <div class="flex gap-2 mt-4 pt-4 border-t border-gray-200">
+            <!-- Liegen ueber dem Karten-Overlay (.card-actions) -->
+            <div
+              class="card-actions flex gap-2 mt-4 pt-4 border-t border-gray-200"
+            >
               <a
                 href="/dashboard/contracts/{contract._id}"
-                onclick={(e) => e.stopPropagation()}
                 class="text-gray-600 hover:text-gray-800 hover:underline text-sm font-medium transition-colors"
               >
                 👁️ Details
               </a>
               <a
                 href="/dashboard/contracts/{contract._id}/edit"
-                onclick={(e) => e.stopPropagation()}
                 class="text-blue-600 hover:text-blue-800 hover:underline text-sm font-medium transition-colors"
               >
                 ✏️ Bearbeiten
               </a>
               <a
                 href="/dashboard/contracts/{contract._id}/delete"
-                onclick={(e) => e.stopPropagation()}
                 class="text-red-600 hover:text-red-800 hover:underline text-sm font-medium transition-colors"
               >
                 🗑️ Löschen
@@ -648,6 +642,29 @@
 
   .contract-card {
     transition: all 0.2s ease;
+    position: relative;
+  }
+
+  /* Titel-Link deckt die ganze Karte ab, damit sie klickbar bleibt */
+  .card-link {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .card-link::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+  }
+
+  .card-link:hover {
+    text-decoration: underline;
+  }
+
+  /* Aktions-Links muessen ueber dem Overlay liegen */
+  .card-actions {
+    position: relative;
   }
 
   .contract-card:hover {
