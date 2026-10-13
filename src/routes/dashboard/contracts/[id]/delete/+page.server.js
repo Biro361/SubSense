@@ -55,7 +55,7 @@ export const actions = {
         console.error('Dokumente konnten nicht gelöscht werden:', cleanupErr);
       }
 
-      throw redirect(303, '/dashboard?message=created');
+      throw redirect(303, '/dashboard?message=deleted');
       
     } catch (err) {
       if (err.status === 303) throw err;

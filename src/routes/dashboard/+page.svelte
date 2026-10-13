@@ -9,6 +9,7 @@
   let contracts = $derived(data.contracts || []);
 
   let message = $derived($page.url.searchParams.get("message"));
+  let importCount = $derived($page.url.searchParams.get("count"));
 
   let successMessage = $derived(
     message === "created"
@@ -17,7 +18,9 @@
         ? "Vertrag erfolgreich aktualisiert!"
         : message === "deleted"
           ? "Vertrag erfolgreich gelöscht!"
-          : null,
+          : message === "import_success"
+            ? `${importCount ?? "0"} Verträge erfolgreich importiert!`
+            : null,
   );
 
   // Filter-State
@@ -67,6 +70,7 @@
       // URL bereinigen (ohne ?message=...)
       const url = new URL(window.location.href);
       url.searchParams.delete("message");
+      url.searchParams.delete("count");
       window.history.replaceState({}, "", url);
     }
   });
