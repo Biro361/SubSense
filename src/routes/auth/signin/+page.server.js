@@ -27,7 +27,7 @@ export const actions = {
 			}
 
 			// Session-Cookie setzen
-			setSessionCookie(cookies, user._id.toString(), user.email);
+			setSessionCookie(cookies, user._id.toString(), user.email, user.tokenVersion);
 
 			// Erfolgreicher Login → Redirect zu Dashboard
 			throw redirect(303, '/dashboard');

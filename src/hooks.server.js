@@ -1,6 +1,7 @@
 // src/hooks.server.js
 import { redirect } from '@sveltejs/kit';
-import { verifyToken } from '$lib/server/auth.js';
+import { verifyToken, clearSessionCookie } from '$lib/server/auth.js';
+import { getUserById } from '$lib/db/users.js';
 
 // Haupthandle
 export async function handle({ event, resolve }) {
@@ -11,10 +12,19 @@ export async function handle({ event, resolve }) {
 	if (sessionToken) {
 		const payload = verifyToken(sessionToken);
 		if (payload) {
-			event.locals.user = {
-				userId: payload.userId,
-				email: payload.email
-			};
+			// Gegen die DB prüfen, nicht nur die Signatur: sonst gilt ein Token bis
+			// zum Ablauf weiter, auch nach Passwortwechsel oder Account-Löschung
+			const user = await getUserById(payload.userId);
+
+			if (user && (user.tokenVersion ?? 0) === (payload.tokenVersion ?? 0)) {
+				event.locals.user = {
+					userId: payload.userId,
+					email: payload.email,
+					tokenVersion: user.tokenVersion ?? 0
+				};
+			} else {
+				clearSessionCookie(event.cookies);
+			}
 		}
 	}
 

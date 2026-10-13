@@ -9,6 +9,7 @@ export interface User {
 	email: string;
 	password: string; // gehashter Wert
 	name?: string;
+	tokenVersion: number; // hochzählen = alle Sessions des Users verwerfen
 	createdAt: Date;
 	updatedAt: Date;
 }
@@ -47,6 +48,7 @@ export async function createUser(data: NewUser): Promise<ObjectId | null> {
 		email: normalizedEmail,
 		password: hashedPassword,
 		name: name || normalizedEmail.split('@')[0],
+		tokenVersion: 0,
 		createdAt: now,
 		updatedAt: now
 	});
@@ -141,7 +143,9 @@ export async function updateUserPassword(
 			$set: {
 				password: hashedPassword,
 				updatedAt: new Date()
-			}
+			},
+			// Alte Tokens entwerten: sie tragen die niedrigere Version
+			$inc: { tokenVersion: 1 }
 		}
 	);
 

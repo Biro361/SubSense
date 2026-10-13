@@ -81,13 +81,13 @@ export const actions = {
 		}
 
 		// Neue Session mit aktualisierter E-Mail setzen
-		setSessionCookie(cookies, locals.user.userId, email);
+		setSessionCookie(cookies, locals.user.userId, email, locals.user.tokenVersion);
 
 		return { success: true, message: 'E-Mail erfolgreich aktualisiert' };
 	},
 
 	// Action: Passwort ändern
-	updatePassword: async ({ request, locals }) => {
+	updatePassword: async ({ request, locals, cookies }) => {
 		if (!locals.user) {
 			return fail(401, { error: 'Nicht eingeloggt' });
 		}
@@ -117,7 +117,16 @@ export const actions = {
 			return fail(400, { error: 'Altes Passwort ist falsch' });
 		}
 
-		return { success: true, message: 'Passwort erfolgreich geändert' };
+		// Eigene Session nachziehen: updateUserPassword hat tokenVersion um 1 erhöht,
+		// ohne das würde sich der eigene Browser beim nächsten Request abmelden
+		setSessionCookie(
+			cookies,
+			locals.user.userId,
+			locals.user.email,
+			locals.user.tokenVersion + 1
+		);
+
+		return { success: true, message: 'Passwort erfolgreich geändert. Andere Geräte wurden abgemeldet.' };
 	},
 
 	// Action: Account löschen

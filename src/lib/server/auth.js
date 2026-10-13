@@ -4,8 +4,9 @@ import { env } from '$env/dynamic/private';
 const JWT_SECRET = env.JWT_SECRET;
 if (!JWT_SECRET) throw new Error('JWT_SECRET is missing');
 
-export function signToken(userId, email) {
-  return jwt.sign({ userId, email }, JWT_SECRET, { expiresIn: '30d' });
+// tokenVersion macht Sessions widerrufbar: hooks.server.js vergleicht sie mit der DB
+export function signToken(userId, email, tokenVersion = 0) {
+  return jwt.sign({ userId, email, tokenVersion }, JWT_SECRET, { expiresIn: '30d' });
 }
 
 export function verifyToken(token) {
@@ -17,8 +18,8 @@ export function verifyToken(token) {
 }
 
 // Session-Cookie setzen
-export function setSessionCookie(cookies, userId, email) {
-	const token = signToken(userId, email);
+export function setSessionCookie(cookies, userId, email, tokenVersion = 0) {
+	const token = signToken(userId, email, tokenVersion);
 	cookies.set('session', token, {
 		path: '/',
 		httpOnly: true,
