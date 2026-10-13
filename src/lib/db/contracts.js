@@ -7,6 +7,20 @@ const COLLECTION_NAME = 'contracts';
 
 
 /**
+ * Hilfsfunktion: Dokument-IDs zu Strings machen.
+ * SvelteKit serialisiert load-Daten mit devalue, und devalue lehnt ObjectId ab:
+ * ein Vertrag mit Dokument würde die Seite sonst mit einem 500er beenden.
+ * @param {Array<Record<string, any>>} [documents]
+ * @returns {Array<Record<string, any>>}
+ */
+function normalizeDocuments(documents) {
+  return (documents ?? []).map((doc) => ({
+    ...doc,
+    _id: doc._id.toString()
+  }));
+}
+
+/**
  * Hilfsfunktion: Berechnet Erinnerungs-Metadaten für einen Vertrag
  */
 function calculateReminderMetadata(contract) {
@@ -76,7 +90,7 @@ export async function getContracts(userId) {
         cancellationUrl: contract.cancellationUrl ?? null,
         notes: contract.notes ?? '',
         cancellationInstructions: contract.cancellationInstructions ?? '',
-        documents: contract.documents ?? [],
+        documents: normalizeDocuments(contract.documents),
         ...metadata
       };
 
@@ -116,7 +130,7 @@ export async function getContractById(id, userId) {
       cancellationUrl: contract.cancellationUrl ?? null,
       notes: contract.notes ?? '',
       cancellationInstructions: contract.cancellationInstructions ?? '',
-      documents: contract.documents ?? [],
+      documents: normalizeDocuments(contract.documents),
       ...metadata
     };
 
