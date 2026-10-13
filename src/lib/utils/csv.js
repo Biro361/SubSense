@@ -93,7 +93,11 @@ export function parseCSV(csvContent) {
   // BOM entfernen falls vorhanden
   const cleanContent = csvContent.replace(/^\uFEFF/, '').trim();
 
-  const rows = parseCSVRows(cleanContent);
+  // Excel speichert mit Schweizer/deutschen Ländereinstellungen mit Semikolon
+  const headerLine = cleanContent.split(/[\r\n]/, 1)[0];
+  const delimiter = headerLine.split(';').length > headerLine.split(',').length ? ';' : ',';
+
+  const rows = parseCSVRows(cleanContent, delimiter);
 
   if (rows.length < 2) {
     return {
@@ -163,9 +167,10 @@ export function parseCSV(csvContent) {
  * Gequotete Felder dürfen Kommas und Zeilenumbrüche enthalten und bleiben
  * zeichengenau; nicht gequotete werden getrimmt (handgeschriebenes "a, b").
  * @param {string} text - Kompletter CSV-Inhalt
+ * @param {string} delimiter - Trennzeichen zwischen den Feldern
  * @returns {Array<Array<string>>} Zeilen mit ihren Feldern
  */
-function parseCSVRows(text) {
+function parseCSVRows(text, delimiter) {
   const rows = [];
   /** @type {string[]} */
   let row = [];
@@ -198,7 +203,7 @@ function parseCSVRows(text) {
     if (char === '"') {
       insideQuotes = true;
       wasQuoted = true;
-    } else if (char === ',') {
+    } else if (char === delimiter) {
       endField();
     } else if (char === '\n' || char === '\r') {
       if (char === '\r' && text[i + 1] === '\n') i++; // CRLF als ein Umbruch
