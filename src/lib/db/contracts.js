@@ -22,6 +22,44 @@ function normalizeDocuments(documents) {
 }
 
 /**
+ * Die Form, in der ein gespeicherter Vertrag die Seiten erreicht:
+ * ein validierter Vertrag plus String-ID, Dokumente und Erinnerungs-Metadaten.
+ * @typedef {import('$lib/validation.js').ValidatedContract & {
+ *   _id: string,
+ *   documents: Record<string, any>[],
+ *   reminderDate: Date,
+ *   daysUntilCancellation: number,
+ *   isUrgent: boolean,
+ *   isOverdue: boolean
+ * }} ContractView
+ */
+
+/**
+ * Ein DB-Dokument in die Form bringen, die die Seiten erwarten.
+ * Die Standardwerte decken Verträge ab, die vor einem Feld angelegt wurden.
+ * @param {Record<string, any>} contract
+ * @returns {ContractView}
+ */
+function normalize(contract) {
+  return {
+    ...contract,
+    _id: contract._id.toString(),
+    name: contract.name ?? '',
+    provider: contract.provider ?? '',
+    status: contract.status ?? 'active',
+    cost: contract.cost ?? 0,
+    billingCycle: contract.billingCycle ?? 'monthly',
+    category: contract.category ?? 'other',
+    cancellationUrl: contract.cancellationUrl ?? null,
+    notes: contract.notes ?? '',
+    cancellationInstructions: contract.cancellationInstructions ?? '',
+    documents: normalizeDocuments(contract.documents),
+    // reminderDays kommt aus den Metadaten, inklusive Standardwert
+    ...calculateReminderMetadata(contract)
+  };
+}
+
+/**
  * Alle Verträge eines Users abrufen (mit Erinnerungs-Metadaten)
  * @param {string} userId - Die ID des eingeloggten Users
  */
@@ -36,24 +74,7 @@ export async function getContracts(userId) {
       .sort({ cancellationDate: 1 })
       .toArray();
 
-    return contracts.map(contract => {
-      const metadata = calculateReminderMetadata(contract);
-
-      return {
-        ...contract,
-        _id: contract._id.toString(),
-        cost: contract.cost ?? 0,
-        billingCycle: contract.billingCycle ?? 'monthly',
-        reminderDays: contract.reminderDays ?? 7,
-        category: contract.category ?? 'other',
-        cancellationUrl: contract.cancellationUrl ?? null,
-        notes: contract.notes ?? '',
-        cancellationInstructions: contract.cancellationInstructions ?? '',
-        documents: normalizeDocuments(contract.documents),
-        ...metadata
-      };
-
-    });
+    return contracts.map(normalize);
   } catch (error) {
     console.error('Error fetching contracts:', error);
     throw error;
@@ -79,21 +100,7 @@ export async function getContractById(id, userId) {
 
     if (!contract) return null;
 
-    const metadata = calculateReminderMetadata(contract);
-
-    return {
-      ...contract,
-      _id: contract._id.toString(),
-      cost: contract.cost ?? 0,
-      billingCycle: contract.billingCycle ?? 'monthly',
-      reminderDays: contract.reminderDays ?? 7,
-      category: contract.category ?? 'other',
-      cancellationUrl: contract.cancellationUrl ?? null,
-      notes: contract.notes ?? '',
-      cancellationInstructions: contract.cancellationInstructions ?? '',
-      documents: normalizeDocuments(contract.documents),
-      ...metadata
-    };
+    return normalize(contract);
 
   } catch (error) {
     console.error('Error fetching contract:', error);
