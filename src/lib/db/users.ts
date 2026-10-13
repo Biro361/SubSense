@@ -80,6 +80,8 @@ export async function getUserByEmail(email: string): Promise<User | null> {
  * User per ID laden.
  */
 export async function getUserById(userId: string): Promise<User | null> {
+	if (!ObjectId.isValid(userId)) return null;
+
 	const db = await getDatabase();
 	return db.collection<User>('users').findOne({
 		_id: new ObjectId(userId)
@@ -94,6 +96,8 @@ export async function updateUserEmail(
 	userId: string,
 	newEmail: string
 ): Promise<boolean> {
+	if (!ObjectId.isValid(userId)) return false;
+
 	const db = await getDatabase();
 	await ensureEmailIndex(db);
 
@@ -130,6 +134,8 @@ export async function updateUserPassword(
 	oldPassword: string,
 	newPassword: string
 ): Promise<boolean> {
+	if (!ObjectId.isValid(userId)) return false;
+
 	const db = await getDatabase();
 	const user = await db.collection<User>('users').findOne({
 		_id: new ObjectId(userId)
@@ -167,6 +173,8 @@ export async function updateUserPassword(
  * Name aktualisieren.
  */
 export async function updateUserName(userId: string, name: string): Promise<void> {
+	if (!ObjectId.isValid(userId)) return;
+
 	const db = await getDatabase();
 	await db.collection<User>('users').updateOne(
 		{ _id: new ObjectId(userId) },
@@ -183,6 +191,8 @@ export async function updateUserName(userId: string, name: string): Promise<void
  * User-Account löschen (inkl. aller zugehörigen Verträge).
  */
 export async function deleteUser(userId: string): Promise<void> {
+	if (!ObjectId.isValid(userId)) return;
+
 	const db = await getDatabase();
 
 	// Dateien zuerst: nach dem deleteMany sind die Vertrags-IDs nicht mehr auffindbar

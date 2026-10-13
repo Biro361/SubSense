@@ -67,6 +67,14 @@ describe('deleteUser', () => {
     expect(mocks.deleteOne).toHaveBeenCalledWith({ _id: new ObjectId(USER_ID) });
   });
 
+  it('tut bei einer ungültigen ID nichts', async () => {
+    await deleteUser('keine-objectid');
+
+    expect(deleteAllContractDocuments).not.toHaveBeenCalled();
+    expect(mocks.deleteMany).not.toHaveBeenCalled();
+    expect(mocks.deleteOne).not.toHaveBeenCalled();
+  });
+
   it('kommt mit einem User ohne Verträge aus', async () => {
     mocks.toArray.mockResolvedValue([]);
 

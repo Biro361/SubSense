@@ -66,6 +66,8 @@ export async function getContracts(userId) {
  * @param {string} userId - User ID (für Sicherheitscheck)
  */
 export async function getContractById(id, userId) {
+  if (!ObjectId.isValid(id)) return null;
+
   const client = await clientPromise;
   const db = client.db(DB_NAME);
 
@@ -142,6 +144,8 @@ export async function createContract(contractData, userId) {
  * @param {string} userId - User ID (Security)
  */
 export async function updateContract(id, updates, userId) {
+  if (!ObjectId.isValid(id)) return false;
+
   const client = await clientPromise;
   const db = client.db(DB_NAME);
 
@@ -187,6 +191,8 @@ export async function updateContract(id, updates, userId) {
  * @param {string} userId - User ID (Security)
  */
 export async function deleteContract(id, userId) {
+  if (!ObjectId.isValid(id)) return false;
+
   const client = await clientPromise;
   const db = client.db(DB_NAME);
 
@@ -214,6 +220,8 @@ export async function deleteContract(id, userId) {
  * @param {string} userId - User ID (Security)
  */
 export async function updateNotes(contractId, notes, userId) {
+  if (!ObjectId.isValid(contractId)) return false;
+
   const client = await clientPromise;
   const db = client.db(DB_NAME);
 
@@ -246,6 +254,8 @@ export async function updateNotes(contractId, notes, userId) {
  * @param {string} userId - User ID (Security)
  */
 export async function updateCancellationInstructions(contractId, instructions, url, userId) {
+  if (!ObjectId.isValid(contractId)) return false;
+
   const client = await clientPromise;
   const db = client.db(DB_NAME);
 
@@ -284,6 +294,8 @@ export async function updateCancellationInstructions(contractId, instructions, u
  * @param {string} userId - User ID (Security)
  */
 export async function addDocument(contractId, documentData, userId) {
+  if (!ObjectId.isValid(contractId)) return false;
+
   const client = await clientPromise;
   const db = client.db(DB_NAME);
 
@@ -319,6 +331,8 @@ export async function addDocument(contractId, documentData, userId) {
  * @param {string} userId - User ID (Security)
  */
 export async function removeDocument(contractId, documentId, userId) {
+  if (!ObjectId.isValid(contractId) || !ObjectId.isValid(documentId)) return false;
+
   const client = await clientPromise;
   const db = client.db(DB_NAME);
 
