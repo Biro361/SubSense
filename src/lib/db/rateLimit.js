@@ -3,7 +3,7 @@ import { getDatabase } from '$lib/mongodb';
 
 const COLLECTION_NAME = 'rate_limits';
 
-// Grenzwerte für den Login; die Forgot-Password-Form nutzt eigene (5 pro Stunde)
+// Grenzwerte für den Login
 export const LOGIN_MAX_ATTEMPTS = 10;
 export const LOGIN_WINDOW_MINUTES = 15;
 

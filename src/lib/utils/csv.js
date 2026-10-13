@@ -5,6 +5,21 @@
 // relativ statt $lib, damit die Datei ohne Vite-Alias testbar bleibt
 import { validateContract } from '../validation.js';
 
+// Eine Liste für Export, Template und Fehlermeldung
+const FIELDS = [
+  'name',
+  'provider',
+  'cancellationDate',
+  'status',
+  'cost',
+  'billingCycle',
+  'reminderDays',
+  'category',
+  'cancellationUrl',
+  'notes',
+  'cancellationInstructions'
+];
+
 // Excel und Sheets führen Werte aus, die mit einem dieser Zeichen beginnen
 const FORMULA_START = /^[=+\-@\t\r]/;
 
@@ -33,31 +48,15 @@ function escapeCSVValue(value) {
 /**
  * Konvertiert Contract-Array zu CSV-String
  * @param {Array} contracts - Array von Contract-Objekten
- * @param {Array} fields - Zu exportierende Felder (Default: alle)
  * @returns {string} CSV-String mit UTF-8 BOM für Excel-Kompatibilität
  */
-export function contractsToCSV(contracts, fields = null) {
-  const defaultFields = [
-    'name',
-    'provider',
-    'cancellationDate',
-    'status',
-    'cost',
-    'billingCycle',
-    'reminderDays',
-    'category',
-    'cancellationUrl',
-    'notes'
-  ];
-
-  const exportFields = fields || defaultFields;
-
+export function contractsToCSV(contracts) {
   // Header-Zeile
-  const header = exportFields.join(',');
+  const header = FIELDS.join(',');
 
   // Daten-Zeilen
   const rows = contracts.map((contract) => {
-    return exportFields
+    return FIELDS
       .map((field) => {
         let value = contract[field] ?? '';
 
@@ -114,7 +113,7 @@ export function parseCSV(csvContent) {
       contracts: [],
       errors: [
         `Fehlende Pflichtfelder im CSV-Header: ${missingFields.join(', ')}`,
-        `Erwarteter Header: name,provider,cancellationDate,status,cost,billingCycle,reminderDays,category,cancellationUrl,notes`
+        `Erwarteter Header: ${FIELDS.join(',')}`
       ],
       warnings: []
     };
@@ -223,7 +222,7 @@ function parseCSVRows(text) {
  * @returns {string} CSV-String für Template-Download
  */
 export function generateTemplateCSV() {
-  const header = 'name,provider,cancellationDate,status,cost,billingCycle,reminderDays,category,cancellationUrl,notes';
+  const header = FIELDS.join(',');
   const examples = [
     'Netflix Premium,Netflix Inc.,2026-03-15,active,15.90,monthly,7,streaming,https://netflix.com/cancel,Test-Abo läuft noch',
     'Spotify Family,Spotify AB,2026-06-30,cancelled,16.90,monthly,14,streaming,,Bereits gekündigt am 01.12.2025',
