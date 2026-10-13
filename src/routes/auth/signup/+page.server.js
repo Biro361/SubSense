@@ -1,6 +1,7 @@
 // src/routes/auth/signup/+page.server.js
 import { fail, redirect } from '@sveltejs/kit';
 import { createUser } from '$lib/db/users';
+import { validatePassword } from '$lib/constants.js';
 import { setSessionCookie } from '$lib/server/auth.js';
 
 export const actions = {
@@ -19,8 +20,9 @@ export const actions = {
 			return fail(400, { error: 'Email und Passwort sind erforderlich.' });
 		}
 
-		if (password.length < 6) {
-			return fail(400, { error: 'Passwort muss mindestens 6 Zeichen lang sein.' });
+		const passwordError = validatePassword(password);
+		if (passwordError) {
+			return fail(400, { error: passwordError });
 		}
 
 		// Email-Format grob prüfen

@@ -8,6 +8,7 @@ import {
 	deleteUser
 } from '$lib/db/users.js';
 import { clearSessionCookie, setSessionCookie } from '$lib/server/auth.js';
+import { validatePassword } from '$lib/constants.js';
 import bcrypt from 'bcryptjs';
 
 /** @type {import('./$types').PageServerLoad} */
@@ -106,8 +107,9 @@ export const actions = {
 			return fail(400, { error: 'Passwörter stimmen nicht überein' });
 		}
 
-		if (newPassword.length < 8) {
-			return fail(400, { error: 'Neues Passwort muss mindestens 8 Zeichen haben' });
+		const passwordError = validatePassword(newPassword);
+		if (passwordError) {
+			return fail(400, { error: passwordError });
 		}
 
 		// Passwort aktualisieren

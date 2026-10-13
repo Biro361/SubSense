@@ -1,11 +1,17 @@
 // src/routes/auth/signin/+page.server.js
 import { fail, redirect } from '@sveltejs/kit';
 import { getUserByEmail } from '$lib/db/users';
+import {
+	recordAttempt,
+	clearAttempts,
+	LOGIN_MAX_ATTEMPTS,
+	LOGIN_WINDOW_MINUTES
+} from '$lib/db/rateLimit.js';
 import { setSessionCookie } from '$lib/server/auth.js';
 import bcrypt from 'bcryptjs';
 
 export const actions = {
-	default: async ({ request, cookies }) => {
+	default: async ({ request, cookies, getClientAddress }) => {
 		const formData = await request.formData();
 		const email = formData.get('email');
 		const password = formData.get('password');
@@ -14,7 +20,22 @@ export const actions = {
 			return fail(400, { error: 'Email und Passwort sind erforderlich.' });
 		}
 
+		// IP und Email getrennt zählen: sonst reicht ein Botnetz oder eine Wortliste
+		const limitKeys = [
+			`login:ip:${getClientAddress()}`,
+			`login:mail:${email.toString().toLowerCase()}`
+		];
+
 		try {
+			// Vor bcrypt prüfen: der Hash-Vergleich ist der teure Teil
+			const attempts = await recordAttempt(limitKeys, LOGIN_WINDOW_MINUTES);
+
+			if (attempts > LOGIN_MAX_ATTEMPTS) {
+				return fail(429, {
+					error: `Zu viele Anmeldeversuche. Bitte in ${LOGIN_WINDOW_MINUTES} Minuten erneut versuchen.`
+				});
+			}
+
 			const user = await getUserByEmail(email.toString());
 
 			if (!user || !user.password) {
@@ -25,6 +46,8 @@ export const actions = {
 			if (!isValid) {
 				return fail(401, { error: 'Email oder Passwort ist falsch.' });
 			}
+
+			await clearAttempts(limitKeys);
 
 			// Session-Cookie setzen
 			setSessionCookie(cookies, user._id.toString(), user.email, user.tokenVersion);
