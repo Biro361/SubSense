@@ -81,8 +81,7 @@ describe('createContracts', () => {
     const result = await createContracts([row, { ...row, name: 'Spotify' }], 'user1');
 
     expect(mocks.insertMany).toHaveBeenCalledOnce();
-    expect(result.insertedCount).toBe(2);
-    expect(result.errors).toEqual([]);
+    expect(result).toBe(2);
 
     const [documents, options] = mocks.insertMany.mock.calls[0];
     expect(documents).toHaveLength(2);
@@ -99,22 +98,14 @@ describe('createContracts', () => {
     expect(document.cancellationDate).toBeInstanceOf(Date);
   });
 
-  it('meldet ungültige Zeilen und schreibt nur die gültigen', async () => {
-    mocks.insertMany.mockResolvedValue({ insertedCount: 1 });
-
-    const result = await createContracts([row, { ...row, name: '' }], 'user1');
-
-    const [documents] = mocks.insertMany.mock.calls[0];
-    expect(documents).toHaveLength(1);
-    expect(result.errors).toHaveLength(1);
-    expect(result.errors[0]).toContain('Zeile 2');
-  });
-
-  it('schreibt gar nicht, wenn keine Zeile gültig ist', async () => {
-    const result = await createContracts([{ name: '' }, { name: '' }], 'user1');
+  it('wirft bei einer ungültigen Zeile und schreibt nichts', async () => {
+    await expect(createContracts([row, { ...row, name: '' }], 'user1')).rejects.toThrow('Name fehlt.');
 
     expect(mocks.insertMany).not.toHaveBeenCalled();
-    expect(result.insertedCount).toBe(0);
-    expect(result.errors).toHaveLength(2);
+  });
+
+  it('schreibt bei einer leeren Liste nicht', async () => {
+    expect(await createContracts([], 'user1')).toBe(0);
+    expect(mocks.insertMany).not.toHaveBeenCalled();
   });
 });
