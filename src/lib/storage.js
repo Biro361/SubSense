@@ -3,9 +3,20 @@ import { getStore } from '@netlify/blobs';
 import { writeFile, readFile, unlink, mkdir, readdir } from 'fs/promises';
 import { join } from 'path';
 import { dev } from '$app/environment';
+import { env } from '$env/dynamic/private';
 
-// Prüfe ob wir in Netlify Production laufen
-const isNetlify = process.env.NETLIFY === 'true';
+/**
+ * Blob-Store mit expliziten Zugangsdaten: die Function läuft im Lambda-Modus
+ * (adapter-netlify 5), dort gibt Netlify getStore('name') keinen Kontext mit.
+ * SITE_ID setzt Netlify zur Laufzeit selbst, das Token ist ein Personal Access Token.
+ */
+function documentStore() {
+  return getStore({
+    name: 'contract-documents',
+    siteID: env.SITE_ID,
+    token: env.NETLIFY_BLOBS_TOKEN
+  });
+}
 
 /**
  * Dokument hochladen (Netlify Blobs in Production, lokales Dateisystem in Dev)
@@ -23,10 +34,12 @@ export async function uploadDocument(file, contractId) {
   const arrayBuffer = await file.arrayBuffer();
   const buffer = Buffer.from(arrayBuffer);
   
-  if (isNetlify && !dev) {
+  // dev steht beim Build fest. process.env.NETLIFY gibt es nur im Build,
+  // nicht in der laufenden Function - damit landete Production auf der Platte.
+  if (!dev) {
     // Production: Netlify Blobs verwenden
-    const store = getStore('contract-documents');
-    
+    const store = documentStore();
+
     await store.set(filename, buffer, {
       metadata: {
         contentType: file.type,
@@ -61,8 +74,8 @@ export async function uploadDocument(file, contractId) {
  * @returns {Promise<ReadableStream|Buffer|null>} null, wenn die Datei fehlt
  */
 export async function readDocument(filename) {
-  if (isNetlify && !dev) {
-    return getStore('contract-documents').get(filename, { type: 'stream' });
+  if (!dev) {
+    return documentStore().get(filename, { type: 'stream' });
   }
 
   try {
@@ -80,9 +93,9 @@ export async function readDocument(filename) {
  * @param {string} filename - Dateiname im Store (Format: contractId/timestamp-name.ext)
  */
 export async function deleteDocument(filename) {
-  if (isNetlify && !dev) {
+  if (!dev) {
     // Production: Netlify Blobs
-    const store = getStore('contract-documents');
+    const store = documentStore();
     await store.delete(filename);
     
   } else {
@@ -105,9 +118,9 @@ export async function deleteDocument(filename) {
  * @param {string} contractId - Vertrags-ID
  */
 export async function deleteAllContractDocuments(contractId) {
-  if (isNetlify && !dev) {
+  if (!dev) {
     // Production: Netlify Blobs
-    const store = getStore('contract-documents');
+    const store = documentStore();
     const { blobs } = await store.list({ prefix: `${contractId}/` });
     await Promise.all(blobs.map(blob => store.delete(blob.key)));
     
