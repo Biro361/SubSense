@@ -1,6 +1,6 @@
 // src/lib/storage.js
 import { getStore } from '@netlify/blobs';
-import { writeFile, unlink, mkdir, readdir } from 'fs/promises';
+import { writeFile, readFile, unlink, mkdir, readdir } from 'fs/promises';
 import { join } from 'path';
 import { dev } from '$app/environment';
 
@@ -11,7 +11,7 @@ const isNetlify = process.env.NETLIFY === 'true';
  * Dokument hochladen (Netlify Blobs in Production, lokales Dateisystem in Dev)
  * @param {File} file - Hochgeladene Datei
  * @param {string} contractId - Vertrags-ID für Organisierung
- * @returns {Promise<{url: string, filename: string}>}
+ * @returns {Promise<{filename: string}>}
  */
 export async function uploadDocument(file, contractId) {
   // Eindeutigen Dateinamen generieren
@@ -36,8 +36,7 @@ export async function uploadDocument(file, contractId) {
       }
     });
     
-    const url = await store.getURL(filename);
-    return { url, filename };
+    return { filename };
     
   } else {
     // Development: Lokales Dateisystem verwenden
@@ -52,10 +51,27 @@ export async function uploadDocument(file, contractId) {
     // Datei lokal speichern
     await writeFile(filePath, buffer);
     
-    // Lokale URL generieren
-    const url = `/uploads/${contractId}/${localFilename}`;
-    
-    return { url, filename };
+    return { filename };
+  }
+}
+
+/**
+ * Dokument-Inhalt lesen (Blobs haben keine öffentliche URL)
+ * @param {string} filename - Dateiname im Store (Format: contractId/timestamp-name.ext)
+ * @returns {Promise<ReadableStream|Buffer|null>} null, wenn die Datei fehlt
+ */
+export async function readDocument(filename) {
+  if (isNetlify && !dev) {
+    return getStore('contract-documents').get(filename, { type: 'stream' });
+  }
+
+  try {
+    return await readFile(join(process.cwd(), 'static', 'uploads', filename));
+  } catch (err) {
+    if (err.code !== 'ENOENT') {
+      throw err;
+    }
+    return null;
   }
 }
 

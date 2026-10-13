@@ -131,15 +131,14 @@ export const actions = {
       }
 
       // Upload zu Netlify Blob
-      const { url, filename } = await uploadDocument(file, params.id);
+      const { filename } = await uploadDocument(file, params.id);
 
       // Metadata in MongoDB speichern
       const documentData = {
         filename,
         originalName: file.name,
         mimeType: file.type,
-        size: file.size,
-        url
+        size: file.size
       };
 
       const added = await addDocument(params.id, documentData, user.userId);
