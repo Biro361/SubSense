@@ -59,6 +59,21 @@ function normalize(contract) {
   };
 }
 
+/** Einmal pro Prozess: ohne den Index liest jedes Dashboard die Verträge aller User */
+let userIndex = null;
+
+function ensureUserIndex(db) {
+  // Nur Tempo: ein Fehlschlag darf das Dashboard nicht stoppen
+  userIndex ??= db
+    .collection(COLLECTION_NAME)
+    .createIndex({ userId: 1, cancellationDate: 1 })
+    .catch((err) => {
+      userIndex = null;
+      console.error('Error creating contracts index:', err);
+    });
+  return userIndex;
+}
+
 /**
  * Alle Verträge eines Users abrufen (mit Erinnerungs-Metadaten)
  * @param {string} userId - Die ID des eingeloggten Users
@@ -68,6 +83,8 @@ export async function getContracts(userId) {
   const db = client.db(DB_NAME);
 
   try {
+    await ensureUserIndex(db);
+
     const contracts = await db
       .collection(COLLECTION_NAME)
       .find({ userId })
