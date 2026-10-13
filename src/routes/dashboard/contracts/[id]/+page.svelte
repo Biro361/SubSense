@@ -339,7 +339,7 @@
                     
                     <div class="flex gap-2">
                       <a
-                        href={doc.url}
+                        href={`/dashboard/contracts/${contract._id}/documents/${doc._id}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         class="px-3 py-1 text-sm text-blue-600 hover:bg-blue-50 rounded transition-colors"

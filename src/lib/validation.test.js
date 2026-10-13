@@ -67,7 +67,8 @@ describe('validateContract', () => {
     ['Monat 13', { cancellationDate: '2026-13-01' }],
     ['unbekannter Status', { status: 'geloescht' }],
     ['negative Kosten', { cost: '-5' }],
-    ['Kosten keine Zahl', { cost: 'abc' }]
+    ['Kosten keine Zahl', { cost: 'abc' }],
+    ['Kosten mit Anhang', { cost: '12abc' }]
   ])('weist %s als Fehler ab', (_label, patch) => {
     const { contract, errors } = validateContract({ ...valid, ...patch });
 
@@ -90,6 +91,12 @@ describe('validateContract', () => {
     expect(contract.reminderDays).toBe(7);
     expect(contract.category).toBe('other');
     expect(contract.cancellationUrl).toBeNull();
+  });
+
+  it('liest ein Dezimalkomma als Dezimalpunkt', () => {
+    const { contract } = validateContract({ ...valid, cost: '15,90' });
+
+    expect(contract.cost).toBe(15.9);
   });
 
   it('kommt mit nur den Pflichtfeldern aus', () => {

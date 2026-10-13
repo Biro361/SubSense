@@ -134,7 +134,7 @@ export const actions = {
       }
     } catch (error) {
       // Redirect durchlassen
-      if (error instanceof Response) throw error;
+      if (error?.status === 303) throw error;
 
       console.error('Import error:', error);
       return fail(500, {
