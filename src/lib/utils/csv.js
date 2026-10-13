@@ -3,6 +3,31 @@
  * Unterstützt UTF-8, Sonderzeichen und robustes Error-Handling
  */
 
+// Excel und Sheets führen Werte aus, die mit einem dieser Zeichen beginnen
+const FORMULA_START = /^[=+\-@\t\r]/;
+
+/**
+ * Escaped einen einzelnen Wert für den CSV-Export
+ * @param {*} value - Rohwert
+ * @returns {string} CSV-sicheres Feld
+ */
+function escapeCSVValue(value) {
+  let text = String(value ?? '');
+
+  // shortcut: ein Wert, der selbst mit ' + Formelzeichen beginnt, verliert beim
+  // Re-Import das Apostroph. Erst relevant, wenn User solche Namen eingeben.
+  if (FORMULA_START.test(text)) {
+    text = `'${text}`;
+  }
+
+  // Quotes, Kommas, Umbrüche und Rand-Leerzeichen müssen in Anführungszeichen
+  if (/[",\n\r]/.test(text) || text !== text.trim()) {
+    return `"${text.replace(/"/g, '""')}"`;
+  }
+
+  return text;
+}
+
 /**
  * Konvertiert Contract-Array zu CSV-String
  * @param {Array} contracts - Array von Contract-Objekten
@@ -39,15 +64,7 @@ export function contractsToCSV(contracts, fields = null) {
           value = new Date(value).toISOString().split('T')[0];
         }
 
-        // CSV-Escape: Anführungszeichen bei Kommas/Newlines/Quotes
-        if (
-          typeof value === 'string' &&
-          (value.includes(',') || value.includes('\n') || value.includes('"'))
-        ) {
-          value = `"${value.replace(/"/g, '""')}`; // Doppelte Quotes escapen
-        }
-
-        return value;
+        return escapeCSVValue(value);
       })
       .join(',');
   });
@@ -75,9 +92,9 @@ export function parseCSV(csvContent) {
   // BOM entfernen falls vorhanden
   const cleanContent = csvContent.replace(/^\uFEFF/, '').trim();
 
-  const lines = cleanContent.split('\n').map((line) => line.trim());
+  const rows = parseCSVRows(cleanContent);
 
-  if (lines.length < 2) {
+  if (rows.length < 2) {
     return {
       contracts: [],
       errors: ['CSV-Datei ist leer oder enthält keine Daten'],
@@ -85,8 +102,7 @@ export function parseCSV(csvContent) {
     };
   }
 
-  // Header parsen (mit Quote-Handling)
-  const headers = parseCSVLine(lines[0]);
+  const headers = rows[0];
   const requiredFields = ['name', 'provider', 'cancellationDate', 'status'];
 
   // Header-Validierung
@@ -107,17 +123,20 @@ export function parseCSV(csvContent) {
   const warnings = [];
 
   // Daten-Zeilen parsen
-  for (let i = 1; i < lines.length; i++) {
-    const line = lines[i].trim();
-    if (!line) continue; // Leere Zeilen überspringen
-
+  for (let i = 1; i < rows.length; i++) {
     try {
-      const values = parseCSVLine(line);
+      const values = rows[i];
 
       // Werte zu Contract-Objekt mappen
       const contract = {};
       headers.forEach((header, index) => {
-        contract[header] = values[index] || null;
+        const value = values[index] || null;
+
+        // Formel-Schutz des Exports wieder entfernen
+        contract[header] =
+          value && value.startsWith("'") && FORMULA_START.test(value.slice(1))
+            ? value.slice(1)
+            : value;
       });
 
       // Validierung der Pflichtfelder
@@ -218,42 +237,62 @@ export function parseCSV(csvContent) {
 }
 
 /**
- * Hilfsfunktion: Parst eine einzelne CSV-Zeile mit Quote-Handling
- * Unterstützt: "Wert mit, Komma", einfache Werte, escaped Quotes
- * @param {string} line - CSV-Zeile
- * @returns {Array<string>} Array von Werten
+ * Hilfsfunktion: Parst einen kompletten CSV-Text zu Zeilen von Feldern.
+ * Gequotete Felder dürfen Kommas und Zeilenumbrüche enthalten und bleiben
+ * zeichengenau; nicht gequotete werden getrimmt (handgeschriebenes "a, b").
+ * @param {string} text - Kompletter CSV-Inhalt
+ * @returns {Array<Array<string>>} Zeilen mit ihren Feldern
  */
-function parseCSVLine(line) {
-  const values = [];
-  let current = '';
+function parseCSVRows(text) {
+  const rows = [];
+  /** @type {string[]} */
+  let row = [];
+  let field = '';
+  let wasQuoted = false;
   let insideQuotes = false;
 
-  for (let i = 0; i < line.length; i++) {
-    const char = line[i];
-    const nextChar = line[i + 1];
+  const endField = () => {
+    row.push(wasQuoted ? field : field.trim());
+    field = '';
+    wasQuoted = false;
+  };
+
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i];
+
+    if (insideQuotes) {
+      if (char !== '"') {
+        field += char;
+      } else if (text[i + 1] === '"') {
+        // Escaped Quote ("" -> ")
+        field += '"';
+        i++;
+      } else {
+        insideQuotes = false;
+      }
+      continue;
+    }
 
     if (char === '"') {
-      if (insideQuotes && nextChar === '"') {
-        // Escaped Quote ("" -> ")
-        current += '"';
-        i++; // Überspringen
-      } else {
-        // Quote-Beginn oder -Ende
-        insideQuotes = !insideQuotes;
-      }
-    } else if (char === ',' && !insideQuotes) {
-      // Feldtrenner (nur außerhalb von Quotes)
-      values.push(current.trim());
-      current = '';
+      insideQuotes = true;
+      wasQuoted = true;
+    } else if (char === ',') {
+      endField();
+    } else if (char === '\n' || char === '\r') {
+      if (char === '\r' && text[i + 1] === '\n') i++; // CRLF als ein Umbruch
+      endField();
+      rows.push(row);
+      row = [];
     } else {
-      current += char;
+      field += char;
     }
   }
 
-  // Letzter Wert
-  values.push(current.trim());
+  endField();
+  rows.push(row);
 
-  return values;
+  // Leerzeilen verwerfen (z. B. Umbruch am Dateiende)
+  return rows.filter((fields) => fields.some((value) => value !== ''));
 }
 
 /**
