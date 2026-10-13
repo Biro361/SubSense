@@ -259,6 +259,62 @@
 
 							<div class="dropdown-divider"></div>
 
+							<!-- CSV-Aktionen: nur hier erreichbar, wenn der Header sie ausblendet -->
+							<div class="dropdown-csv">
+								<button
+									onclick={() => {
+										showUserMenu = false;
+										handleExport();
+									}}
+									disabled={isExporting}
+									class="dropdown-item"
+								>
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										class="w-5 h-5"
+										fill="none"
+										viewBox="0 0 24 24"
+										stroke="currentColor"
+									>
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											stroke-width="2"
+											d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+										/>
+									</svg>
+									<span
+										>{isExporting
+											? "Exportiere …"
+											: "Als CSV exportieren"}</span
+									>
+								</button>
+
+								<a
+									href="/dashboard/import"
+									class="dropdown-item"
+									onclick={() => (showUserMenu = false)}
+								>
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										class="w-5 h-5"
+										fill="none"
+										viewBox="0 0 24 24"
+										stroke="currentColor"
+									>
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											stroke-width="2"
+											d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+										/>
+									</svg>
+									<span>CSV importieren</span>
+								</a>
+
+								<div class="dropdown-divider"></div>
+							</div>
+
 							<!-- Menü-Items -->
 							<a
 								href="/dashboard/profile"
@@ -721,6 +777,16 @@
 		background: #f9fafb;
 	}
 
+	.dropdown-item:disabled {
+		opacity: 0.6;
+		cursor: not-allowed;
+	}
+
+	/* CSV im Dropdown nur, solange der Header die Buttons nicht zeigt */
+	.dropdown-csv {
+		display: none;
+	}
+
 	.dropdown-item-danger:hover {
 		background: #fef2f2;
 		color: #dc2626;
@@ -851,8 +917,13 @@
 
 	/* ===== RESPONSIVE ===== */
 	@media (max-width: 768px) {
+		/* Kein Platz im Header – die Aktionen wandern ins User-Dropdown */
 		.csv-actions {
-			display: none; /* Auf Tablet/Mobile verstecken für bessere UX */
+			display: none;
+		}
+
+		.dropdown-csv {
+			display: block;
 		}
 	}
 
