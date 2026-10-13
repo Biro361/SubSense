@@ -154,19 +154,26 @@ export const actions = {
 
     const data = await request.formData();
     const documentId = data.get('documentId')?.toString();
-    const filename = data.get('filename')?.toString();
-    
-    if (!documentId || !filename) {
+
+    if (!documentId) {
       return { success: false, message: 'Ungültige Dokument-Daten' };
     }
-    
+
     try {
-      // Aus Storage löschen
-      await deleteStorageDocument(filename);
-      
-      // Aus MongoDB löschen
+      // Dateiname nur aus dem eigenen Vertrag nehmen, nie aus dem Formular
+      const contract = await getContractById(params.id, user.userId);
+      const document = contract?.documents?.find(
+        (doc) => doc._id.toString() === documentId
+      );
+
+      if (!document) {
+        return { success: false, message: 'Dokument nicht gefunden' };
+      }
+
+      // Erst aus MongoDB, dann aus Storage: so bleibt kein toter Verweis zurück
       await removeDocument(params.id, documentId, user.userId);
-      
+      await deleteStorageDocument(document.filename);
+
       return { success: true, message: 'Dokument gelöscht' };
     } catch (err) {
       console.error('Fehler beim Löschen:', err);

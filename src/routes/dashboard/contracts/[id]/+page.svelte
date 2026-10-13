@@ -348,7 +348,6 @@
                       </a>
                       <form method="POST" action="?/deleteDocument" use:enhance class="inline">
                         <input type="hidden" name="documentId" value={doc._id} />
-                        <input type="hidden" name="filename" value={doc.filename} />
                         <button
                           type="submit"
                           class="px-3 py-1 text-sm text-red-600 hover:bg-red-50 rounded transition-colors"
