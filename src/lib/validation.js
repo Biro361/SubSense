@@ -89,7 +89,8 @@ export function validateContract(input) {
   }
 
   const rawCost = String(input.cost ?? '').trim();
-  const cost = rawCost === '' ? 0 : Number.parseFloat(rawCost);
+  // Number statt parseFloat: "15,90" wurde sonst still zu 15, "12abc" zu 12
+  const cost = Number(rawCost.replace(',', '.'));
   if (!Number.isFinite(cost) || cost < 0) {
     errors.push(`Ungültige Kosten "${rawCost}" (Zahl ab 0 erwartet).`);
   }
