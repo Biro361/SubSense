@@ -25,8 +25,15 @@ export function calculateReminderMetadata(contract) {
   const cancellationDate = new Date(contract.cancellationDate);
   cancellationDate.setHours(0, 0, 0, 0);
 
+  // "Heute" ist der Kalendertag der Nutzer, nicht des Servers: Netlify läuft in UTC
+  // und zählte zwischen 00:00 und 02:00 Schweizer Zeit noch den Vortag.
+  // shortcut: feste Zeitzone, pro User speichern sobald jemand ausserhalb der Schweiz dazukommt
+  const today = new Date(
+    `${new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Zurich' })}T00:00:00`
+  );
+
   // Tage bis zur Kündigungsfrist berechnen
-  const daysUntilCancellation = calendarDaysBetween(new Date(), cancellationDate);
+  const daysUntilCancellation = calendarDaysBetween(today, cancellationDate);
 
   // Erinnerungstage (Standard: 7 Tage vor Kündigungsfrist)
   const reminderDays = contract.reminderDays ?? 7;
