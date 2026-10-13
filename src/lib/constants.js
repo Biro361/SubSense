@@ -28,6 +28,19 @@ export function getCategoryByValue(value) {
   return CATEGORIES.find(c => c.value === value) || null;
 }
 
+/**
+ * Kosten eines Vertrags auf einen Monat umgerechnet
+ * @param {{ cost?: number, billingCycle?: string }} contract
+ * @returns {number}
+ */
+export function monthlyCost(contract) {
+  const cost = contract.cost || 0;
+
+  if (contract.billingCycle === 'yearly') return cost / 12;
+  if (contract.billingCycle === 'quarterly') return cost / 3;
+  return cost;
+}
+
 export const PASSWORD_MIN_LENGTH = 8;
 
 // bcrypt schneidet alles über 72 Byte stillschweigend ab

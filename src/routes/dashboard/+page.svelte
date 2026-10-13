@@ -2,7 +2,7 @@
 <script>
   import { page } from "$app/stores";
   import { onMount } from "svelte";
-  import { CATEGORIES, getCategoryByValue } from "$lib/constants";
+  import { CATEGORIES, getCategoryByValue, monthlyCost } from "$lib/constants";
   import { goto } from '$app/navigation';
   import Toast from "$lib/components/Toast.svelte";
 
@@ -95,17 +95,7 @@
 
   // Monatliche Gesamtkosten (normalisiert)
   let totalMonthlyCost = $derived(
-    activeContracts.reduce((sum, contract) => {
-      const cost = contract.cost || 0;
-      const cycle = contract.billingCycle || "monthly";
-
-      // Auf monatliche Kosten normalisieren
-      let monthlyCost = cost;
-      if (cycle === "yearly") monthlyCost = cost / 12;
-      if (cycle === "quarterly") monthlyCost = cost / 3;
-
-      return sum + monthlyCost;
-    }, 0),
+    activeContracts.reduce((sum, contract) => sum + monthlyCost(contract), 0),
   );
 
   // Jährliche Gesamtkosten
@@ -140,21 +130,14 @@
         (c) => c.category === cat.value,
       );
       const count = categoryContracts.length;
-      const monthlyCost = categoryContracts
+      const categoryMonthlyCost = categoryContracts
         .filter((c) => c.status === "active")
-        .reduce((sum, c) => {
-          const cost = c.cost || 0;
-          const cycle = c.billingCycle || "monthly";
-          let monthly = cost;
-          if (cycle === "yearly") monthly = cost / 12;
-          if (cycle === "quarterly") monthly = cost / 3;
-          return sum + monthly;
-        }, 0);
+        .reduce((sum, c) => sum + monthlyCost(c), 0);
 
       return {
         ...cat,
         count,
-        monthlyCost: monthlyCost.toFixed(2),
+        monthlyCost: categoryMonthlyCost.toFixed(2),
       };
     }),
   );

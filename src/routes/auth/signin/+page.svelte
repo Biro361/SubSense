@@ -1,10 +1,8 @@
 <!-- src/routes/auth/signin/+page.svelte -->
 <script>
 	import { enhance } from '$app/forms';
-	import { page } from '$app/stores';
 
 	let { form } = $props();
-	let justRegistered = $derived($page.url.searchParams.get('registered') === '1');
 </script>
 
 <svelte:head>
@@ -15,12 +13,6 @@
 	<div class="max-w-md w-full bg-white rounded-2xl shadow-lg p-8">
 		<h1 class="text-2xl font-semibold text-gray-900 mb-2">Willkommen zurück</h1>
 		<p class="text-gray-600 mb-6">Melde dich an, um deine Verträge zu verwalten.</p>
-
-		{#if justRegistered}
-			<div class="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
-				✅ Account erfolgreich erstellt! Du kannst dich jetzt anmelden.
-			</div>
-		{/if}
 
 		{#if form?.error}
 			<div class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
