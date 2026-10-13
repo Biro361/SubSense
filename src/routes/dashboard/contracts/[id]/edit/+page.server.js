@@ -1,5 +1,6 @@
 import { fail, redirect, error } from '@sveltejs/kit';
 import { getContractById, updateContract } from '$lib/db/contracts';
+import { validateContract } from '$lib/validation.js';
 
 // Vertrag laden (mit User-Check)
 export async function load({ params, locals }) {
@@ -33,55 +34,17 @@ export const actions = {
       return fail(401, { error: 'Nicht eingeloggt' });
     }
 
-    const formData = await request.formData();
+    // Rohwerte: validateContract nimmt nur die bekannten Felder an
+    const raw = Object.fromEntries(await request.formData());
+    const { contract, errors } = validateContract(raw);
 
-    const name = formData.get('name');
-    const provider = formData.get('provider');
-    const category = formData.get('category') || 'other';
-    const cancellationDate = formData.get('cancellationDate');
-    const status = formData.get('status');
-    const cost = formData.get('cost');
-    const billingCycle = formData.get('billingCycle');
-    const reminderDays = formData.get('reminderDays') || '7';
-    // NEU: URL auslesen
-    const cancellationUrl = formData.get('cancellationUrl');
-
-    // Validierung
-    if (!name || !provider || !cancellationDate || !cost) {
-      return fail(400, {
-        error: 'Bitte fülle alle Pflichtfelder aus'
-      });
-    }
-
-    // Kosten validieren
-    const parsedCost = parseFloat(cost);
-    if (isNaN(parsedCost) || parsedCost < 0) {
-      return fail(400, {
-        error: 'Bitte gib gültige Kosten ein (mindestens 0)'
-      });
-    }
-
-    // Erinnerungstage validieren
-    const parsedReminderDays = parseInt(reminderDays);
-    if (isNaN(parsedReminderDays) || parsedReminderDays < 1 || parsedReminderDays > 90) {
-      return fail(400, {
-        error: 'Erinnerungstage müssen zwischen 1 und 90 liegen'
-      });
+    if (!contract) {
+      return fail(400, { error: errors.join(' '), ...raw });
     }
 
     try {
       // WICHTIG: userId als dritten Parameter übergeben (Security!)
-      const success = await updateContract(params.id, {
-        name: name.toString(),
-        provider: provider.toString(),
-        category: category.toString(),
-        cancellationDate: new Date(cancellationDate.toString()),
-        status: status.toString(),
-        cost: parsedCost,
-        billingCycle: billingCycle.toString(),
-        reminderDays: parsedReminderDays,
-        cancellationUrl: cancellationUrl ? cancellationUrl.toString() : null // NEU: URL übergeben
-      }, user.userId);
+      const success = await updateContract(params.id, contract, user.userId);
 
 
       // Falls false → User ist nicht der Besitzer

@@ -1,5 +1,6 @@
 import { fail, redirect } from '@sveltejs/kit';
 import { createContract } from '$lib/db/contracts';
+import { validateContract } from '$lib/validation.js';
 
 // Form Action zum Erstellen eines Vertrags
 export const actions = {
@@ -11,58 +12,17 @@ export const actions = {
 			return fail(401, { error: 'Nicht eingeloggt' });
 		}
 
-		const formData = await request.formData();
+		// Rohwerte: validateContract nimmt nur die bekannten Felder an
+		const raw = Object.fromEntries(await request.formData());
+		const { contract, errors } = validateContract(raw);
 
-		const name = formData.get('name');
-		const provider = formData.get('provider');
-		const category = formData.get('category') || 'other';
-		const cancellationDate = formData.get('cancellationDate');
-		const status = formData.get('status') || 'active';
-		const cost = formData.get('cost');
-		const billingCycle = formData.get('billingCycle') || 'monthly';
-		const reminderDays = formData.get('reminderDays') || '7';
-		// NEU: URL auslesen
-		const cancellationUrl = formData.get('cancellationUrl');
-
-		// Validierung 
-		if (!name || !provider || !cancellationDate || !cost || !category) {
-			return fail(400, {
-				error: 'Bitte fülle alle Pflichtfelder aus',
-				name, provider, category, cancellationDate, cost, billingCycle, reminderDays, cancellationUrl
-			});
-		}
-
-
-		const parsedCost = parseFloat(cost);
-		if (isNaN(parsedCost) || parsedCost < 0) {
-			return fail(400, {
-				error: 'Bitte gib gültige Kosten ein (mindestens 0)',
-				name, provider, cancellationDate, cost, billingCycle, reminderDays, cancellationUrl
-			});
-		}
-
-		const parsedReminderDays = parseInt(reminderDays);
-		if (isNaN(parsedReminderDays) || parsedReminderDays < 1 || parsedReminderDays > 90) {
-			return fail(400, {
-				error: 'Erinnerungstage müssen zwischen 1 und 90 liegen',
-				name, provider, cancellationDate, cost, billingCycle, reminderDays, cancellationUrl
-			});
+		if (!contract) {
+			return fail(400, { error: errors.join(' '), ...raw });
 		}
 
 		try {
 			// WICHTIG: userId als zweiten Parameter übergeben
-			await createContract({
-				name: name.toString(),
-				provider: provider.toString(),
-				category: category.toString(),
-				cancellationDate: new Date(cancellationDate.toString()),
-				status: status.toString(),
-				cost: parsedCost,
-				billingCycle: billingCycle.toString(),
-				reminderDays: parsedReminderDays,
-				cancellationUrl: cancellationUrl ? cancellationUrl.toString() : null // NEU: URL übergeben
-			}, user.userId);
-
+			await createContract(contract, user.userId);
 
 			throw redirect(303, '/dashboard?message=created');
 
@@ -70,10 +30,7 @@ export const actions = {
 			if (error.status === 303) throw error;
 
 			console.error('Fehler beim Erstellen:', error);
-			return fail(500, {
-				error: 'Vertrag konnte nicht gespeichert werden',
-				name, provider, cancellationDate, cost, billingCycle, reminderDays, cancellationUrl
-			});
+			return fail(500, { error: 'Vertrag konnte nicht gespeichert werden', ...raw });
 		}
 	}
 };

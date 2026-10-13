@@ -2,6 +2,8 @@
  * CSV-Utility-Funktionen für Import/Export von Vertragsdaten
  * Unterstützt UTF-8, Sonderzeichen und robustes Error-Handling
  */
+// relativ statt $lib, damit die Datei ohne Vite-Alias testbar bleibt
+import { validateContract } from '../validation.js';
 
 // Excel und Sheets führen Werte aus, die mit einem dieser Zeichen beginnen
 const FORMULA_START = /^[=+\-@\t\r]/;
@@ -128,6 +130,7 @@ export function parseCSV(csvContent) {
       const values = rows[i];
 
       // Werte zu Contract-Objekt mappen
+      /** @type {Record<string, unknown>} */
       const contract = {};
       headers.forEach((header, index) => {
         const value = values[index] || null;
@@ -139,95 +142,15 @@ export function parseCSV(csvContent) {
             : value;
       });
 
-      // Validierung der Pflichtfelder
-      if (!contract.name || !contract.provider || !contract.cancellationDate) {
-        errors.push(
-          `Zeile ${i + 1}: Pflichtfelder (name, provider, cancellationDate) fehlen oder sind leer`
-        );
-        continue;
+      // Eine Regelquelle für Formular und CSV
+      const result = validateContract(contract);
+
+      errors.push(...result.errors.map((message) => `Zeile ${i + 1}: ${message}`));
+      warnings.push(...result.warnings.map((message) => `Zeile ${i + 1}: ${message}`));
+
+      if (result.contract) {
+        contracts.push(result.contract);
       }
-
-      // Datum-Validierung (Format: YYYY-MM-DD)
-      const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-      if (!dateRegex.test(contract.cancellationDate)) {
-        errors.push(
-          `Zeile ${i + 1}: Ungültiges Datum "${contract.cancellationDate}" (erwartet: YYYY-MM-DD, z.B. 2026-03-15)`
-        );
-        continue;
-      }
-
-      // Datum-Plausibilität prüfen
-      const parsedDate = new Date(contract.cancellationDate);
-      if (isNaN(parsedDate.getTime())) {
-        errors.push(
-          `Zeile ${i + 1}: Ungültiges Datum "${contract.cancellationDate}" (nicht parsebar)`
-        );
-        continue;
-      }
-
-      // Status-Validierung
-      const validStatuses = ['active', 'cancelled'];
-      if (!validStatuses.includes(contract.status)) {
-        errors.push(
-          `Zeile ${i + 1}: Ungültiger Status "${contract.status}" (erlaubt: active, cancelled)`
-        );
-        continue;
-      }
-
-      // Typ-Konvertierung & Defaults
-      contract.cost = parseFloat(contract.cost) || 0;
-      contract.reminderDays = parseInt(contract.reminderDays) || 7;
-      contract.billingCycle = contract.billingCycle || 'monthly';
-      contract.category = contract.category || 'other';
-      contract.notes = contract.notes || '';
-
-      // BillingCycle-Validierung
-      const validCycles = ['monthly', 'yearly', 'quarterly'];
-      if (!validCycles.includes(contract.billingCycle)) {
-        warnings.push(
-          `Zeile ${i + 1}: Ungültiger Abrechnungszyklus "${contract.billingCycle}", verwende "monthly" als Standard`
-        );
-        contract.billingCycle = 'monthly';
-      }
-
-      // ReminderDays-Validierung
-      if (contract.reminderDays < 1 || contract.reminderDays > 90) {
-        warnings.push(
-          `Zeile ${i + 1}: Erinnerungstage (${contract.reminderDays}) außerhalb 1-90, verwende 7 Tage als Standard`
-        );
-        contract.reminderDays = 7;
-      }
-
-      // Kategorie-Validierung
-      const validCategories = [
-        'streaming',
-        'fitness',
-        'software',
-        'transport',
-        'insurance',
-        'other'
-      ];
-      if (!validCategories.includes(contract.category)) {
-        warnings.push(
-          `Zeile ${i + 1}: Unbekannte Kategorie "${contract.category}", verwende "other" als Standard`
-        );
-        contract.category = 'other';
-      }
-
-      // URL-Validierung (optional)
-      if (contract.cancellationUrl && contract.cancellationUrl !== '') {
-        const urlPattern = /^https?:\/\/.+/;
-        if (!urlPattern.test(contract.cancellationUrl)) {
-          warnings.push(
-            `Zeile ${i + 1}: Ungültige URL "${contract.cancellationUrl}" (muss mit http:// oder https:// beginnen)`
-          );
-          contract.cancellationUrl = null;
-        }
-      } else {
-        contract.cancellationUrl = null;
-      }
-
-      contracts.push(contract);
     } catch (error) {
       errors.push(`Zeile ${i + 1}: Parsing-Fehler - ${error.message}`);
     }

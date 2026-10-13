@@ -1,6 +1,6 @@
 import { ObjectId } from 'mongodb';
 import clientPromise from '$lib/mongodb';
-import { VALID_CATEGORIES } from '$lib/constants';
+import { validateContract } from '$lib/validation.js';
 
 const DB_NAME = 'subsense';
 const COLLECTION_NAME = 'contracts';
@@ -136,38 +136,14 @@ export async function createContract(contractData, userId) {
   const db = client.db(DB_NAME);
 
   try {
-    const cost = parseFloat(contractData.cost) || 0;
-    const billingCycle = contractData.billingCycle || 'monthly';
-    const reminderDays = parseInt(contractData.reminderDays) || 7;
-
-    const category = contractData.category || 'other';
-    if (!VALID_CATEGORIES.includes(category)) {
-      throw new Error('Invalid category');
-    }
-
-    const cancellationUrl = contractData.cancellationUrl?.trim() || null;
-    if (cancellationUrl && !/^https?:\/\/.+/.test(cancellationUrl)) {
-      throw new Error('Invalid cancellation URL format (must start with http:// or https://)');
-    }
-
-    if (!['monthly', 'yearly', 'quarterly'].includes(billingCycle)) {
-      throw new Error('Invalid billing cycle');
-    }
-
-    if (reminderDays < 1 || reminderDays > 90) {
-      throw new Error('Reminder days must be between 1 and 90');
+    const { contract, errors } = validateContract(contractData);
+    if (!contract) {
+      throw new Error(errors.join(' '));
     }
 
     const result = await db.collection(COLLECTION_NAME).insertOne({
-      ...contractData,
+      ...contract,
       userId,
-      cost,
-      billingCycle,
-      reminderDays,
-      category,
-      cancellationUrl,
-      notes: '',
-      cancellationInstructions: '',
       documents: [],
       createdAt: new Date(),
       updatedAt: new Date()
@@ -175,15 +151,8 @@ export async function createContract(contractData, userId) {
 
     return {
       _id: result.insertedId.toString(),
-      ...contractData,
+      ...contract,
       userId,
-      cost,
-      billingCycle,
-      reminderDays,
-      category,
-      cancellationUrl,
-      notes: '',
-      cancellationInstructions: '',
       documents: []
     };
 
@@ -204,42 +173,13 @@ export async function updateContract(id, updates, userId) {
   const db = client.db(DB_NAME);
 
   try {
-    const updateData = { ...updates };
-
-    if (updates.cost !== undefined) {
-      updateData.cost = parseFloat(updates.cost) || 0;
+    const { contract, errors } = validateContract(updates);
+    if (!contract) {
+      throw new Error(errors.join(' '));
     }
 
-    if (updates.billingCycle !== undefined) {
-      if (!['monthly', 'yearly', 'quarterly'].includes(updates.billingCycle)) {
-        throw new Error('Invalid billing cycle');
-      }
-      updateData.billingCycle = updates.billingCycle;
-    }
-
-    if (updates.reminderDays !== undefined) {
-      const reminderDays = parseInt(updates.reminderDays);
-      if (reminderDays < 1 || reminderDays > 90) {
-        throw new Error('Reminder days must be between 1 and 90');
-      }
-      updateData.reminderDays = reminderDays;
-    }
-
-    if (updates.category !== undefined) {
-      if (!VALID_CATEGORIES.includes(updates.category)) {
-        throw new Error('Invalid category');
-      }
-      updateData.category = updates.category;
-    }
-
-    if (updates.cancellationUrl !== undefined) {
-      const url = updates.cancellationUrl?.trim() || null;
-      if (url && !/^https?:\/\/.+/.test(url)) {
-        throw new Error('Invalid cancellation URL format');
-      }
-      updateData.cancellationUrl = url;
-    }
-
+    // Nur die editierbaren Felder: notes, cancellationInstructions und documents
+    // haben eigene Funktionen und dürfen hier nicht überschrieben werden
     const result = await db.collection(COLLECTION_NAME).updateOne(
       {
         _id: new ObjectId(id),
@@ -247,7 +187,15 @@ export async function updateContract(id, updates, userId) {
       },
       {
         $set: {
-          ...updateData,
+          name: contract.name,
+          provider: contract.provider,
+          cancellationDate: contract.cancellationDate,
+          status: contract.status,
+          cost: contract.cost,
+          billingCycle: contract.billingCycle,
+          reminderDays: contract.reminderDays,
+          category: contract.category,
+          cancellationUrl: contract.cancellationUrl,
           updatedAt: new Date()
         }
       }
