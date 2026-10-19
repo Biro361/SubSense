@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { calculateReminderMetadata } from './reminders.js';
+import { calculateReminderMetadata, compareByDeadline } from './reminders.js';
 
 /**
  * Lokaler Kalendertag relativ zu heute
@@ -125,5 +125,17 @@ describe('calculateReminderMetadata', () => {
     });
 
     expect(result.reminderDate.getTime()).toBe(dayOffset(16).getTime());
+  });
+});
+
+describe('compareByDeadline', () => {
+  it('sortiert überfällige vor dringenden vor den übrigen', () => {
+    const later = { name: 'später', cancellationDate: dayOffset(60), isUrgent: false, isOverdue: false };
+    const urgent = { name: 'dringend', cancellationDate: dayOffset(3), isUrgent: true, isOverdue: false };
+    const overdue = { name: 'überfällig', cancellationDate: dayOffset(-1), isUrgent: false, isOverdue: true };
+
+    const sorted = [later, urgent, overdue].sort(compareByDeadline);
+
+    expect(sorted.map((c) => c.name)).toEqual(['überfällig', 'dringend', 'später']);
   });
 });

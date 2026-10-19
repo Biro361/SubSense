@@ -18,6 +18,10 @@
 	}
 </script>
 
+<svelte:head>
+	<title>Neuer Vertrag – SubSense</title>
+</svelte:head>
+
 <div class="mx-auto max-w-[70rem] px-6 pt-10 pb-16 max-sm:px-4 max-sm:pt-7">
 	<div class="max-w-2xl">
 		<a href="/" class="text-[13px] text-ink-2 hover:text-ink">

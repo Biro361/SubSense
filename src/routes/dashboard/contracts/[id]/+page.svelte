@@ -15,6 +15,10 @@
   let instructionsText = $state(contract.cancellationInstructions || '');
   let cancellationUrl = $state(contract.cancellationUrl || '');
 
+  // Ohne reset: false leert enhance die Felder, die States behalten aber nur den Anfangswert
+  /** @type {import('@sveltejs/kit').SubmitFunction} */
+  const keepValues = () => async ({ update }) => update({ reset: false });
+
   // Kategorie-Info
   const category = $derived(getCategoryByValue(contract.category));
 
@@ -51,6 +55,10 @@
     { id: 'documents', label: 'Dokumente' }
   ];
 </script>
+
+<svelte:head>
+  <title>{contract.name} – SubSense</title>
+</svelte:head>
 
 <div class="max-w-[70rem] mx-auto px-6 pt-10 pb-16 max-sm:px-4 max-sm:pt-7">
   <!-- Header -->
@@ -175,7 +183,7 @@
 
     <!-- Notizen Tab -->
     {#if activeTab === 'notes'}
-      <form method="POST" action="?/updateNote" use:enhance>
+      <form method="POST" action="?/updateNote" use:enhance={keepValues}>
         <div>
           <label for="notes" class="label">
             Persönliche Notizen
@@ -201,7 +209,7 @@
 
     <!-- Kündigungsanweisungen Tab -->
     {#if activeTab === 'instructions'}
-      <form method="POST" action="?/updateInstructions" use:enhance>
+      <form method="POST" action="?/updateInstructions" use:enhance={keepValues}>
         <div class="space-y-5">
           <div>
             <label for="cancellationUrl" class="label">
@@ -251,10 +259,13 @@
               type="file"
               name="document"
               accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp"
-              class="hidden"
+              class="peer sr-only"
               id="file-upload"
             />
-            <label for="file-upload" class="flex cursor-pointer flex-col items-center gap-2">
+            <label
+              for="file-upload"
+              class="flex cursor-pointer flex-col items-center gap-2 rounded-card peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-accent"
+            >
               <Icon name="upload" size={24} class="text-ink-3" />
               <span class="text-sm font-medium">Dokument auswählen</span>
               <span class="text-xs text-ink-3">PDF, Word, JPG, PNG, WebP (max. 4 MB)</span>

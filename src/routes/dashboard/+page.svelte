@@ -1,8 +1,10 @@
 <!-- src/routes/dashboard/+page.svelte -->
 <script>
   import { page } from "$app/stores";
-  import { onMount } from "svelte";
+  import { onMount, tick } from "svelte";
+  import { replaceState } from "$app/navigation";
   import { CATEGORIES, getCategoryByValue, monthlyCost } from "$lib/constants";
+  import { compareByDeadline } from "$lib/reminders.js";
   import Toast from "$lib/components/Toast.svelte";
   import Icon from "$lib/components/Icon.svelte";
 
@@ -58,7 +60,7 @@
   let toastMessage = $state("");
 
   // Toast anzeigen; die Komponente blendet sich nach 5 Sekunden selbst aus
-  onMount(() => {
+  onMount(async () => {
     if (successMessage) {
       toastMessage = successMessage;
       showToast = true;
@@ -67,20 +69,14 @@
       const url = new URL(window.location.href);
       url.searchParams.delete("message");
       url.searchParams.delete("count");
-      window.history.replaceState({}, "", url);
+      // Erst nach tick(): beim ersten Laden ist der Router in onMount noch nicht bereit
+      await tick();
+      replaceState(url, {});
     }
   });
 
-  // Verträge nach Dringlichkeit sortieren (dringend zuerst)
-  let sortedContracts = $derived(
-    [...filteredContracts].sort((a, b) => {
-      // Dringende zuerst
-      if (a.isUrgent && !b.isUrgent) return -1;
-      if (!a.isUrgent && b.isUrgent) return 1;
-      // Dann nach Kündigungsdatum
-      return new Date(a.cancellationDate) - new Date(b.cancellationDate);
-    }),
-  );
+  // Überfällige und dringende zuerst, dann nach Frist
+  let sortedContracts = $derived([...filteredContracts].sort(compareByDeadline));
 
   // Dringende Verträge filtern
   let urgentContracts = $derived(contracts.filter((c) => c.isUrgent));
@@ -170,6 +166,10 @@
     ),
   );
 </script>
+
+<svelte:head>
+  <title>Dashboard – SubSense</title>
+</svelte:head>
 
 {#if showToast}
   <Toast message={toastMessage} onClose={() => (showToast = false)} />
