@@ -251,10 +251,13 @@
               type="file"
               name="document"
               accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp"
-              class="hidden"
+              class="peer sr-only"
               id="file-upload"
             />
-            <label for="file-upload" class="flex cursor-pointer flex-col items-center gap-2">
+            <label
+              for="file-upload"
+              class="flex cursor-pointer flex-col items-center gap-2 rounded-card peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-accent"
+            >
               <Icon name="upload" size={24} class="text-ink-3" />
               <span class="text-sm font-medium">Dokument auswählen</span>
               <span class="text-xs text-ink-3">PDF, Word, JPG, PNG, WebP (max. 4 MB)</span>
