@@ -2,15 +2,15 @@
 
 /**
  * Verfügbare Vertragskategorien
- * @type {Array<{value: string, label: string, icon: string, color: string}>}
+ * @type {Array<{value: string, label: string}>}
  */
 export const CATEGORIES = [
-  { value: 'streaming', label: 'Streaming', icon: '📺', color: 'purple' },
-  { value: 'fitness', label: 'Fitness', icon: '💪', color: 'green' },
-  { value: 'software', label: 'Software', icon: '💻', color: 'blue' },
-  { value: 'transport', label: 'Transport', icon: '🚗', color: 'yellow' },
-  { value: 'insurance', label: 'Versicherung', icon: '🛡️', color: 'red' },
-  { value: 'other', label: 'Sonstiges', icon: '📦', color: 'gray' }
+  { value: 'streaming', label: 'Streaming' },
+  { value: 'fitness', label: 'Fitness' },
+  { value: 'software', label: 'Software' },
+  { value: 'transport', label: 'Transport' },
+  { value: 'insurance', label: 'Versicherung' },
+  { value: 'other', label: 'Sonstiges' }
 ];
 
 /**
