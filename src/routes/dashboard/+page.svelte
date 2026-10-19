@@ -4,6 +4,7 @@
   import { onMount } from "svelte";
   import { CATEGORIES, getCategoryByValue, monthlyCost } from "$lib/constants";
   import Toast from "$lib/components/Toast.svelte";
+  import Icon from "$lib/components/Icon.svelte";
 
   let { data } = $props();
   let contracts = $derived(data.contracts || []);
@@ -38,13 +39,13 @@
     // 2. Suchfilter anwenden (nur wenn searchQuery nicht leer)
     if (searchQuery.trim() !== "") {
       const query = searchQuery.toLowerCase().trim();
-      
+
       result = result.filter((contract) => {
         // Suche in: Name, Anbieter, Status
         const nameMatch = contract.name?.toLowerCase().includes(query);
         const providerMatch = contract.provider?.toLowerCase().includes(query);
         const statusMatch = (contract.status === "active" ? "aktiv" : "gekündigt").includes(query);
-        
+
         return nameMatch || providerMatch || statusMatch;
       });
     }
@@ -122,6 +123,15 @@
     return `Noch ${days} Tage`;
   }
 
+  // Datum zweistellig, damit die Fristen-Spalte fluchtet
+  function formatDate(date) {
+    return new Date(date).toLocaleDateString("de-CH", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+  }
+
   // Statistiken pro Kategorie
   let categoryStats = $derived(
     CATEGORIES.map((cat) => {
@@ -140,634 +150,738 @@
       };
     }),
   );
+
+  // Vertrag mit der nächsten Frist (überfällig schlägt dringend)
+  let nextDeadline = $derived(
+    overdueContracts[0] ?? urgentContracts[0] ?? null,
+  );
+
+  // Teuerste Kategorie, für die Kennzahl neben der Leitzahl
+  let topCategory = $derived(
+    [...categoryStats].sort(
+      (a, b) => parseFloat(b.monthlyCost) - parseFloat(a.monthlyCost),
+    )[0] ?? null,
+  );
+
+  // Aktive Verträge, deren Frist in den nächsten 30 Tagen liegt
+  let deadlinesSoon = $derived(
+    activeContracts.filter(
+      (c) => c.daysUntilCancellation >= 0 && c.daysUntilCancellation <= 30,
+    ),
+  );
 </script>
 
 {#if showToast}
   <Toast message={toastMessage} onClose={() => (showToast = false)} />
 {/if}
 
-<!-- Karte für überfällige (overdue) und dringende Verträge -->
-{#snippet alertCard(contract, overdue)}
-  <div
-    class="{overdue
-      ? 'bg-red-100 border-red-500 shadow-lg'
-      : 'bg-red-50 border-red-200 shadow'} border-2 rounded-lg p-4"
-  >
-    <div class="flex justify-between items-start">
-      <div class="flex-1">
-        <div class="flex items-center gap-2 mb-2">
-          <h3 class="text-lg font-semibold {overdue ? 'text-gray-900' : ''}">
-            {contract.name}
-          </h3>
-          <span
-            class="bg-red-600 text-white px-3 py-1 rounded-full text-xs font-bold"
-          >
-            {overdue ? "ÜBERFÄLLIG" : "DRINGEND"}
-          </span>
-        </div>
-        <p class="{overdue ? 'text-gray-800' : 'text-gray-700'} font-medium">
-          Anbieter: {contract.provider}
-        </p>
-
-        {#if contract.cancellationUrl}
-          <a
-            href={contract.cancellationUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            class="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 hover:underline mt-1"
-          >
-            <svg
-              class="w-4 h-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-              ></path>
-            </svg>
-            Zur Kündigungsseite
-          </a>
-        {/if}
-
-        {#if overdue}
-          <div class="mt-3 p-3 bg-white rounded border-2 border-red-500">
-            <p class="text-sm font-semibold text-red-700 mb-1">
-              ⚠️ Kündigungsfrist überschritten:
-            </p>
-            <p class="text-xl font-bold text-red-700">
-              {formatDaysText(contract.daysUntilCancellation)}
-            </p>
-            <p class="text-sm font-medium text-gray-700 mt-2">
-              Frist war am: <span class="font-semibold"
-                >{new Date(contract.cancellationDate).toLocaleDateString(
-                  "de-DE",
-                )}</span
-              >
-            </p>
-            <p class="text-xs text-red-600 mt-2 italic">
-              💡 Tipp: Prüfe die Vertragsbedingungen. Möglicherweise wurde
-              der Vertrag automatisch verlängert.
-            </p>
-          </div>
-        {:else}
-          <div class="mt-3 p-3 bg-white rounded border border-red-300">
-            <p class="text-sm font-medium text-gray-700 mb-1">
-              Kündigungsfrist:
-            </p>
-            <p class="text-xl font-bold text-red-600">
-              {formatDaysText(contract.daysUntilCancellation)}
-            </p>
-            <p class="text-sm font-medium text-gray-600 mt-1">
-              bis <span class="font-semibold"
-                >{new Date(contract.cancellationDate).toLocaleDateString(
-                  "de-DE",
-                )}</span
-              >
-            </p>
-          </div>
-        {/if}
-
-        {#if contract.cost && contract.cost > 0}
-          <p class="text-sm font-medium text-blue-600 mt-3">
-            {contract.cost.toFixed(2)} CHF / {formatBillingCycle(
-              contract.billingCycle,
-            )}
-          </p>
-        {/if}
-      </div>
-
-      <span
-        class="{overdue || contract.status !== 'active'
-          ? 'bg-gray-100 text-gray-800'
-          : 'bg-green-100 text-green-800'} px-3 py-1 rounded-full text-sm h-fit"
-      >
-        {contract.status === "active" ? "Aktiv" : "Gekündigt"}
-      </span>
-    </div>
-
-    {#if overdue}
-      <div class="flex gap-2 mt-4 pt-4 border-t border-red-300">
-        <a
-          href="/dashboard/contracts/{contract._id}"
-          class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 text-sm font-medium"
-        >
-          Details anzeigen
-        </a>
-        <a
-          href="/dashboard/contracts/{contract._id}/edit"
-          class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm font-medium"
-        >
-          Status aktualisieren
-        </a>
-        <a
-          href="/dashboard/contracts/{contract._id}/delete"
-          class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 text-sm font-medium"
-        >
-          Löschen
-        </a>
-      </div>
-    {:else}
-      <div class="flex gap-2 mt-4 pt-4 border-t border-red-200">
-        <a
-          href="/dashboard/contracts/{contract._id}"
-          class="text-gray-600 hover:text-gray-800 text-sm font-medium"
-        >
-          👁️ Details
-        </a>
-        <a
-          href="/dashboard/contracts/{contract._id}/edit"
-          class="text-blue-600 hover:text-blue-800 text-sm font-medium"
-        >
-          ✏️ Bearbeiten
-        </a>
-        <a
-          href="/dashboard/contracts/{contract._id}/delete"
-          class="text-red-600 hover:text-red-800 text-sm font-medium"
-        >
-          🗑️ Löschen
-        </a>
-      </div>
-    {/if}
-  </div>
-{/snippet}
-
-<!-- Dashboard-Content (Header ist jetzt im Layout) -->
-<div class="max-w-4xl mx-auto p-6">
-  <!-- Suchleiste -->
-  <div class="mb-6">
-    <label for="search" class="block text-lg font-semibold mb-3">
-      Verträge durchsuchen
-    </label>
-    <div class="relative">
-      <!-- Lupe-Icon (links) -->
-      <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-        <svg
-          class="w-5 h-5 text-gray-400"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-          ></path>
-        </svg>
-      </div>
-
-      <!-- Eingabefeld -->
-      <input
-        id="search"
-        type="text"
-        bind:value={searchQuery}
-        placeholder="Suche nach Name, Anbieter oder Status..."
-        class="w-full pl-10 pr-10 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-      />
-
-      <!-- Clear-Button (rechts, nur sichtbar wenn Text vorhanden) -->
-      {#if searchQuery.trim() !== ""}
-        <button
-          onclick={() => (searchQuery = "")}
-          class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
-          aria-label="Suche löschen"
-        >
-          <svg
-            class="w-5 h-5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M6 18L18 6M6 6l12 12"
-            ></path>
-          </svg>
-        </button>
-      {/if}
-    </div>
-
-    <!-- Suchergebnis-Anzeige -->
-    {#if searchQuery.trim() !== ""}
-      <p class="text-sm text-gray-600 mt-2">
-        📊 {filteredContracts.length} von {contracts.length} Verträgen gefunden
-        {#if filteredContracts.length === 0}
-          <span class="text-red-600 font-medium">
-            – Keine Treffer für "{searchQuery}"
-          </span>
-        {/if}
-      </p>
-    {/if}
-  </div>
-
-  <!-- Kategorie-Filter -->
-  <div class="mb-6">
-    <h2 class="text-lg font-semibold mb-3">Nach Kategorie filtern</h2>
-    <div class="flex flex-wrap gap-2">
-      <!-- "Alle"-Button -->
-      <button
-        onclick={() => (selectedCategory = "all")}
-        class="filter-button {selectedCategory === 'all'
-          ? 'filter-button-active'
-          : 'filter-button-inactive'}"
-      >
-        <span class="text-lg">📋</span>
-        <span class="font-medium">Alle</span>
-        <span class="filter-badge">{contracts.length}</span>
-      </button>
-
-      <!-- Kategorie-Buttons -->
-      {#each categoryStats as cat}
-        {#if cat.count > 0}
-          <button
-            onclick={() => (selectedCategory = cat.value)}
-            class="filter-button {selectedCategory === cat.value
-              ? 'filter-button-active'
-              : 'filter-button-inactive'}"
-          >
-            <span class="text-lg">{cat.icon}</span>
-            <span class="font-medium">{cat.label}</span>
-            <span class="filter-badge">{cat.count}</span>
-            {#if parseFloat(cat.monthlyCost) > 0}
-              <span class="text-xs text-gray-500">
-                {cat.monthlyCost} CHF/M
-              </span>
-            {/if}
-          </button>
-        {/if}
-      {/each}
-    </div>
-  </div>
-
-  <!-- Kosten-Dashboard -->
-  {#if activeContracts.length > 0}
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-      <div class="bg-blue-50 rounded-lg p-4 border border-blue-200">
-        <p class="text-sm text-gray-600 mb-1">Monatliche Kosten</p>
-        <p class="text-2xl font-bold text-blue-600">
-          {totalMonthlyCost.toFixed(2)} CHF
-        </p>
-        <p class="text-xs text-gray-500 mt-1">Durchschnitt pro Monat</p>
-      </div>
-
-      <div class="bg-purple-50 rounded-lg p-4 border border-purple-200">
-        <p class="text-sm text-gray-600 mb-1">Jährliche Kosten</p>
-        <p class="text-2xl font-bold text-purple-600">
-          {totalYearlyCost.toFixed(2)} CHF
-        </p>
-        <p class="text-xs text-gray-500 mt-1">Hochgerechnet aufs Jahr</p>
-      </div>
-
-      <div class="bg-green-50 rounded-lg p-4 border border-green-200">
-        <p class="text-sm text-gray-600 mb-1">Aktive Verträge</p>
-        <p class="text-2xl font-bold text-green-600">
-          {activeContracts.length}
-        </p>
-        <p class="text-xs text-gray-500 mt-1">Von {contracts.length} gesamt</p>
-      </div>
-    </div>
-  {/if}
-
-  <!-- Überfällige Kündigungen Sektion -->
-  {#if overdueContracts.length > 0}
-    <div class="mb-8">
-      <div class="flex items-center gap-2 mb-4">
-        <h2 class="text-xl font-semibold text-red-700">
-          🚨 Kündigungsfrist verpasst!
-        </h2>
-        <span
-          class="bg-red-600 text-white px-2 py-1 rounded-full text-sm font-bold animate-pulse"
-        >
-          {overdueContracts.length}
-        </span>
-      </div>
-
-      <div class="grid gap-4">
-        {#each overdueContracts as contract}
-          {@render alertCard(contract, true)}
-        {/each}
-      </div>
-    </div>
-  {/if}
-
-  <!-- Dringende Verträge Sektion -->
-  {#if urgentContracts.length > 0}
-    <div class="mb-8">
-      <div class="flex items-center gap-2 mb-4">
-        <h2 class="text-xl font-semibold text-red-600">
-          ⚠️ Dringende Kündigungen
-        </h2>
-        <span
-          class="bg-red-100 text-red-800 px-2 py-1 rounded-full text-sm font-medium"
-        >
-          {urgentContracts.length}
-        </span>
-      </div>
-
-      <div class="grid gap-4">
-        {#each urgentContracts as contract}
-          {@render alertCard(contract, false)}
-        {/each}
-      </div>
-    </div>
-  {/if}
-
-  <h2 class="text-xl font-semibold mb-4">
-    {#if searchQuery.trim() !== "" || selectedCategory !== "all"}
-      Gefilterte Verträge ({sortedContracts.length})
-    {:else}
-      Alle Verträge ({contracts.length})
-    {/if}
-  </h2>
-
+<div class="page">
   {#if contracts.length === 0}
-    <div class="text-center py-12 bg-gray-50 rounded-lg">
-      <p class="text-gray-600 mb-4">Noch keine Verträge vorhanden.</p>
-      <a
-        href="/dashboard/contracts/new"
-        class="text-blue-600 hover:text-blue-800 font-medium"
-      >
+    <div class="empty">
+      <p>Noch keine Verträge vorhanden.</p>
+      <a href="/dashboard/contracts/new" class="btn btn-primary">
+        <Icon name="plus" size={15} />
         Ersten Vertrag erstellen
       </a>
     </div>
   {:else}
-    <div class="grid gap-6">
-      {#each sortedContracts as contract}
-        <!-- Klickbar ueber den Titel-Link (.card-link), der die Karte ueberdeckt -->
-        <div
-          class="contract-card {contract.status === 'active'
-            ? 'contract-card-active'
-            : 'contract-card-inactive'} rounded-lg shadow-md border border-gray-200 p-4"
+    <!-- Leitzahl: die eine Information, die zählt -->
+    <section class="lead">
+      <p class="kicker">Laufende Kosten</p>
+      <p class="figure">
+        {totalMonthlyCost.toFixed(2)} <i>CHF / Monat</i>
+      </p>
+      <p class="sub">
+        <b
+          >{activeContracts.length}
+          {activeContracts.length === 1 ? "aktiver Vertrag" : "aktive Verträge"}</b
         >
-          <div>
-            <div class="flex justify-between items-start">
-              <div class="flex-1">
-                <div class="flex items-center gap-2 mb-2">
-                  <h3 class="text-lg font-semibold">
-                    <a
-                      href="/dashboard/contracts/{contract._id}"
-                      class="card-link">{contract.name}</a
-                    >
-                  </h3>
+        · {totalYearlyCost.toFixed(2)} CHF im Jahr
+        {#if overdueContracts.length > 0}
+          · <b class="text-crit"
+            >{overdueContracts.length}
+            {overdueContracts.length === 1 ? "Frist" : "Fristen"} verpasst</b
+          >
+        {/if}
+        {#if urgentContracts.length > 0}
+          · {urgentContracts.length}
+          {urgentContracts.length === 1 ? "Frist läuft" : "Fristen laufen"} bald
+          ab
+        {/if}
+      </p>
+    </section>
 
-                  <!-- Kategorie-Badge -->
-                  {#if contract.category}
-                    {@const cat = getCategoryByValue(contract.category)}
-                    {#if cat}
-                      <span class="category-badge category-badge-{cat.color}">
-                        {cat.icon}
-                        {cat.label}
-                      </span>
-                    {/if}
-                  {/if}
-                </div>
-
-                <p class="text-gray-600">Anbieter: {contract.provider}</p>
-
-                {#if contract.cancellationUrl}
-                  <span
-                    class="inline-flex items-center gap-1 text-sm text-blue-600 mt-1"
-                  >
-                    <svg
-                      class="w-4 h-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                      ></path>
-                    </svg>
-                    Kündigungslink verfügbar
-                  </span>
-                {/if}
-
-                <div class="mt-2">
-                  <p class="text-base font-medium text-gray-700">
-                    🗓️ Kündigung möglich bis:
-                    <span class="font-semibold"
-                      >{new Date(contract.cancellationDate).toLocaleDateString(
-                        "de-DE",
-                      )}</span
-                    >
-                  </p>
-                  {#if !contract.isUrgent && contract.status === "active"}
-                    <p class="text-sm text-gray-600 mt-1">
-                      🔔 Erinnerung {contract.reminderDays} Tage vorher
-                      <span class="font-medium"
-                        >({new Date(contract.reminderDate).toLocaleDateString(
-                          "de-DE",
-                        )})</span
-                      >
-                    </p>
-                  {/if}
-                </div>
-
-                {#if contract.cost && contract.cost > 0}
-                  <p class="text-sm font-medium text-blue-600 mt-2">
-                    {contract.cost.toFixed(2)} CHF / {formatBillingCycle(
-                      contract.billingCycle,
-                    )}
-                  </p>
-                {:else}
-                  <p class="text-sm text-gray-400 mt-2 italic">
-                    Keine Kosten angegeben
-                  </p>
-                {/if}
-              </div>
-
-              <span
-                class="{contract.status === 'active'
-                  ? 'bg-green-100 text-green-800'
-                  : 'bg-gray-100 text-gray-800'} px-3 py-1 rounded-full text-sm h-fit"
+    <!-- Nächste Frist, dann Kennzahlen -->
+    <section class="tiles" aria-label="Übersicht">
+      {#if nextDeadline}
+        <article class="tile tile-hero" class:is-crit={nextDeadline.isOverdue}>
+          <p class="hero-top">
+            <Icon name="alert" size={15} />
+            {nextDeadline.isOverdue ? "Frist verpasst" : "Nächste Frist"}
+          </p>
+          <p class="hero-name">{nextDeadline.name}</p>
+          <p class="hero-count">
+            {formatDaysText(nextDeadline.daysUntilCancellation)}
+            <small>
+              {nextDeadline.isOverdue ? "Frist war am" : "Kündigung möglich bis"}
+              {formatDate(nextDeadline.cancellationDate)}
+            </small>
+          </p>
+          <div class="hero-foot">
+            {#if nextDeadline.cancellationUrl}
+              <a
+                class="btn btn-primary"
+                href={nextDeadline.cancellationUrl}
+                target="_blank"
+                rel="noopener noreferrer"
               >
-                {contract.status === "active" ? "Aktiv" : "Gekündigt"}
+                <Icon name="external" size={15} />
+                Zur Kündigungsseite
+              </a>
+            {/if}
+            <a class="btn" href="/dashboard/contracts/{nextDeadline._id}/edit">
+              Status aktualisieren
+            </a>
+          </div>
+        </article>
+      {/if}
+
+      <article class="tile">
+        <p class="tile-label">Teuerste Kategorie</p>
+        {#if topCategory && parseFloat(topCategory.monthlyCost) > 0}
+          <p class="tile-value">{topCategory.monthlyCost} <i>CHF</i></p>
+          <p class="tile-note">
+            {topCategory.label} · {Math.round(
+              (parseFloat(topCategory.monthlyCost) / totalMonthlyCost) * 100,
+            )} % der Monatskosten
+          </p>
+        {:else}
+          <p class="tile-value">–</p>
+        {/if}
+      </article>
+
+      <article class="tile">
+        <p class="tile-label">Fristen in 30 Tagen</p>
+        <p class="tile-value">{deadlinesSoon.length}</p>
+        {#if deadlinesSoon.length > 0}
+          <p class="tile-note">{deadlinesSoon.map((c) => c.name).join(", ")}</p>
+        {/if}
+      </article>
+
+      <article class="tile">
+        <p class="tile-label">Gekündigt</p>
+        <p class="tile-value">{contracts.length - activeContracts.length}</p>
+        <p class="tile-note">von {contracts.length} Verträgen</p>
+      </article>
+    </section>
+
+    <!-- Werkzeuge: leise, weil sie nicht der Inhalt sind -->
+    <div class="tools">
+      <div class="search">
+        <Icon name="search" size={15} class="search-icon" />
+        <input
+          type="text"
+          bind:value={searchQuery}
+          aria-label="Verträge durchsuchen"
+          placeholder="Name, Anbieter oder Status"
+        />
+        {#if searchQuery.trim() !== ""}
+          <button
+            onclick={() => (searchQuery = "")}
+            class="icon-btn search-clear"
+            aria-label="Suche löschen"
+          >
+            <Icon name="x" size={15} />
+          </button>
+        {/if}
+      </div>
+
+      <div class="chips" role="group" aria-label="Nach Kategorie filtern">
+        <button
+          type="button"
+          class="chip"
+          aria-pressed={selectedCategory === "all"}
+          onclick={() => (selectedCategory = "all")}
+        >
+          Alle <b>{contracts.length}</b>
+        </button>
+        {#each categoryStats as cat}
+          {#if cat.count > 0}
+            <button
+              type="button"
+              class="chip"
+              aria-pressed={selectedCategory === cat.value}
+              onclick={() => (selectedCategory = cat.value)}
+            >
+              {cat.label} <b>{cat.count}</b>
+            </button>
+          {/if}
+        {/each}
+      </div>
+    </div>
+
+    <div class="list-head">
+      <h2>
+        {searchQuery.trim() !== "" || selectedCategory !== "all"
+          ? "Gefilterte Verträge"
+          : "Alle Verträge"}
+      </h2>
+      <span class="count">nach Frist sortiert · {sortedContracts.length}</span>
+    </div>
+
+    {#if sortedContracts.length === 0}
+      <div class="empty">
+        <p>
+          Keine Treffer{searchQuery.trim() !== ""
+            ? ` für „${searchQuery.trim()}“`
+            : " in dieser Kategorie"}.
+        </p>
+        <button
+          type="button"
+          class="btn"
+          onclick={() => {
+            searchQuery = "";
+            selectedCategory = "all";
+          }}
+        >
+          Filter zurücksetzen
+        </button>
+      </div>
+    {:else}
+      <ul class="rows">
+        {#each sortedContracts as contract (contract._id)}
+          {@const cat = getCategoryByValue(contract.category)}
+          {@const active = contract.status === "active"}
+          <li
+            class="row"
+            class:row-crit={contract.isOverdue}
+            class:row-warn={contract.isUrgent}
+            class:row-done={!active}
+          >
+            <div class="name">
+              <!-- Titel-Link deckt die ganze Zeile ab -->
+              <a href="/dashboard/contracts/{contract._id}" class="row-link"
+                >{contract.name}</a
+              >
+              {#if cat}<span class="cat">{cat.label}</span>{/if}
+            </div>
+
+            <div class="meta">
+              <span>{contract.provider}</span>
+              <span class="sep" aria-hidden="true">·</span>
+              <span>
+                {#if !active}
+                  Gekündigt
+                {:else if contract.isOverdue}
+                  Frist überschritten – Vertrag läuft evtl. weiter
+                {:else if contract.isUrgent}
+                  Erinnerung war am {formatDate(contract.reminderDate)}
+                {:else}
+                  Erinnerung am {formatDate(contract.reminderDate)}
+                {/if}
               </span>
             </div>
 
-            <!-- Liegen ueber dem Karten-Overlay (.card-actions) -->
-            <div
-              class="card-actions flex gap-2 mt-4 pt-4 border-t border-gray-200"
-            >
+            <div class="deadline">
+              <p class="d-days">
+                {active ? formatDaysText(contract.daysUntilCancellation) : "–"}
+              </p>
+              <p class="d-date">{formatDate(contract.cancellationDate)}</p>
+            </div>
+
+            <div class="cost">
+              {#if contract.cost && contract.cost > 0}
+                <p class="c-amt">{contract.cost.toFixed(2)}</p>
+                <p class="c-cycle">
+                  CHF / {formatBillingCycle(contract.billingCycle)}
+                </p>
+              {:else}
+                <p class="c-amt">–</p>
+                <p class="c-cycle">Keine Kosten angegeben</p>
+              {/if}
+            </div>
+
+            <!-- Liegen über dem Zeilen-Overlay -->
+            <div class="acts">
               <a
                 href="/dashboard/contracts/{contract._id}"
-                class="text-gray-600 hover:text-gray-800 hover:underline text-sm font-medium transition-colors"
+                class="icon-btn"
+                aria-label="Details zu {contract.name}"
               >
-                👁️ Details
+                <Icon name="eye" />
               </a>
               <a
                 href="/dashboard/contracts/{contract._id}/edit"
-                class="text-blue-600 hover:text-blue-800 hover:underline text-sm font-medium transition-colors"
+                class="icon-btn"
+                aria-label="{contract.name} bearbeiten"
               >
-                ✏️ Bearbeiten
+                <Icon name="pencil" />
               </a>
               <a
                 href="/dashboard/contracts/{contract._id}/delete"
-                class="text-red-600 hover:text-red-800 hover:underline text-sm font-medium transition-colors"
+                class="icon-btn icon-btn-danger"
+                aria-label="{contract.name} löschen"
               >
-                🗑️ Löschen
+                <Icon name="trash" />
               </a>
             </div>
-          </div>
-        </div>
-      {/each}
-    </div>
+          </li>
+        {/each}
+      </ul>
+    {/if}
   {/if}
 </div>
 
 <style>
-  /* Puls-Animation für überfällige Badges */
-  @keyframes pulse {
-    0%,
-    100% {
-      opacity: 1;
-    }
-    50% {
-      opacity: 0.7;
-    }
+  .page {
+    max-width: 70rem;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem 4rem;
   }
 
-  .animate-pulse {
-    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  .text-crit {
+    color: var(--color-crit);
   }
 
-  .contract-card {
-    transition: all 0.2s ease;
+  /* === Leitzahl === */
+  .lead {
+    margin-bottom: 2.25rem;
+  }
+
+  .kicker {
+    margin-bottom: 0.75rem;
+    font-size: 11.5px;
+    font-weight: 500;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--color-ink-3);
+  }
+
+  .figure {
+    font: 600 54px/1.02 var(--font-mono);
+    letter-spacing: -0.03em;
+  }
+
+  .figure i,
+  .tile-value i {
+    font-style: normal;
+    font-size: 0.5em;
+    font-weight: 400;
+    color: var(--color-ink-3);
+  }
+
+  .sub {
+    margin-top: 0.625rem;
+    font-size: 14px;
+    color: var(--color-ink-2);
+  }
+
+  .sub b {
+    font-weight: 600;
+    color: var(--color-ink);
+  }
+
+  .sub b.text-crit {
+    color: var(--color-crit);
+  }
+
+  /* === Kennzahlen: dünne Zeile statt Karten === */
+  .tiles {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    margin-bottom: 2.5rem;
+    border-top: 1px solid var(--color-line-strong);
+    border-bottom: 1px solid var(--color-line-strong);
+  }
+
+  .tile {
+    min-width: 0;
+    padding: 1rem 1.25rem 1rem 0;
+    border-right: 1px solid var(--color-line);
+  }
+
+  .tile + .tile:not(.tile-hero + .tile) {
+    padding-left: 1.25rem;
+  }
+
+  .tile:last-child {
+    border-right: 0;
+  }
+
+  .tile-label {
+    margin-bottom: 0.45rem;
+    font-size: 12.5px;
+    color: var(--color-ink-2);
+  }
+
+  .tile-value {
+    font: 600 24px/1.1 var(--font-mono);
+    letter-spacing: -0.03em;
+  }
+
+  .tile-note {
+    margin-top: 0.35rem;
+    font-size: 12px;
+    color: var(--color-ink-3);
+  }
+
+  .tile-hero {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1.25rem 0;
+    border-right: 0;
+    border-bottom: 1px solid var(--color-line);
+    --hero-color: var(--color-warn);
+  }
+
+  .tile-hero.is-crit {
+    --hero-color: var(--color-crit);
+  }
+
+  .hero-top {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--hero-color);
+  }
+
+  .hero-name {
+    font-size: 22px;
+    font-weight: 600;
+    line-height: 1.15;
+    letter-spacing: -0.03em;
+  }
+
+  .hero-count {
+    font: 600 34px/1 var(--font-mono);
+    color: var(--hero-color);
+  }
+
+  .hero-count small {
+    display: block;
+    margin-top: 0.3rem;
+    font: 500 14px/1.3 var(--font-sans);
+    color: var(--color-ink-2);
+  }
+
+  .hero-foot {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  /* === Werkzeugleiste === */
+  .tools {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.625rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .search {
     position: relative;
+    flex: 1 1 260px;
+    min-width: 200px;
   }
 
-  /* Titel-Link deckt die ganze Karte ab, damit sie klickbar bleibt */
-  .card-link {
-    color: inherit;
+  .search :global(.search-icon) {
+    position: absolute;
+    left: 0.7rem;
+    top: 0;
+    bottom: 0;
+    margin: auto 0;
+    color: var(--color-ink-3);
+    pointer-events: none;
+  }
+
+  .search input {
+    width: 100%;
+    padding: 0.65rem 2.25rem 0.65rem 2.15rem;
+    font-size: 14px;
+    color: var(--color-ink);
+    background: var(--color-surface);
+    border: 1px solid var(--color-line-strong);
+    border-radius: var(--radius-card);
+  }
+
+  .search input::placeholder {
+    color: var(--color-ink-3);
+  }
+
+  .search input:focus-visible {
+    outline-offset: 1px;
+    border-color: var(--color-accent);
+  }
+
+  .search-clear {
+    position: absolute;
+    right: 0.25rem;
+    top: 0;
+    bottom: 0;
+    margin: auto 0;
+  }
+
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.375rem;
+  }
+
+  .chip {
+    padding: 0.5rem 0.7rem;
+    font-size: 12.5px;
+    font-weight: 500;
+    line-height: 1;
+    color: var(--color-ink-2);
+    background: transparent;
+    border: 1px solid var(--color-line-strong);
+    border-radius: 3px;
+    cursor: pointer;
+  }
+
+  .chip b {
+    margin-left: 0.3rem;
+    font-weight: 600;
+    color: var(--color-ink-3);
+  }
+
+  .chip:hover {
+    color: var(--color-ink);
+    border-color: var(--color-ink-3);
+  }
+
+  .chip[aria-pressed="true"] {
+    color: var(--color-page);
+    background: var(--color-ink);
+    border-color: var(--color-ink);
+  }
+
+  .chip[aria-pressed="true"] b {
+    color: var(--color-page);
+    opacity: 0.6;
+  }
+
+  /* === Liste === */
+  .list-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    padding-bottom: 0.625rem;
+    border-bottom: 1px solid var(--color-line-strong);
+  }
+
+  .list-head h2 {
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--color-ink-3);
+  }
+
+  .list-head .count {
+    font-size: 12px;
+    color: var(--color-ink-3);
+  }
+
+  .row {
+    position: relative;
+    display: grid;
+    align-items: center;
+    gap: 0.25rem 1rem;
+    grid-template-columns: minmax(0, 1fr) auto auto auto;
+    grid-template-areas:
+      "name deadline cost acts"
+      "meta deadline cost acts";
+    padding: 1.05rem 1rem 1.05rem 0.9rem;
+    border-bottom: 1px solid var(--color-line);
+    transition: background-color 0.12s;
+  }
+
+  /* Dringlichkeit als 3px-Leiste links */
+  .row::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+  }
+
+  .row:hover {
+    background: color-mix(in srgb, var(--color-ink) 3%, transparent);
+  }
+
+  .row-crit::before {
+    background: var(--color-crit);
+  }
+
+  .row-warn::before {
+    background: var(--color-warn);
+  }
+
+  .row-done {
+    opacity: 0.62;
+  }
+
+  .name {
+    grid-area: name;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 0;
+  }
+
+  .row-link {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1.3;
+    letter-spacing: -0.02em;
+    color: var(--color-ink);
     text-decoration: none;
   }
 
-  .card-link::after {
+  /* Overlay: ganze Zeile klickbar */
+  .row-link::after {
     content: "";
     position: absolute;
     inset: 0;
-    border-radius: inherit;
   }
 
-  .card-link:hover {
+  .row-link:hover {
     text-decoration: underline;
+    text-underline-offset: 2px;
   }
 
-  /* Aktions-Links muessen ueber dem Overlay liegen */
-  .card-actions {
+  .cat {
+    padding: 0.25rem 0.45rem;
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    color: var(--color-ink-2);
+    border: 1px solid var(--color-line-strong);
+    border-radius: 3px;
+  }
+
+  .meta {
+    grid-area: meta;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 13px;
+    color: var(--color-ink-2);
+  }
+
+  .meta .sep {
+    color: var(--color-ink-3);
+  }
+
+  .deadline,
+  .cost {
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .deadline {
+    grid-area: deadline;
+  }
+
+  .cost {
+    grid-area: cost;
+  }
+
+  .d-days,
+  .c-amt {
+    font: 600 14.5px/1.2 var(--font-mono);
+  }
+
+  .row-crit .d-days {
+    color: var(--color-crit);
+  }
+
+  .row-warn .d-days {
+    color: var(--color-warn);
+  }
+
+  .d-date,
+  .c-cycle {
+    margin-top: 0.2rem;
+    font-size: 12px;
+    color: var(--color-ink-3);
+  }
+
+  .acts {
+    grid-area: acts;
     position: relative;
+    display: flex;
+    gap: 0.125rem;
   }
 
-  .contract-card:hover {
-    box-shadow:
-      0 20px 25px -5px rgb(0 0 0 / 0.1),
-      0 8px 10px -6px rgb(0 0 0 / 0.1);
-    border-color: rgb(59, 130, 246);
-    border-width: 2px;
-    transform: translateY(-5px);
+  /* === Leer- und Null-Treffer-Zustand === */
+  .empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    padding: 3rem 1rem;
+    color: var(--color-ink-2);
+    text-align: center;
   }
 
-  .contract-card-active {
-    background: linear-gradient(135deg, #dbeafe 0%, #ffffff 70%);
+  /* === Responsive === */
+  @media (max-width: 640px) {
+    .page {
+      padding: 1.75rem 1rem 3rem;
+    }
+
+    .figure {
+      font-size: 40px;
+    }
+
+    .tiles {
+      grid-template-columns: 1fr;
+    }
+
+    .tile,
+    .tile + .tile:not(.tile-hero + .tile) {
+      padding: 0.875rem 0;
+      border-right: 0;
+      border-bottom: 1px solid var(--color-line);
+    }
+
+    .tile:last-child {
+      border-bottom: 0;
+    }
   }
 
-  .contract-card-inactive {
-    background: linear-gradient(135deg, #f3f4f6 0%, #ffffff 70%);
+  @media (max-width: 560px) {
+    /* Aktionen bleiben auf dem Handy erreichbar, rutschen nur in die dritte Zeile */
+    .row {
+      grid-template-columns: minmax(0, 1fr) auto;
+      grid-template-areas:
+        "name cost"
+        "meta cost"
+        "deadline acts";
+    }
+
+    .deadline {
+      margin-top: 0.5rem;
+      text-align: left;
+    }
+
+    .acts {
+      justify-self: end;
+    }
   }
-
-/* === Kategorie-Filter === */
-.filter-button {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.625rem 1rem;
-  border-radius: 0.75rem;
-  border: 2px solid transparent;
-  transition: all 0.2s ease;
-  cursor: pointer;
-  background: white;
-  font-size: 0.875rem;
-}
-
-.filter-button-inactive {
-  border-color: #e5e7eb;
-  color: #6b7280;
-}
-
-.filter-button-inactive:hover {
-  border-color: #3b82f6;
-  background: #eff6ff;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.15);
-}
-
-.filter-button-active {
-  border-color: #3b82f6;
-  background: linear-gradient(135deg, #dbeafe 0%, #eff6ff 100%);
-  color: #1e40af;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
-}
-
-.filter-badge {
-  background: #3b82f6;
-  color: white;
-  padding: 0.125rem 0.5rem;
-  border-radius: 9999px;
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-
-/* === Kategorie-Badges in Cards === */
-.category-badge {
-  padding: 0.25rem 0.75rem;
-  border-radius: 9999px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  border: 1px solid;
-}
-
-.category-badge-purple {
-  background: #f3e8ff;
-  color: #7c3aed;
-  border-color: #c4b5fd;
-}
-
-.category-badge-green {
-  background: #d1fae5;
-  color: #059669;
-  border-color: #a7f3d0;
-}
-
-.category-badge-blue {
-  background: #dbeafe;
-  color: #2563eb;
-  border-color: #bfdbfe;
-}
-
-.category-badge-yellow {
-  background: #fef3c7;
-  color: #d97706;
-  border-color: #fde68a;
-}
-
-.category-badge-red {
-  background: #fee2e2;
-  color: #dc2626;
-  border-color: #fecaca;
-}
-
-.category-badge-gray {
-  background: #f3f4f6;
-  color: #6b7280;
-  border-color: #d1d5db;
-}
 </style>
