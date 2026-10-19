@@ -760,19 +760,6 @@
     text-underline-offset: 2px;
   }
 
-  .cat {
-    padding: 0.25rem 0.45rem;
-    font-size: 11px;
-    font-weight: 500;
-    line-height: 1;
-    letter-spacing: 0.07em;
-    text-transform: uppercase;
-    white-space: nowrap;
-    color: var(--color-ink-2);
-    border: 1px solid var(--color-line-strong);
-    border-radius: 3px;
-  }
-
   .meta {
     grid-area: meta;
     display: flex;

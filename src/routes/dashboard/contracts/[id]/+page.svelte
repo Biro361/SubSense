@@ -2,37 +2,33 @@
 <script>
   import { enhance } from '$app/forms';
   import { getCategoryByValue } from '$lib/constants';
-  
+  import Icon from '$lib/components/Icon.svelte';
+
   let { data, form } = $props();
   let contract = $derived(data.contract);
-  
+
   // Tab-State
   let activeTab = $state('details');
-  
+
   // Edit-States
   let notesText = $state(contract.notes || '');
   let instructionsText = $state(contract.cancellationInstructions || '');
   let cancellationUrl = $state(contract.cancellationUrl || '');
-  
-  // Status-Badge-Farbe
-  const statusColor = $derived(
-    contract.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-  );
-  
+
   // Kategorie-Info
   const category = $derived(getCategoryByValue(contract.category));
-  
+
   // Datum formatieren
   function formatDate(dateString) {
     if (!dateString) return 'Nicht verfügbar';
     const date = new Date(dateString);
-    return date.toLocaleDateString('de-CH', { 
-      day: '2-digit', 
-      month: '2-digit', 
-      year: 'numeric' 
+    return date.toLocaleDateString('de-CH', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
     });
   }
-  
+
   // Dateigrösse formatieren
   function formatFileSize(bytes) {
     if (!bytes) return '0 B';
@@ -40,182 +36,148 @@
     if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
     return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
   }
-  
-  // Datei-Icon basierend auf MIME-Type
-  function getFileIcon(mimeType) {
-    if (mimeType?.startsWith('image/')) return '🖼️';
-    if (mimeType === 'application/pdf') return '📄';
-    if (mimeType?.includes('word')) return '📝';
-    return '📎';
-  }
-  
+
   // Lösch-Bestätigung für Dokumente
   function confirmDelete(e) {
     if (!confirm('Dokument wirklich löschen?')) {
       e.preventDefault();
     }
   }
+
+  const TABS = [
+    { id: 'details', label: 'Details' },
+    { id: 'notes', label: 'Notizen' },
+    { id: 'instructions', label: 'Kündigungsanweisungen' },
+    { id: 'documents', label: 'Dokumente' }
+  ];
 </script>
 
-<div class="max-w-4xl mx-auto p-6">
+<div class="max-w-[70rem] mx-auto px-6 pt-10 pb-16 max-sm:px-4 max-sm:pt-7">
   <!-- Header -->
-  <div class="mb-6">
-    <div class="flex items-center justify-between">
-      <div>
-        <h1 class="text-3xl font-bold text-gray-900">{contract.name}</h1>
-        <p class="text-gray-600 mt-1">{contract.provider}</p>
+  <div class="mb-8">
+    <a href="/dashboard" class="inline-flex items-center gap-1 text-[13px] text-ink-2 hover:text-ink">
+      ← Zurück zum Dashboard
+    </a>
+
+    <div class="mt-4 flex flex-wrap items-start justify-between gap-4">
+      <div class="min-w-0">
+        <h1 class="text-3xl font-semibold tracking-tight [overflow-wrap:anywhere]">{contract.name}</h1>
+        <div class="mt-2 flex flex-wrap items-center gap-2 text-sm text-ink-2">
+          <span>{contract.provider}</span>
+          {#if category}<span class="cat">{category.label}</span>{/if}
+          <span class="cat">{contract.status === 'active' ? 'Aktiv' : 'Gekündigt'}</span>
+        </div>
       </div>
-      <div class="flex gap-2 items-center">
-        {#if category}
-          <span class="px-3 py-1 rounded-full text-sm font-medium bg-{category.color}-100 text-{category.color}-800">
-            {category.icon} {category.label}
-          </span>
-        {/if}
-        <span class="px-3 py-1 rounded-full text-sm font-medium {statusColor}">
-          {contract.status === 'active' ? 'Aktiv' : 'Gekündigt'}
-        </span>
-      </div>
-    </div>
-    
-    <!-- Quick Actions -->
-    <div class="mt-4 flex gap-3">
-      <a 
-        href="/dashboard/contracts/{contract._id}/edit" 
-        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-      >
-        ✏️ Bearbeiten
-      </a>
-      <a 
-        href="/dashboard" 
-        class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
-      >
-        ← Zurück zum Dashboard
+
+      <a href="/dashboard/contracts/{contract._id}/edit" class="btn btn-primary">
+        <Icon name="pencil" size={15} />
+        Bearbeiten
       </a>
     </div>
   </div>
-  
+
   <!-- Feedback-Meldung -->
   {#if form?.success}
-    <div class="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg text-green-800">
-      ✓ {form.message}
+    <div class="mb-6 flex items-center gap-2 rounded-card border border-ok/30 bg-ok/5 px-4 py-3 text-sm text-ok">
+      <Icon name="check" />
+      {form.message}
     </div>
   {:else if form?.success === false}
-    <div class="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-800">
-      ✗ {form.message}
+    <div class="mb-6 flex items-center gap-2 rounded-card border border-crit/30 bg-crit/5 px-4 py-3 text-sm text-crit">
+      <Icon name="alert" />
+      {form.message}
     </div>
   {/if}
-  
+
   <!-- Tabs -->
-  <div class="border-b border-gray-200 mb-6">
-    <nav class="flex gap-4">
-      <button
-        onclick={() => activeTab = 'details'}
-        class="pb-3 px-1 border-b-2 font-medium transition-colors {activeTab === 'details' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'}"
-      >
-        📋 Details
-      </button>
-      <button
-        onclick={() => activeTab = 'notes'}
-        class="pb-3 px-1 border-b-2 font-medium transition-colors {activeTab === 'notes' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'}"
-      >
-        📝 Notizen
-      </button>
-      <button
-        onclick={() => activeTab = 'instructions'}
-        class="pb-3 px-1 border-b-2 font-medium transition-colors {activeTab === 'instructions' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'}"
-      >
-        📖 Kündigungsanweisungen
-      </button>
-      <button
-        onclick={() => activeTab = 'documents'}
-        class="pb-3 px-1 border-b-2 font-medium transition-colors {activeTab === 'documents' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'}"
-      >
-        📎 Dokumente ({contract.documents?.length || 0})
-      </button>
+  <div class="mb-6 border-b border-line-strong">
+    <nav class="-mb-px flex gap-5 overflow-x-auto">
+      {#each TABS as tab}
+        <button
+          onclick={() => activeTab = tab.id}
+          class="whitespace-nowrap border-b-2 px-0.5 pb-3 text-sm font-medium transition-colors {activeTab === tab.id ? 'border-accent text-ink' : 'border-transparent text-ink-3 hover:text-ink'}"
+        >
+          {tab.label}
+          {#if tab.id === 'documents'}
+            <span class="font-mono text-xs text-ink-3">{contract.documents?.length || 0}</span>
+          {/if}
+        </button>
+      {/each}
     </nav>
   </div>
-  
+
   <!-- Tab-Content -->
-  <div class="bg-white rounded-lg shadow p-6">
-    
+  <div class="max-w-2xl">
+
     <!-- Details Tab -->
     {#if activeTab === 'details'}
-      <div class="space-y-6">
-        <div class="grid grid-cols-2 gap-4">
-          <div>
-            <h3 class="text-sm font-medium text-gray-500">Kündigungsdatum</h3>
-            <p class="mt-1 text-lg font-semibold text-gray-900">
-              {formatDate(contract.cancellationDate)}
-            </p>
-          </div>
-          
-          <div>
-            <h3 class="text-sm font-medium text-gray-500">Tage bis zur Kündigung</h3>
-            <p class="mt-1 text-lg font-semibold {contract.isOverdue ? 'text-red-600' : contract.isUrgent ? 'text-orange-600' : 'text-green-600'}">
-              {#if contract.isOverdue}
-                ⚠️ Überfällig ({Math.abs(contract.daysUntilCancellation)} Tage)
-              {:else if contract.daysUntilCancellation === 0}
-                🔥 Heute!
-              {:else if contract.daysUntilCancellation === 1}
-                ⏰ Morgen
-              {:else}
-                📅 Noch {contract.daysUntilCancellation} Tage
-              {/if}
-            </p>
-          </div>
+      <dl class="grid grid-cols-2 gap-x-6 gap-y-6 max-sm:grid-cols-1">
+        <div>
+          <dt class="label">Kündigungsdatum</dt>
+          <dd class="font-mono text-lg font-semibold">{formatDate(contract.cancellationDate)}</dd>
         </div>
-        
-        <div class="grid grid-cols-2 gap-4">
-          <div>
-            <h3 class="text-sm font-medium text-gray-500">Kosten</h3>
-            <p class="mt-1 text-lg font-semibold text-gray-900">
-              {contract.cost?.toFixed(2) || '0.00'} CHF / {contract.billingCycle === 'monthly' ? 'Monat' : contract.billingCycle === 'yearly' ? 'Jahr' : 'Quartal'}
-            </p>
-          </div>
-          
-          <div>
-            <h3 class="text-sm font-medium text-gray-500">Erinnerung</h3>
-            <p class="mt-1 text-gray-900">
-              {contract.reminderDays} Tage vorher ({formatDate(contract.reminderDate)})
-            </p>
-          </div>
+
+        <div>
+          <dt class="label">Tage bis zur Kündigung</dt>
+          <dd class="font-mono text-lg font-semibold {contract.isOverdue ? 'text-crit' : contract.isUrgent ? 'text-warn' : ''}">
+            {#if contract.isOverdue}
+              Überfällig ({Math.abs(contract.daysUntilCancellation)} Tage)
+            {:else if contract.daysUntilCancellation === 0}
+              Heute
+            {:else if contract.daysUntilCancellation === 1}
+              Morgen
+            {:else}
+              Noch {contract.daysUntilCancellation} Tage
+            {/if}
+          </dd>
         </div>
-        
+
+        <div>
+          <dt class="label">Kosten</dt>
+          <dd class="font-mono text-lg font-semibold">
+            {contract.cost?.toFixed(2) || '0.00'}
+            <span class="font-sans text-sm font-normal text-ink-3">CHF / {contract.billingCycle === 'monthly' ? 'Monat' : contract.billingCycle === 'yearly' ? 'Jahr' : 'Quartal'}</span>
+          </dd>
+        </div>
+
+        <div>
+          <dt class="label">Erinnerung</dt>
+          <dd>{contract.reminderDays} Tage vorher ({formatDate(contract.reminderDate)})</dd>
+        </div>
+
         {#if contract.cancellationUrl}
-          <div>
-            <h3 class="text-sm font-medium text-gray-500 mb-2">Kündigungsseite</h3>
-            <a 
-              href={contract.cancellationUrl} 
-              target="_blank"
-              rel="noopener noreferrer"
-              class="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 hover:underline"
-            >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-              </svg>
-              {contract.cancellationUrl}
-            </a>
+          <div class="col-span-full">
+            <dt class="label">Kündigungsseite</dt>
+            <dd>
+              <a
+                href={contract.cancellationUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex items-center gap-2 text-accent [overflow-wrap:anywhere] hover:underline"
+              >
+                <Icon name="external" class="shrink-0" />
+                {contract.cancellationUrl}
+              </a>
+            </dd>
           </div>
         {/if}
-        
-        <div class="grid grid-cols-2 gap-4 pt-4 border-t">
-          <div>
-            <h3 class="text-sm font-medium text-gray-500">Erstellt am</h3>
-            <p class="mt-1 text-gray-900">{formatDate(contract.createdAt)}</p>
-          </div>
-          <div>
-            <h3 class="text-sm font-medium text-gray-500">Zuletzt aktualisiert</h3>
-            <p class="mt-1 text-gray-900">{formatDate(contract.updatedAt)}</p>
-          </div>
+
+        <div class="border-t border-line pt-6">
+          <dt class="label">Erstellt am</dt>
+          <dd class="text-ink-2">{formatDate(contract.createdAt)}</dd>
         </div>
-      </div>
+        <div class="border-t border-line pt-6 max-sm:border-0 max-sm:pt-0">
+          <dt class="label">Zuletzt aktualisiert</dt>
+          <dd class="text-ink-2">{formatDate(contract.updatedAt)}</dd>
+        </div>
+      </dl>
     {/if}
-    
+
     <!-- Notizen Tab -->
     {#if activeTab === 'notes'}
       <form method="POST" action="?/updateNote" use:enhance>
         <div>
-          <label for="notes" class="block text-sm font-medium text-gray-700 mb-2">
+          <label for="notes" class="label">
             Persönliche Notizen
           </label>
           <textarea
@@ -223,29 +185,26 @@
             name="notes"
             rows="10"
             bind:value={notesText}
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            class="field"
             placeholder="Hier kannst du Notizen zu diesem Vertrag speichern...\n\nBeispielsweise:\n- Testphase endet am 15. Februar\n- Kündigung per E-Mail an kuendigung@anbieter.ch\n- Kundennummer: 12345"
           ></textarea>
-          <p class="text-xs text-gray-500 mt-2">
-            💡 Tipp: Notiere wichtige Details wie Kundennummern, Kontaktdaten oder Kündigungshinweise.
+          <p class="hint">
+            Notiere wichtige Details wie Kundennummern, Kontaktdaten oder Kündigungshinweise.
           </p>
         </div>
-        
-        <button
-          type="submit"
-          class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          💾 Speichern
+
+        <button type="submit" class="btn btn-primary mt-4">
+          Speichern
         </button>
       </form>
     {/if}
-    
+
     <!-- Kündigungsanweisungen Tab -->
     {#if activeTab === 'instructions'}
       <form method="POST" action="?/updateInstructions" use:enhance>
-        <div class="space-y-4">
+        <div class="space-y-5">
           <div>
-            <label for="cancellationUrl" class="block text-sm font-medium text-gray-700 mb-2">
+            <label for="cancellationUrl" class="label">
               Link zur Kündigungsseite
             </label>
             <input
@@ -253,13 +212,13 @@
               id="cancellationUrl"
               name="cancellationUrl"
               bind:value={cancellationUrl}
-              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              class="field"
               placeholder="https://www.anbieter.ch/kuendigung"
             />
           </div>
-          
+
           <div>
-            <label for="instructions" class="block text-sm font-medium text-gray-700 mb-2">
+            <label for="instructions" class="label">
               Kündigungsanweisungen
             </label>
             <textarea
@@ -267,30 +226,27 @@
               name="instructions"
               rows="10"
               bind:value={instructionsText}
-              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              class="field"
               placeholder="Schritt-für-Schritt Anleitung zur Kündigung...\n\n1. Auf der Webseite einloggen\n2. Menü 'Mein Konto' öffnen\n3. Unter 'Verträge' die Option 'Kündigen' wählen\n4. Kündigungsbestätigung per E-Mail abwarten"
             ></textarea>
-            <p class="text-xs text-gray-500 mt-2">
-              💡 Tipp: Halte die Schritte fest, damit du beim nächsten Mal schnell weisst, wie die Kündigung funktioniert.
+            <p class="hint">
+              Halte die Schritte fest, damit du beim nächsten Mal schnell weisst, wie die Kündigung funktioniert.
             </p>
           </div>
         </div>
-        
-        <button
-          type="submit"
-          class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          💾 Speichern
+
+        <button type="submit" class="btn btn-primary mt-4">
+          Speichern
         </button>
       </form>
     {/if}
-    
+
     <!-- Dokumente Tab -->
     {#if activeTab === 'documents'}
-      <div class="space-y-6">
+      <div class="space-y-8">
         <!-- Upload-Formular -->
         <form method="POST" action="?/uploadDocument" enctype="multipart/form-data" use:enhance>
-          <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors">
+          <div class="rounded-card border border-dashed border-line-strong bg-surface p-6 text-center transition-colors hover:border-ink-3">
             <input
               type="file"
               name="document"
@@ -298,80 +254,72 @@
               class="hidden"
               id="file-upload"
             />
-            <label for="file-upload" class="cursor-pointer">
-              <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-              </svg>
-              <span class="mt-2 block text-sm font-medium text-gray-900">
-                📎 Dokument hochladen
-              </span>
-              <span class="mt-1 block text-xs text-gray-500">
-                PDF, Word, JPG, PNG, WebP (max. 4 MB)
-              </span>
+            <label for="file-upload" class="flex cursor-pointer flex-col items-center gap-2">
+              <Icon name="upload" size={24} class="text-ink-3" />
+              <span class="text-sm font-medium">Dokument auswählen</span>
+              <span class="text-xs text-ink-3">PDF, Word, JPG, PNG, WebP (max. 4 MB)</span>
             </label>
           </div>
-          
-          <button
-            type="submit"
-            class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            ⬆️ Hochladen
+
+          <button type="submit" class="btn btn-primary mt-4">
+            <Icon name="upload" size={15} />
+            Hochladen
           </button>
         </form>
-        
+
         <!-- Dokumentenliste -->
         {#if contract.documents && contract.documents.length > 0}
-          <div class="mt-6">
-            <h3 class="text-sm font-medium text-gray-700 mb-3">Gespeicherte Dokumente</h3>
-            <ul class="divide-y divide-gray-200 border border-gray-200 rounded-lg">
+          <div>
+            <h3 class="mb-2 text-xs font-medium uppercase tracking-[0.09em] text-ink-3">Gespeicherte Dokumente</h3>
+            <ul class="border-t border-line-strong">
               {#each contract.documents as doc}
-                <li class="p-4 hover:bg-gray-50 transition-colors">
-                  <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-3 flex-1">
-                      <span class="text-3xl">{getFileIcon(doc.mimeType)}</span>
-                      <div class="flex-1 min-w-0">
-                        <p class="text-sm font-medium text-gray-900 truncate">{doc.originalName}</p>
-                        <p class="text-xs text-gray-500">
-                          {formatFileSize(doc.size)} • {formatDate(doc.uploadDate)}
-                        </p>
-                      </div>
+                <li class="flex items-center justify-between gap-3 border-b border-line py-3">
+                  <div class="flex min-w-0 flex-1 items-center gap-3">
+                    <Icon name="doc" size={20} class="shrink-0 text-ink-3" />
+                    <div class="min-w-0 flex-1">
+                      <p class="truncate text-sm font-medium">{doc.originalName}</p>
+                      <p class="text-xs text-ink-3">
+                        {formatFileSize(doc.size)} · {formatDate(doc.uploadDate)}
+                      </p>
                     </div>
-                    
-                    <div class="flex gap-2">
-                      <a
-                        href={`/dashboard/contracts/${contract._id}/documents/${doc._id}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="px-3 py-1 text-sm text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                  </div>
+
+                  <div class="flex gap-0.5">
+                    <a
+                      href={`/dashboard/contracts/${contract._id}/documents/${doc._id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="icon-btn"
+                      aria-label="{doc.originalName} öffnen"
+                    >
+                      <Icon name="eye" />
+                    </a>
+                    <form method="POST" action="?/deleteDocument" use:enhance>
+                      <input type="hidden" name="documentId" value={doc._id} />
+                      <button
+                        type="submit"
+                        class="icon-btn icon-btn-danger"
+                        aria-label="{doc.originalName} löschen"
+                        onclick={confirmDelete}
                       >
-                        👁️ Öffnen
-                      </a>
-                      <form method="POST" action="?/deleteDocument" use:enhance class="inline">
-                        <input type="hidden" name="documentId" value={doc._id} />
-                        <button
-                          type="submit"
-                          class="px-3 py-1 text-sm text-red-600 hover:bg-red-50 rounded transition-colors"
-                          onclick={confirmDelete}
-                        >
-                          🗑️ Löschen
-                        </button>
-                      </form>
-                    </div>
+                        <Icon name="trash" />
+                      </button>
+                    </form>
                   </div>
                 </li>
               {/each}
             </ul>
           </div>
         {:else}
-          <div class="text-center py-8 bg-gray-50 rounded-lg">
-            <p class="text-gray-500">📭 Noch keine Dokumente hochgeladen</p>
-            <p class="text-sm text-gray-400 mt-1">
+          <div class="py-8 text-center">
+            <p class="text-ink-2">Noch keine Dokumente hochgeladen</p>
+            <p class="mt-1 text-sm text-ink-3">
               Lade Vertragsdokumente, Kündigungsbestätigungen oder andere wichtige Dateien hoch.
             </p>
           </div>
         {/if}
       </div>
     {/if}
-    
+
   </div>
 </div>
