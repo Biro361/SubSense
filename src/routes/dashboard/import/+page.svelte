@@ -215,9 +215,11 @@
                 <td class="px-3 py-3 font-medium">{contract.name}</td>
                 <td class="px-3 py-3 text-ink-2">{contract.provider}</td>
                 <td class="px-3 py-3 font-mono">
-                  {new Date(contract.cancellationDate).toLocaleDateString(
-                    'de-DE'
-                  )}
+                  {new Date(contract.cancellationDate).toLocaleDateString('de-CH', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric'
+                  })}
                 </td>
                 <td class="px-3 py-3">
                   <span class="cat">
