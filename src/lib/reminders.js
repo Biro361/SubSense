@@ -59,3 +59,15 @@ export function calculateReminderMetadata(contract) {
     isOverdue
   };
 }
+
+/**
+ * Sortierung fürs Dashboard: überfällige und dringende zuerst, sonst nach Frist.
+ * Überfällige haben die früheste Frist und stehen damit vor den dringenden.
+ * @param {{ isUrgent: boolean, isOverdue: boolean, cancellationDate: Date|string }} a
+ * @param {{ isUrgent: boolean, isOverdue: boolean, cancellationDate: Date|string }} b
+ * @returns {number}
+ */
+export function compareByDeadline(a, b) {
+  const rank = (/** @type {typeof a} */ c) => (c.isOverdue || c.isUrgent ? 0 : 1);
+  return rank(a) - rank(b) || new Date(a.cancellationDate).getTime() - new Date(b.cancellationDate).getTime();
+}

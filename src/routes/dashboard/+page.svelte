@@ -3,6 +3,7 @@
   import { page } from "$app/stores";
   import { onMount } from "svelte";
   import { CATEGORIES, getCategoryByValue, monthlyCost } from "$lib/constants";
+  import { compareByDeadline } from "$lib/reminders.js";
   import Toast from "$lib/components/Toast.svelte";
   import Icon from "$lib/components/Icon.svelte";
 
@@ -71,16 +72,8 @@
     }
   });
 
-  // Verträge nach Dringlichkeit sortieren (dringend zuerst)
-  let sortedContracts = $derived(
-    [...filteredContracts].sort((a, b) => {
-      // Dringende zuerst
-      if (a.isUrgent && !b.isUrgent) return -1;
-      if (!a.isUrgent && b.isUrgent) return 1;
-      // Dann nach Kündigungsdatum
-      return new Date(a.cancellationDate) - new Date(b.cancellationDate);
-    }),
-  );
+  // Überfällige und dringende zuerst, dann nach Frist
+  let sortedContracts = $derived([...filteredContracts].sort(compareByDeadline));
 
   // Dringende Verträge filtern
   let urgentContracts = $derived(contracts.filter((c) => c.isUrgent));
