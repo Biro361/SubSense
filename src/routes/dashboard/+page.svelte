@@ -2,6 +2,7 @@
 <script>
   import { page } from "$app/stores";
   import { onMount } from "svelte";
+  import { replaceState } from "$app/navigation";
   import { CATEGORIES, getCategoryByValue, monthlyCost } from "$lib/constants";
   import { compareByDeadline } from "$lib/reminders.js";
   import Toast from "$lib/components/Toast.svelte";
@@ -68,7 +69,7 @@
       const url = new URL(window.location.href);
       url.searchParams.delete("message");
       url.searchParams.delete("count");
-      window.history.replaceState({}, "", url);
+      replaceState(url, {});
     }
   });
 

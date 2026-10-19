@@ -1,7 +1,7 @@
 <!-- src/routes/+page.svelte -->
 <script>
 	import { onMount } from 'svelte';
-	import { goto } from '$app/navigation';
+	import { goto, replaceState } from '$app/navigation';
 	import { page } from '$app/stores';
 	import Toast from '$lib/components/Toast.svelte';
 	import Icon from '$lib/components/Icon.svelte';
@@ -26,7 +26,7 @@
 			// URL bereinigen
 			const url = new URL(window.location.href);
 			url.searchParams.delete('message');
-			window.history.replaceState({}, '', url);
+			replaceState(url, {});
 		}
 	});
 </script>
