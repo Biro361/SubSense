@@ -56,6 +56,10 @@
   ];
 </script>
 
+<svelte:head>
+  <title>{contract.name} – SubSense</title>
+</svelte:head>
+
 <div class="max-w-[70rem] mx-auto px-6 pt-10 pb-16 max-sm:px-4 max-sm:pt-7">
   <!-- Header -->
   <div class="mb-8">

@@ -5,6 +5,10 @@
   let contract = $derived(data.contract);
 </script>
 
+<svelte:head>
+  <title>{contract.name} löschen – SubSense</title>
+</svelte:head>
+
 <div class="mx-auto max-w-[70rem] px-6 pt-10 pb-16 max-sm:px-4 max-sm:pt-7">
   <div class="max-w-2xl">
     <h1 class="mb-4 text-3xl font-semibold tracking-tight">Vertrag löschen</h1>

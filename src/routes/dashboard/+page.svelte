@@ -165,6 +165,10 @@
   );
 </script>
 
+<svelte:head>
+  <title>Dashboard – SubSense</title>
+</svelte:head>
+
 {#if showToast}
   <Toast message={toastMessage} onClose={() => (showToast = false)} />
 {/if}

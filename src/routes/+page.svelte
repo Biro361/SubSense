@@ -31,6 +31,10 @@
 	});
 </script>
 
+<svelte:head>
+	<title>SubSense – Verträge und Fristen im Blick</title>
+</svelte:head>
+
 {#if showToast}
 	<Toast message="Du wurdest erfolgreich abgemeldet." onClose={() => (showToast = false)} />
 {/if}
