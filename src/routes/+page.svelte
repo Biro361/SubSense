@@ -1,6 +1,6 @@
 <!-- src/routes/+page.svelte -->
 <script>
-	import { onMount } from 'svelte';
+	import { onMount, tick } from 'svelte';
 	import { goto, replaceState } from '$app/navigation';
 	import { page } from '$app/stores';
 	import Toast from '$lib/components/Toast.svelte';
@@ -12,7 +12,7 @@
 	let showToast = $state(false);
 
 	// Wenn User bereits eingeloggt ist, direkt zu Dashboard
-	onMount(() => {
+	onMount(async () => {
 		if (data?.user) {
 			goto('/dashboard');
 			return;
@@ -26,6 +26,8 @@
 			// URL bereinigen
 			const url = new URL(window.location.href);
 			url.searchParams.delete('message');
+			// Erst nach tick(): beim ersten Laden ist der Router in onMount noch nicht bereit
+			await tick();
 			replaceState(url, {});
 		}
 	});

@@ -1,7 +1,7 @@
 <!-- src/routes/dashboard/+page.svelte -->
 <script>
   import { page } from "$app/stores";
-  import { onMount } from "svelte";
+  import { onMount, tick } from "svelte";
   import { replaceState } from "$app/navigation";
   import { CATEGORIES, getCategoryByValue, monthlyCost } from "$lib/constants";
   import { compareByDeadline } from "$lib/reminders.js";
@@ -60,7 +60,7 @@
   let toastMessage = $state("");
 
   // Toast anzeigen; die Komponente blendet sich nach 5 Sekunden selbst aus
-  onMount(() => {
+  onMount(async () => {
     if (successMessage) {
       toastMessage = successMessage;
       showToast = true;
@@ -69,6 +69,8 @@
       const url = new URL(window.location.href);
       url.searchParams.delete("message");
       url.searchParams.delete("count");
+      // Erst nach tick(): beim ersten Laden ist der Router in onMount noch nicht bereit
+      await tick();
       replaceState(url, {});
     }
   });
