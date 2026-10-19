@@ -28,8 +28,9 @@
 	body {
 		background: var(--color-page);
 		color: var(--color-ink);
+		/* Kein tabular-nums hier: Inter macht damit auch Bindestriche breit ("CSV - Import").
+		   Beträge und Fristen fluchten über die Mono-Schrift. */
 		font-family: var(--font-sans);
-		font-variant-numeric: tabular-nums;
 	}
 
 	:where(a, button, input, select, textarea, [tabindex]):focus-visible {
