@@ -22,9 +22,9 @@
 	}
 
 	const typeStyles = {
-		success: 'bg-green-50 border-green-200 text-green-800',
-		error: 'bg-red-50 border-red-200 text-red-800',
-		info: 'bg-blue-50 border-blue-200 text-blue-800'
+		success: 'border-ok/40 text-ok',
+		error: 'border-crit/40 text-crit',
+		info: 'border-accent/40 text-accent'
 	};
 
 	const icons = {
@@ -62,9 +62,11 @@
 		align-items: center;
 		gap: 0.75rem;
 		padding: 1rem 1.25rem;
-		border-radius: 0.75rem;
+		/* Deckend, da der Toast über dem Inhalt liegt */
+		background: var(--color-surface);
+		border-radius: var(--radius-card);
 		border: 1px solid;
-		box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+		box-shadow: 0 8px 24px -8px rgba(0, 0, 0, 0.12);
 		max-width: 24rem;
 		z-index: 9999;
 		animation: toast-slide-in 0.3s ease;
@@ -98,7 +100,7 @@
 		border: none;
 		cursor: pointer;
 		padding: 0.25rem;
-		border-radius: 0.25rem;
+		border-radius: var(--radius-card);
 		transition: background 0.2s;
 		opacity: 0.7;
 	}

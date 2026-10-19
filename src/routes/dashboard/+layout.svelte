@@ -1,5 +1,7 @@
 <!-- src/routes/dashboard/+layout.svelte -->
 <script>
+	import Icon from "$lib/components/Icon.svelte";
+
 	let { data, children } = $props();
 
 	// User-Dropdown State
@@ -75,296 +77,164 @@
 <!-- Fixed Header -->
 <header class="dashboard-header">
 	<div class="header-container">
-		<div class="header-content">
-			<!-- Logo/Titel -->
-			<a href="/dashboard" class="logo-link">
-				<div class="logo-icon">
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						class="w-6 h-6"
-						fill="none"
-						viewBox="0 0 24 24"
-						stroke="currentColor"
-					>
-						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							stroke-width="2"
-							d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-						/>
-					</svg>
-				</div>
-				<div>
-					<h1 class="logo-title">SubSense</h1>
-					<p class="logo-subtitle">Vertrags-Radar</p>
-				</div>
+		<!-- Logo/Titel -->
+		<a href="/dashboard" class="logo-link">
+			<span class="logo-icon"><Icon name="doc" size={18} /></span>
+			<div>
+				<h1 class="logo-title">SubSense</h1>
+				<p class="logo-subtitle">Vertrags-Radar</p>
+			</div>
+		</a>
+
+		<!-- Navigation -->
+		<nav class="nav-section">
+			<!-- CSV-Import/Export-Buttons -->
+			<div class="csv-actions">
+				<button
+					onclick={handleExport}
+					disabled={isExporting}
+					class="btn"
+					aria-label="CSV exportieren"
+					title="Alle Verträge als CSV exportieren"
+				>
+					{#if isExporting}
+						<svg
+							class="animate-spin"
+							width="15"
+							height="15"
+							fill="none"
+							viewBox="0 0 24 24"
+							aria-hidden="true"
+						>
+							<circle
+								class="opacity-25"
+								cx="12"
+								cy="12"
+								r="10"
+								stroke="currentColor"
+								stroke-width="4"
+							></circle>
+							<path
+								class="opacity-75"
+								fill="currentColor"
+								d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+							></path>
+						</svg>
+					{:else}
+						<Icon name="download" size={15} />
+					{/if}
+					<span class="btn-text">Export</span>
+				</button>
+
+				<a
+					href="/dashboard/import"
+					class="btn"
+					aria-label="CSV importieren"
+					title="Verträge aus CSV importieren"
+				>
+					<Icon name="upload" size={15} />
+					<span class="btn-text">Import</span>
+				</a>
+			</div>
+
+			<!-- Neuer Vertrag Button -->
+			<a
+				href="/dashboard/contracts/new"
+				class="btn btn-primary"
+				aria-label="Neuer Vertrag"
+			>
+				<Icon name="plus" size={15} />
+				<span class="btn-text">Neuer Vertrag</span>
 			</a>
 
-			<!-- Navigation -->
-			<nav class="nav-section">
-				<!-- CSV-Import/Export-Buttons -->
-				<div class="csv-actions">
-					<!-- Export-Button -->
-					<button
-						onclick={handleExport}
-						disabled={isExporting}
-						class="btn-csv btn-export"
-						aria-label="CSV exportieren"
-						title="Alle Verträge als CSV exportieren"
-					>
-						{#if isExporting}
-							<svg
-								class="animate-spin w-5 h-5"
-								fill="none"
-								viewBox="0 0 24 24"
-							>
-								<circle
-									class="opacity-25"
-									cx="12"
-									cy="12"
-									r="10"
-									stroke="currentColor"
-									stroke-width="4"
-								></circle>
-								<path
-									class="opacity-75"
-									fill="currentColor"
-									d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-								></path>
-							</svg>
-						{:else}
-							<svg
-								xmlns="http://www.w3.org/2000/svg"
-								class="w-5 h-5"
-								fill="none"
-								viewBox="0 0 24 24"
-								stroke="currentColor"
-							>
-								<path
-									stroke-linecap="round"
-									stroke-linejoin="round"
-									stroke-width="2"
-									d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-								/>
-							</svg>
-						{/if}
-						<span class="btn-text">Export</span>
-					</button>
+			<!-- User-Dropdown -->
+			<div class="user-dropdown">
+				<button
+					onclick={() => (showUserMenu = !showUserMenu)}
+					class="user-button"
+					aria-label="Benutzermenü"
+					aria-haspopup="true"
+					aria-expanded={showUserMenu}
+				>
+					<span class="user-avatar"><Icon name="user" size={16} /></span>
+					<!-- Email (nur Desktop) -->
+					<span class="user-email">{userEmail}</span>
+					<Icon
+						name="chevron"
+						size={14}
+						class="dropdown-icon {showUserMenu ? 'dropdown-icon-open' : ''}"
+					/>
+				</button>
 
-					<!-- Import-Button -->
-					<a
-						href="/dashboard/import"
-						class="btn-csv btn-import"
-						aria-label="CSV importieren"
-						title="Verträge aus CSV importieren"
-					>
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							class="w-5 h-5"
-							fill="none"
-							viewBox="0 0 24 24"
-							stroke="currentColor"
-						>
-							<path
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								stroke-width="2"
-								d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-							/>
-						</svg>
-						<span class="btn-text">Import</span>
-					</a>
-				</div>
-
-				<!-- Neuer Vertrag Button -->
-				<a href="/dashboard/contracts/new" class="btn-new-contract">
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						class="w-5 h-5"
-						fill="none"
-						viewBox="0 0 24 24"
-						stroke="currentColor"
-					>
-						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							stroke-width="2"
-							d="M12 4v16m8-8H4"
-						/>
-					</svg>
-					<span class="btn-text">Neuer Vertrag</span>
-					<span class="btn-text-mobile">+</span>
-				</a>
-
-				<!-- User-Dropdown -->
-				<div class="user-dropdown">
-					<button
-						onclick={() => (showUserMenu = !showUserMenu)}
-						class="user-button"
-						aria-label="Benutzermenü"
-						aria-haspopup="true"
-						aria-expanded={showUserMenu}
-					>
-						<!-- User-Avatar -->
-						<div class="user-avatar">
-							<svg
-								xmlns="http://www.w3.org/2000/svg"
-								class="w-5 h-5"
-								fill="none"
-								viewBox="0 0 24 24"
-								stroke="currentColor"
-							>
-								<path
-									stroke-linecap="round"
-									stroke-linejoin="round"
-									stroke-width="2"
-									d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-								/>
-							</svg>
+				<!-- Dropdown-Menü -->
+				{#if showUserMenu}
+					<div class="dropdown-menu">
+						<!-- User-Info -->
+						<div class="dropdown-header">
+							<div class="dropdown-avatar">
+								{userEmail.charAt(0).toUpperCase()}
+							</div>
+							<div class="dropdown-user-info">
+								<p class="dropdown-email">{userEmail}</p>
+								<p class="dropdown-status">Angemeldet</p>
+							</div>
 						</div>
-						<!-- Email (nur Desktop) -->
-						<span class="user-email">{userEmail}</span>
-						<!-- Dropdown-Icon -->
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							class="dropdown-icon {showUserMenu
-								? 'dropdown-icon-open'
-								: ''}"
-							fill="none"
-							viewBox="0 0 24 24"
-							stroke="currentColor"
-						>
-							<path
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								stroke-width="2"
-								d="M19 9l-7 7-7-7"
-							/>
-						</svg>
-					</button>
 
-					<!-- Dropdown-Menü -->
-					{#if showUserMenu}
-						<div class="dropdown-menu">
-							<!-- User-Info -->
-							<div class="dropdown-header">
-								<div class="dropdown-avatar">
-									{userEmail.charAt(0).toUpperCase()}
-								</div>
-								<div class="dropdown-user-info">
-									<p class="dropdown-email">{userEmail}</p>
-									<p class="dropdown-status">Angemeldet</p>
-								</div>
-							</div>
+						<div class="dropdown-divider"></div>
 
-							<div class="dropdown-divider"></div>
-
-							<!-- CSV-Aktionen: nur hier erreichbar, wenn der Header sie ausblendet -->
-							<div class="dropdown-csv">
-								<button
-									onclick={() => {
-										showUserMenu = false;
-										handleExport();
-									}}
-									disabled={isExporting}
-									class="dropdown-item"
+						<!-- CSV-Aktionen: nur hier erreichbar, wenn der Header sie ausblendet -->
+						<div class="dropdown-csv">
+							<button
+								onclick={() => {
+									showUserMenu = false;
+									handleExport();
+								}}
+								disabled={isExporting}
+								class="dropdown-item"
+							>
+								<Icon name="download" />
+								<span
+									>{isExporting
+										? "Exportiere …"
+										: "Als CSV exportieren"}</span
 								>
-									<svg
-										xmlns="http://www.w3.org/2000/svg"
-										class="w-5 h-5"
-										fill="none"
-										viewBox="0 0 24 24"
-										stroke="currentColor"
-									>
-										<path
-											stroke-linecap="round"
-											stroke-linejoin="round"
-											stroke-width="2"
-											d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-										/>
-									</svg>
-									<span
-										>{isExporting
-											? "Exportiere …"
-											: "Als CSV exportieren"}</span
-									>
-								</button>
+							</button>
 
-								<a
-									href="/dashboard/import"
-									class="dropdown-item"
-									onclick={() => (showUserMenu = false)}
-								>
-									<svg
-										xmlns="http://www.w3.org/2000/svg"
-										class="w-5 h-5"
-										fill="none"
-										viewBox="0 0 24 24"
-										stroke="currentColor"
-									>
-										<path
-											stroke-linecap="round"
-											stroke-linejoin="round"
-											stroke-width="2"
-											d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-										/>
-									</svg>
-									<span>CSV importieren</span>
-								</a>
-
-								<div class="dropdown-divider"></div>
-							</div>
-
-							<!-- Menü-Items -->
 							<a
-								href="/dashboard/profile"
+								href="/dashboard/import"
 								class="dropdown-item"
 								onclick={() => (showUserMenu = false)}
 							>
-								<svg
-									xmlns="http://www.w3.org/2000/svg"
-									class="w-5 h-5"
-									fill="none"
-									viewBox="0 0 24 24"
-									stroke="currentColor"
-								>
-									<path
-										stroke-linecap="round"
-										stroke-linejoin="round"
-										stroke-width="2"
-										d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-									/>
-								</svg>
-								<span>Mein Profil</span>
+								<Icon name="upload" />
+								<span>CSV importieren</span>
 							</a>
 
 							<div class="dropdown-divider"></div>
-
-							<button
-								onclick={handleLogoutClick}
-								class="dropdown-item dropdown-item-danger"
-							>
-								<svg
-									xmlns="http://www.w3.org/2000/svg"
-									class="w-5 h-5"
-									fill="none"
-									viewBox="0 0 24 24"
-									stroke="currentColor"
-								>
-									<path
-										stroke-linecap="round"
-										stroke-linejoin="round"
-										stroke-width="2"
-										d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-									/>
-								</svg>
-								<span>Abmelden</span>
-							</button>
 						</div>
-					{/if}
-				</div>
-			</nav>
-		</div>
+
+						<!-- Menü-Items -->
+						<a
+							href="/dashboard/profile"
+							class="dropdown-item"
+							onclick={() => (showUserMenu = false)}
+						>
+							<Icon name="user" />
+							<span>Mein Profil</span>
+						</a>
+
+						<div class="dropdown-divider"></div>
+
+						<button
+							onclick={handleLogoutClick}
+							class="dropdown-item dropdown-item-danger"
+						>
+							<Icon name="logout" />
+							<span>Abmelden</span>
+						</button>
+					</div>
+				{/if}
+			</div>
+		</nav>
 	</div>
 </header>
 
@@ -388,22 +258,7 @@
 		>
 			<!-- Modal-Header -->
 			<div class="modal-header">
-				<div class="modal-icon">
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						class="w-8 h-8"
-						fill="none"
-						viewBox="0 0 24 24"
-						stroke="currentColor"
-					>
-						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							stroke-width="2"
-							d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-						/>
-					</svg>
-				</div>
+				<div class="modal-icon"><Icon name="logout" size={24} /></div>
 				<h3 id="logout-modal-title" class="modal-title">
 					Wirklich abmelden?
 				</h3>
@@ -416,42 +271,13 @@
 			<!-- Modal-Actions -->
 			<div class="modal-actions">
 				<form method="POST" action="/auth/logout">
-					<button type="submit" class="btn-modal btn-modal-danger">
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							class="w-5 h-5"
-							fill="none"
-							viewBox="0 0 24 24"
-							stroke="currentColor"
-						>
-							<path
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								stroke-width="2"
-								d="M5 13l4 4L19 7"
-							/>
-						</svg>
+					<button type="submit" class="btn btn-danger modal-btn">
+						<Icon name="check" />
 						Ja, abmelden
 					</button>
 				</form>
-				<button
-					onclick={cancelLogout}
-					class="btn-modal btn-modal-secondary"
-				>
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						class="w-5 h-5"
-						fill="none"
-						viewBox="0 0 24 24"
-						stroke="currentColor"
-					>
-						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							stroke-width="2"
-							d="M6 18L18 6M6 6l12 12"
-						/>
-					</svg>
+				<button onclick={cancelLogout} class="btn modal-btn">
+					<Icon name="x" />
 					Abbrechen
 				</button>
 			</div>
@@ -467,128 +293,76 @@
 <style>
 	/* ===== HEADER ===== */
 	.dashboard-header {
-		background: white;
-		border-bottom: 1px solid #e5e7eb;
+		background: var(--color-surface);
+		border-bottom: 1px solid var(--color-line-strong);
 		position: sticky;
 		top: 0;
 		z-index: 40;
-		box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
 	}
 
+	/* Gleiche Maximalbreite wie der Seiteninhalt, damit beides fluchtet */
 	.header-container {
-		max-width: 80rem;
+		max-width: 70rem;
 		margin: 0 auto;
 		padding: 0 1.5rem;
-	}
-
-	.header-content {
 		display: flex;
-		justify-content: space-between;
 		align-items: center;
-		height: 4rem;
+		justify-content: space-between;
+		gap: 1rem;
+		height: 3.75rem;
 	}
 
 	/* Logo */
 	.logo-link {
 		display: flex;
 		align-items: center;
-		gap: 0.75rem;
+		gap: 0.625rem;
+		color: inherit;
 		text-decoration: none;
-		transition: opacity 0.2s;
-	}
-
-	.logo-link:hover {
-		opacity: 0.8;
 	}
 
 	.logo-icon {
-		width: 2.5rem;
-		height: 2.5rem;
-		background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-		border-radius: 0.75rem;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		color: white;
+		display: grid;
+		place-items: center;
+		width: 2rem;
+		height: 2rem;
+		border-radius: var(--radius-card);
+		background: var(--color-accent);
+		color: var(--color-surface);
 		flex-shrink: 0;
 	}
 
 	.logo-title {
-		font-size: 1.25rem;
-		font-weight: 700;
-		color: #111827;
-		line-height: 1.2;
+		font-size: 18px;
+		font-weight: 600;
+		letter-spacing: -0.03em;
+		line-height: 1.1;
 		margin: 0;
 	}
 
 	.logo-subtitle {
-		font-size: 0.75rem;
-		color: #6b7280;
-		margin: 0;
+		font-size: 12px;
+		color: var(--color-ink-3);
 		line-height: 1;
+		margin: 0;
 	}
 
 	/* Navigation */
 	.nav-section {
 		display: flex;
 		align-items: center;
-		gap: 0.75rem;
+		gap: 0.375rem;
 	}
 
-	/* CSV-Actions Container */
 	.csv-actions {
 		display: flex;
-		align-items: center;
-		gap: 0.5rem;
-		padding-right: 0.5rem;
-		border-right: 1px solid #e5e7eb;
-	}
-
-	/* CSV-Import/Export-Buttons */
-	.btn-csv {
-		display: flex;
-		align-items: center;
 		gap: 0.375rem;
-		padding: 0.5rem 0.875rem;
-		border-radius: 0.625rem;
-		font-size: 0.875rem;
-		font-weight: 500;
-		border: 1px solid;
-		cursor: pointer;
-		transition: all 0.2s;
-		text-decoration: none;
+		padding-right: 0.5rem;
+		margin-right: 0.125rem;
+		border-right: 1px solid var(--color-line);
 	}
 
-	.btn-export {
-		background: white;
-		color: #047857;
-		border-color: #d1fae5;
-	}
-
-	.btn-export:hover:not(:disabled) {
-		background: #d1fae5;
-		border-color: #047857;
-		transform: translateY(-1px);
-	}
-
-	.btn-export:disabled {
-		opacity: 0.6;
-		cursor: not-allowed;
-	}
-
-	.btn-import {
-		background: white;
-		color: #7c3aed;
-		border-color: #e9d5ff;
-	}
-
-	.btn-import:hover {
-		background: #e9d5ff;
-		border-color: #7c3aed;
-		transform: translateY(-1px);
-	}
-
-	/* Spinner-Animation */
+	/* Export-Spinner: einziges Lade-Feedback, von reduced-motion ausgenommen */
 	@keyframes spin {
 		to {
 			transform: rotate(360deg);
@@ -599,31 +373,6 @@
 		animation: spin 1s linear infinite;
 	}
 
-	/* Neuer Vertrag Button */
-	.btn-new-contract {
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
-		background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-		color: white;
-		padding: 0.625rem 1.25rem;
-		border-radius: 0.75rem;
-		font-size: 0.875rem;
-		font-weight: 600;
-		text-decoration: none;
-		transition: all 0.2s;
-		box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25);
-	}
-
-	.btn-new-contract:hover {
-		box-shadow: 0 4px 12px rgba(59, 130, 246, 0.35);
-		transform: translateY(-1px);
-	}
-
-	.btn-text-mobile {
-		display: none;
-	}
-
 	/* User-Dropdown */
 	.user-dropdown {
 		position: relative;
@@ -632,51 +381,47 @@
 	.user-button {
 		display: flex;
 		align-items: center;
-		gap: 0.625rem;
-		background: #f3f4f6;
-		padding: 0.5rem 0.875rem;
-		border-radius: 0.75rem;
-		border: 1px solid #e5e7eb;
+		gap: 0.5rem;
+		padding: 0.25rem 0.5rem 0.25rem 0.25rem;
+		border: 1px solid transparent;
+		border-radius: var(--radius-card);
+		background: transparent;
+		color: var(--color-ink-2);
+		font-size: 13.5px;
 		cursor: pointer;
-		transition: all 0.2s;
-		font-size: 0.875rem;
 	}
 
 	.user-button:hover {
-		background: #e5e7eb;
-		border-color: #d1d5db;
+		border-color: var(--color-line-strong);
 	}
 
 	.user-avatar {
-		width: 2rem;
-		height: 2rem;
-		background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
-		border-radius: 50%;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		color: white;
+		display: grid;
+		place-items: center;
+		width: 30px;
+		height: 30px;
+		border-radius: 999px;
+		background: var(--color-line-strong);
+		color: var(--color-ink-2);
 		flex-shrink: 0;
 	}
 
 	.user-email {
-		color: #374151;
-		font-weight: 500;
 		max-width: 150px;
+		font-weight: 500;
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
 	}
 
-	.dropdown-icon {
-		width: 1rem;
-		height: 1rem;
-		color: #6b7280;
-		transition: transform 0.2s;
+	/* Icon rendert ein eigenes Element, daher :global für die übergebene Klasse */
+	.user-button :global(.dropdown-icon) {
+		color: var(--color-ink-3);
 		flex-shrink: 0;
+		transition: transform 0.2s;
 	}
 
-	.dropdown-icon-open {
+	.user-button :global(.dropdown-icon-open) {
 		transform: rotate(180deg);
 	}
 
@@ -686,25 +431,18 @@
 		right: 0;
 		top: calc(100% + 0.5rem);
 		width: 16rem;
-		background: white;
-		border-radius: 0.75rem;
-		box-shadow:
-			0 10px 25px -5px rgba(0, 0, 0, 0.1),
-			0 10px 10px -5px rgba(0, 0, 0, 0.04);
-		border: 1px solid #e5e7eb;
+		background: var(--color-surface);
+		border: 1px solid var(--color-line-strong);
+		border-radius: var(--radius-card);
+		box-shadow: 0 8px 24px -8px rgba(0, 0, 0, 0.12);
 		overflow: hidden;
-		animation: dropdown-fade-in 0.2s ease;
+		animation: dropdown-fade-in 0.15s ease;
 		z-index: 50;
 	}
 
 	@keyframes dropdown-fade-in {
 		from {
 			opacity: 0;
-			transform: translateY(-8px);
-		}
-		to {
-			opacity: 1;
-			transform: translateY(0);
 		}
 	}
 
@@ -713,20 +451,17 @@
 		align-items: center;
 		gap: 0.75rem;
 		padding: 1rem;
-		background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
 	}
 
 	.dropdown-avatar {
-		width: 2.5rem;
-		height: 2.5rem;
-		background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-		border-radius: 50%;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		color: white;
-		font-weight: 700;
-		font-size: 1.125rem;
+		display: grid;
+		place-items: center;
+		width: 2.25rem;
+		height: 2.25rem;
+		border-radius: 999px;
+		background: var(--color-accent);
+		color: var(--color-surface);
+		font-weight: 600;
 		flex-shrink: 0;
 	}
 
@@ -736,9 +471,8 @@
 	}
 
 	.dropdown-email {
-		font-size: 0.875rem;
+		font-size: 13.5px;
 		font-weight: 600;
-		color: #111827;
 		margin: 0;
 		overflow: hidden;
 		text-overflow: ellipsis;
@@ -746,14 +480,14 @@
 	}
 
 	.dropdown-status {
-		font-size: 0.75rem;
-		color: #047857;
+		font-size: 12px;
+		color: var(--color-ok);
 		margin: 0;
 	}
 
 	.dropdown-divider {
 		height: 1px;
-		background: #e5e7eb;
+		background: var(--color-line);
 	}
 
 	.dropdown-item {
@@ -761,25 +495,29 @@
 		align-items: center;
 		gap: 0.75rem;
 		width: 100%;
-		padding: 0.875rem 1rem;
+		padding: 0.75rem 1rem;
 		border: none;
-		background: white;
-		color: #374151;
-		font-size: 0.875rem;
+		background: transparent;
+		color: var(--color-ink-2);
+		font-size: 13.5px;
 		font-weight: 500;
-		cursor: pointer;
-		transition: all 0.15s;
 		text-align: left;
 		text-decoration: none;
+		cursor: pointer;
 	}
 
 	.dropdown-item:hover {
-		background: #f9fafb;
+		color: var(--color-ink);
+		background: color-mix(in srgb, var(--color-ink) 4%, transparent);
 	}
 
 	.dropdown-item:disabled {
-		opacity: 0.6;
+		opacity: 0.5;
 		cursor: not-allowed;
+	}
+
+	.dropdown-item-danger:hover {
+		color: var(--color-crit);
 	}
 
 	/* CSV im Dropdown nur, solange der Header die Buttons nicht zeigt */
@@ -787,53 +525,26 @@
 		display: none;
 	}
 
-	.dropdown-item-danger:hover {
-		background: #fef2f2;
-		color: #dc2626;
-	}
-
 	/* ===== MODAL ===== */
 	.modal-overlay {
 		position: fixed;
 		inset: 0;
-		background: rgba(0, 0, 0, 0.5);
-		backdrop-filter: blur(4px);
+		background: rgba(0, 0, 0, 0.4);
 		display: flex;
 		align-items: center;
 		justify-content: center;
 		z-index: 60;
 		padding: 1rem;
-		animation: modal-fade-in 0.2s ease;
-	}
-
-	@keyframes modal-fade-in {
-		from {
-			opacity: 0;
-		}
-		to {
-			opacity: 1;
-		}
+		animation: dropdown-fade-in 0.15s ease;
 	}
 
 	.modal-content {
-		background: white;
-		border-radius: 1rem;
-		max-width: 26rem;
 		width: 100%;
+		max-width: 26rem;
 		padding: 1.5rem;
-		box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-		animation: modal-scale-in 0.2s ease;
-	}
-
-	@keyframes modal-scale-in {
-		from {
-			transform: scale(0.95);
-			opacity: 0;
-		}
-		to {
-			transform: scale(1);
-			opacity: 1;
-		}
+		background: var(--color-surface);
+		border: 1px solid var(--color-line-strong);
+		border-radius: var(--radius-card);
 	}
 
 	.modal-header {
@@ -842,27 +553,25 @@
 	}
 
 	.modal-icon {
-		width: 4rem;
-		height: 4rem;
-		background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
-		border-radius: 50%;
-		display: flex;
-		align-items: center;
-		justify-content: center;
+		display: grid;
+		place-items: center;
+		width: 3rem;
+		height: 3rem;
 		margin: 0 auto 1rem;
-		color: #dc2626;
+		border-radius: 999px;
+		background: color-mix(in srgb, var(--color-crit) 8%, transparent);
+		color: var(--color-crit);
 	}
 
 	.modal-title {
-		font-size: 1.25rem;
-		font-weight: 700;
-		color: #111827;
-		margin: 0 0 0.5rem 0;
+		font-size: 18px;
+		font-weight: 600;
+		margin: 0 0 0.5rem;
 	}
 
 	.modal-description {
-		font-size: 0.875rem;
-		color: #6b7280;
+		font-size: 14px;
+		color: var(--color-ink-2);
 		line-height: 1.5;
 		margin: 0;
 	}
@@ -870,49 +579,18 @@
 	.modal-actions {
 		display: flex;
 		flex-direction: column;
-		gap: 0.75rem;
+		gap: 0.625rem;
 	}
 
-	.btn-modal {
-		display: flex;
-		align-items: center;
+	.modal-btn {
+		width: 100%;
 		justify-content: center;
-		gap: 0.5rem;
-		padding: 0.875rem 1.25rem;
-		border-radius: 0.75rem;
-		font-size: 0.875rem;
-		font-weight: 600;
-		border: none;
-		cursor: pointer;
-		transition: all 0.2s;
-		text-decoration: none;
-	}
-
-	.btn-modal-danger {
-		background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
-		color: white;
-		box-shadow: 0 2px 8px rgba(220, 38, 38, 0.25);
-	}
-
-	.btn-modal-danger:hover {
-		box-shadow: 0 4px 12px rgba(220, 38, 38, 0.35);
-		transform: translateY(-1px);
-	}
-
-	.btn-modal-secondary {
-		background: white;
-		color: #374151;
-		border: 2px solid #e5e7eb;
-	}
-
-	.btn-modal-secondary:hover {
-		background: #f9fafb;
-		border-color: #d1d5db;
+		padding: 0.75rem 1rem;
 	}
 
 	/* ===== MAIN CONTENT ===== */
 	.main-content {
-		min-height: calc(100vh - 4rem);
+		min-height: calc(100vh - 3.75rem);
 	}
 
 	/* ===== RESPONSIVE ===== */
@@ -938,16 +616,6 @@
 
 		.btn-text {
 			display: none;
-		}
-
-		.btn-text-mobile {
-			display: block;
-			font-size: 1.25rem;
-			font-weight: 600;
-		}
-
-		.btn-new-contract {
-			padding: 0.625rem 1rem;
 		}
 
 		.user-email {

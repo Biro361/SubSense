@@ -1,4 +1,163 @@
 @import 'tailwindcss';
+@import '@fontsource-variable/inter';
+@import '@fontsource/fira-code/400.css';
+@import '@fontsource/fira-code/600.css';
+
+/* Additiv: Tailwind-Defaults (blue-600 usw.) bleiben, bis alle Seiten migriert sind.
+   static: Variablen immer ausgeben, auch wenn sie nur in scoped <style>-Blöcken vorkommen */
+@theme static {
+	--font-sans: 'Inter Variable', Inter, ui-sans-serif, system-ui, sans-serif;
+	--font-mono: 'Fira Code', ui-monospace, monospace;
+
+	--color-page: #fafaf9;
+	--color-surface: #ffffff;
+	--color-ink: #18181b;
+	--color-ink-2: #52525b;
+	--color-ink-3: #a1a1aa;
+	--color-line: #e4e4e7;
+	--color-line-strong: #d4d4d8;
+	--color-accent: #1e3a8a;
+	--color-ok: #15803d;
+	--color-warn: #b45309;
+	--color-crit: #b91c1c;
+
+	--radius-card: 4px;
+}
+
+@layer base {
+	body {
+		background: var(--color-page);
+		color: var(--color-ink);
+		/* Kein tabular-nums hier: Inter macht damit auch Bindestriche breit ("CSV - Import").
+		   Beträge und Fristen fluchten über die Mono-Schrift. */
+		font-family: var(--font-sans);
+	}
+
+	:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+		outline: 2px solid var(--color-accent);
+		outline-offset: 2px;
+	}
+}
+
+@layer components {
+	/* Formularfeld: ersetzt die wiederholte Utility-Kette */
+	.field {
+		display: block;
+		width: 100%;
+		font-size: 14px;
+		color: var(--color-ink);
+		padding: 0.65rem 0.75rem;
+		background: var(--color-surface);
+		border: 1px solid var(--color-line-strong);
+		border-radius: var(--radius-card);
+	}
+	.field::placeholder {
+		color: var(--color-ink-3);
+	}
+	.field:focus-visible {
+		outline-offset: 1px;
+		border-color: var(--color-accent);
+	}
+
+	.label {
+		display: block;
+		margin-bottom: 0.35rem;
+		font-size: 13px;
+		font-weight: 500;
+		color: var(--color-ink-2);
+	}
+
+	.hint {
+		margin-top: 0.35rem;
+		font-size: 12.5px;
+		color: var(--color-ink-3);
+	}
+
+	.btn {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.4rem;
+		font-size: 13.5px;
+		font-weight: 500;
+		line-height: 1;
+		padding: 0.55rem 0.8rem;
+		border-radius: var(--radius-card);
+		border: 1px solid var(--color-line-strong);
+		background: transparent;
+		color: var(--color-ink-2);
+		cursor: pointer;
+		text-decoration: none;
+		transition:
+			background-color 0.12s,
+			color 0.12s,
+			border-color 0.12s;
+	}
+	.btn:hover {
+		color: var(--color-ink);
+		border-color: var(--color-ink-3);
+	}
+	.btn:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+
+	.btn-primary {
+		background: var(--color-accent);
+		border-color: var(--color-accent);
+		color: var(--color-surface);
+		font-weight: 600;
+	}
+	.btn-primary:hover {
+		color: var(--color-surface);
+		border-color: var(--color-accent);
+		filter: brightness(1.08);
+	}
+
+	.btn-danger {
+		background: var(--color-crit);
+		border-color: var(--color-crit);
+		color: var(--color-surface);
+		font-weight: 600;
+	}
+	.btn-danger:hover {
+		color: var(--color-surface);
+		border-color: var(--color-crit);
+		filter: brightness(1.08);
+	}
+
+	.icon-btn {
+		display: inline-grid;
+		place-items: center;
+		width: 30px;
+		height: 30px;
+		border: 0;
+		background: transparent;
+		border-radius: var(--radius-card);
+		color: var(--color-ink-3);
+		cursor: pointer;
+	}
+	.icon-btn:hover {
+		color: var(--color-ink);
+		background: color-mix(in srgb, var(--color-ink) 8%, transparent);
+	}
+	.icon-btn-danger:hover {
+		color: var(--color-crit);
+	}
+
+	/* Kategorie- und Statuslabel in Kapitälchen; ersetzt die Emoji-Pills */
+	.cat {
+		padding: 0.25rem 0.45rem;
+		font-size: 11px;
+		font-weight: 500;
+		line-height: 1;
+		letter-spacing: 0.07em;
+		text-transform: uppercase;
+		white-space: nowrap;
+		color: var(--color-ink-2);
+		border: 1px solid var(--color-line-strong);
+		border-radius: 3px;
+	}
+}
 
 @media (prefers-reduced-motion: reduce) {
 	/* Spinner ausgenommen: er ist das Lade-Feedback, nicht Dekoration */

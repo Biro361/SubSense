@@ -9,20 +9,20 @@
 	<title>Anmelden – SubSense</title>
 </svelte:head>
 
-<main class="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-	<div class="max-w-md w-full bg-white rounded-2xl shadow-lg p-8">
-		<h1 class="text-2xl font-semibold text-gray-900 mb-2">Willkommen zurück</h1>
-		<p class="text-gray-600 mb-6">Melde dich an, um deine Verträge zu verwalten.</p>
+<main class="flex min-h-screen items-center justify-center px-4 py-12">
+	<div class="w-full max-w-md rounded-card border border-line bg-surface p-8 max-sm:p-6">
+		<h1 class="mb-2 text-2xl font-semibold tracking-tight">Willkommen zurück</h1>
+		<p class="mb-6 text-sm text-ink-2">Melde dich an, um deine Verträge zu verwalten.</p>
 
 		{#if form?.error}
-			<div role="alert" class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+			<div role="alert" class="mb-4 rounded-card border border-crit/30 bg-crit/5 px-4 py-3 text-sm text-crit">
 				{form.error}
 			</div>
 		{/if}
 
 		<form method="POST" use:enhance class="space-y-4">
 			<div>
-				<label class="block text-sm font-medium text-gray-700 mb-1" for="email">
+				<label class="label" for="email">
 					Email-Adresse
 				</label>
 				<input
@@ -31,13 +31,13 @@
 					type="email"
 					required
 					autocomplete="email"
-					class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
+					class="field"
 					placeholder="du@example.com"
 				/>
 			</div>
 
 			<div>
-				<label class="block text-sm font-medium text-gray-700 mb-1" for="password">
+				<label class="label" for="password">
 					Passwort
 				</label>
 				<input
@@ -46,22 +46,22 @@
 					type="password"
 					required
 					autocomplete="current-password"
-					class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
+					class="field"
 					placeholder="••••••••"
 				/>
 			</div>
 
 			<button
 				type="submit"
-				class="w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-1"
+				class="btn btn-primary w-full justify-center py-3"
 			>
 				Anmelden
 			</button>
 		</form>
 
-		<p class="mt-6 text-center text-sm text-gray-600">
+		<p class="mt-6 text-center text-sm text-ink-2">
 			Noch kein Account?
-			<a href="/auth/signup" class="font-medium text-blue-600 hover:text-blue-700">
+			<a href="/auth/signup" class="font-medium text-accent underline-offset-2 hover:underline">
 				Jetzt registrieren
 			</a>
 		</p>

@@ -1,40 +1,34 @@
 <script>
   import { enhance } from '$app/forms';
-  
+
   let { data, form } = $props();
   let contract = $derived(data.contract);
 </script>
 
-<div class="max-w-md mx-auto p-6 mt-12">
-  <div class="bg-white rounded-lg shadow-lg p-6">
-    <h1 class="text-xl font-bold mb-4">Vertrag löschen</h1>
-    
+<div class="mx-auto max-w-[70rem] px-6 pt-10 pb-16 max-sm:px-4 max-sm:pt-7">
+  <div class="max-w-2xl">
+    <h1 class="mb-4 text-3xl font-semibold tracking-tight">Vertrag löschen</h1>
+
     {#if form?.error}
-      <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+      <div role="alert" class="mb-6 rounded-card border border-crit/30 bg-crit/5 px-4 py-3 text-sm text-crit">
         {form.error}
       </div>
     {/if}
-    
-    <p class="text-gray-600 mb-4">
+
+    <p class="mb-6 text-ink-2">
       Möchtest du den folgenden Vertrag wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.
     </p>
-    
-    <div class="bg-gray-50 rounded p-3 mb-6">
-      <p class="font-semibold">{contract.name}</p>
-      <p class="text-sm text-gray-600">{contract.provider}</p>
+
+    <div class="mb-6 border-l-[3px] border-crit bg-surface py-3 pr-4 pl-4">
+      <p class="font-semibold [overflow-wrap:anywhere]">{contract.name}</p>
+      <p class="text-sm text-ink-2">{contract.provider}</p>
     </div>
-    
-    <form method="POST" use:enhance class="flex gap-3">
-      <button
-        type="submit"
-        class="flex-1 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700"
-      >
+
+    <form method="POST" use:enhance class="flex gap-2">
+      <button type="submit" class="btn btn-danger">
         Ja, löschen
       </button>
-      <a
-        href="/"
-        class="flex-1 bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 text-center"
-      >
+      <a href="/" class="btn">
         Abbrechen
       </a>
     </form>

@@ -24,223 +24,191 @@
   }
 </script>
 
-<div class="max-w-2xl mx-auto p-6">
-  <h1 class="text-2xl font-bold mb-6">Vertrag bearbeiten</h1>
+<div class="mx-auto max-w-[70rem] px-6 pt-10 pb-16 max-sm:px-4 max-sm:pt-7">
+  <div class="max-w-2xl">
+    <h1 class="mb-8 text-3xl font-semibold tracking-tight">Vertrag bearbeiten</h1>
 
-  {#if form?.error}
-    <div
-      class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4"
-    >
-      {form.error}
-    </div>
-  {/if}
-
-  <form method="POST" use:enhance class="space-y-4">
-    <div>
-      <label for="name" class="block text-sm font-medium mb-1">
-        Vertragsname *
-      </label>
-      <input
-        type="text"
-        id="name"
-        name="name"
-        value={contract.name}
-        required
-        class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-      />
-    </div>
-
-    <div>
-      <label for="provider" class="block text-sm font-medium mb-1">
-        Anbieter *
-      </label>
-      <input
-        type="text"
-        id="provider"
-        name="provider"
-        value={contract.provider}
-        required
-        class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-      />
-    </div>
-
-    <!-- NEU: Kündigungs-URL -->
-    <div>
-      <label for="cancellationUrl" class="block text-sm font-medium mb-1">
-        🔗 Kündigungs-Link (Optional)
-      </label>
-      <input
-        type="url"
-        id="cancellationUrl"
-        name="cancellationUrl"
-        value={form?.cancellationUrl || contract.cancellationUrl || ''}
-        placeholder="https://www.netflix.com/cancelplan"
-        pattern="https?://.+"
-        class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-      />
-      <p class="text-sm text-gray-500 mt-1">
-        💡 Direkter Link zur Kündigungsseite – spart Zeit beim Kündigen!
-      </p>
-    </div>
-
-    <div>
-      <label for="category" class="block text-sm font-medium mb-1">
-        Kategorie *
-      </label>
-      <select
-        id="category"
-        name="category"
-        bind:value={category}
-        required
-        class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+    {#if form?.error}
+      <div
+        role="alert"
+        class="mb-6 rounded-card border border-crit/30 bg-crit/5 px-4 py-3 text-sm text-crit"
       >
-        {#each CATEGORIES as cat}
-          <option value={cat.value}>{cat.icon} {cat.label}</option>
-        {/each}
-      </select>
-    </div>
+        {form.error}
+      </div>
+    {/if}
 
-    <div>
-      <label for="cancellationDate" class="block text-sm font-medium mb-1">
-        Kündigungsfrist *
-      </label>
-      <input
-        type="date"
-        id="cancellationDate"
-        name="cancellationDate"
-        value={formattedDate}
-        required
-        class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-      />
-    </div>
-
-    <!-- NEU: Erinnerung -->
-    <div class="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-      <label
-        for="reminderDays"
-        class="block text-sm font-medium text-gray-700 mb-2"
-      >
-        🔔 Erinnerung (Tage vorher) *
-      </label>
-
-      <!-- Preset-Buttons -->
-      <div class="flex gap-2 mb-3">
-        <button
-          type="button"
-          onclick={() => setReminderPreset(3)}
-          class="px-3 py-1 rounded {reminderDays === 3
-            ? 'bg-blue-600 text-white'
-            : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'}"
-        >
-          3 Tage
-        </button>
-        <button
-          type="button"
-          onclick={() => setReminderPreset(7)}
-          class="px-3 py-1 rounded {reminderDays === 7
-            ? 'bg-blue-600 text-white'
-            : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'}"
-        >
-          7 Tage
-        </button>
-        <button
-          type="button"
-          onclick={() => setReminderPreset(14)}
-          class="px-3 py-1 rounded {reminderDays === 14
-            ? 'bg-blue-600 text-white'
-            : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'}"
-        >
-          14 Tage
-        </button>
-        <button
-          type="button"
-          onclick={() => setReminderPreset(30)}
-          class="px-3 py-1 rounded {reminderDays === 30
-            ? 'bg-blue-600 text-white'
-            : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'}"
-        >
-          30 Tage
-        </button>
+    <form method="POST" use:enhance class="space-y-6">
+      <div>
+        <label for="name" class="label">
+          Vertragsname *
+        </label>
+        <input
+          type="text"
+          id="name"
+          name="name"
+          value={contract.name}
+          required
+          class="field"
+        />
       </div>
 
-      <input
-        type="number"
-        id="reminderDays"
-        name="reminderDays"
-        bind:value={reminderDays}
-        min="1"
-        max="90"
-        required
-        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-      />
-      <p class="text-sm text-gray-600 mt-2">
-        💡 Du wirst <strong>{reminderDays} Tage</strong> vor der Kündigungsfrist
-        erinnert.
-      </p>
-    </div>
+      <div>
+        <label for="provider" class="label">
+          Anbieter *
+        </label>
+        <input
+          type="text"
+          id="provider"
+          name="provider"
+          value={contract.provider}
+          required
+          class="field"
+        />
+      </div>
 
-    <!-- Kosten -->
-    <div>
-      <label for="cost" class="block text-sm font-medium mb-1">
-        Kosten (CHF) *
-      </label>
-      <input
-        type="number"
-        id="cost"
-        name="cost"
-        value={contract.cost || 0}
-        step="0.01"
-        min="0"
-        required
-        class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-      />
-    </div>
+      <!-- Kündigungs-URL -->
+      <div>
+        <label for="cancellationUrl" class="label">
+          Kündigungs-Link (optional)
+        </label>
+        <input
+          type="url"
+          id="cancellationUrl"
+          name="cancellationUrl"
+          value={form?.cancellationUrl || contract.cancellationUrl || ''}
+          placeholder="https://www.netflix.com/cancelplan"
+          pattern="https?://.+"
+          class="field"
+        />
+        <p class="hint">
+          Direkter Link zur Kündigungsseite – spart Zeit beim Kündigen.
+        </p>
+      </div>
 
-    <!-- Abrechnungszyklus -->
-    <div>
-      <label for="billingCycle" class="block text-sm font-medium mb-1">
-        Abrechnungszyklus *
-      </label>
-      <select
-        id="billingCycle"
-        name="billingCycle"
-        value={contract.billingCycle || "monthly"}
-        class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-      >
-        <option value="monthly">Monatlich</option>
-        <option value="quarterly">Vierteljährlich</option>
-        <option value="yearly">Jährlich</option>
-      </select>
-    </div>
+      <div>
+        <label for="category" class="label">
+          Kategorie *
+        </label>
+        <select
+          id="category"
+          name="category"
+          bind:value={category}
+          required
+          class="field"
+        >
+          {#each CATEGORIES as cat}
+            <option value={cat.value}>{cat.label}</option>
+          {/each}
+        </select>
+      </div>
 
-    <div>
-      <label for="status" class="block text-sm font-medium mb-1">
-        Status *
-      </label>
-      <select
-        id="status"
-        name="status"
-        value={contract.status}
-        class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-      >
-        <option value="active">Aktiv</option>
-        <option value="cancelled">Gekündigt</option>
-      </select>
-    </div>
+      <div>
+        <label for="cancellationDate" class="label">
+          Kündigungsfrist *
+        </label>
+        <input
+          type="date"
+          id="cancellationDate"
+          name="cancellationDate"
+          value={formattedDate}
+          required
+          class="field"
+        />
+      </div>
 
-    <div class="flex gap-3 pt-4">
-      <button
-        type="submit"
-        class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
-      >
-        Speichern
-      </button>
-      <a
-        href="/"
-        class="bg-gray-200 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-300"
-      >
-        Abbrechen
-      </a>
-    </div>
-  </form>
+      <!-- Erinnerung -->
+      <div class="rounded-card border border-line bg-surface p-4">
+        <label for="reminderDays" class="label">
+          Erinnerung (Tage vorher) *
+        </label>
+
+        <!-- Preset-Buttons -->
+        <div class="mb-3 flex flex-wrap gap-2">
+          {#each [3, 7, 14, 30] as days}
+            <button
+              type="button"
+              onclick={() => setReminderPreset(days)}
+              aria-pressed={reminderDays === days}
+              class="btn {reminderDays === days ? 'btn-primary' : ''}"
+            >
+              {days} Tage
+            </button>
+          {/each}
+        </div>
+
+        <input
+          type="number"
+          id="reminderDays"
+          name="reminderDays"
+          bind:value={reminderDays}
+          min="1"
+          max="90"
+          required
+          class="field"
+        />
+        <p class="hint">
+          Du wirst <strong class="font-semibold text-ink-2">{reminderDays} Tage</strong> vor der Kündigungsfrist
+          erinnert.
+        </p>
+      </div>
+
+      <!-- Kosten -->
+      <div>
+        <label for="cost" class="label">
+          Kosten (CHF) *
+        </label>
+        <input
+          type="number"
+          id="cost"
+          name="cost"
+          value={contract.cost || 0}
+          step="0.01"
+          min="0"
+          required
+          class="field font-mono"
+        />
+      </div>
+
+      <!-- Abrechnungszyklus -->
+      <div>
+        <label for="billingCycle" class="label">
+          Abrechnungszyklus *
+        </label>
+        <select
+          id="billingCycle"
+          name="billingCycle"
+          value={contract.billingCycle || "monthly"}
+          class="field"
+        >
+          <option value="monthly">Monatlich</option>
+          <option value="quarterly">Vierteljährlich</option>
+          <option value="yearly">Jährlich</option>
+        </select>
+      </div>
+
+      <div>
+        <label for="status" class="label">
+          Status *
+        </label>
+        <select
+          id="status"
+          name="status"
+          value={contract.status}
+          class="field"
+        >
+          <option value="active">Aktiv</option>
+          <option value="cancelled">Gekündigt</option>
+        </select>
+      </div>
+
+      <div class="flex gap-2 pt-2">
+        <button type="submit" class="btn btn-primary">
+          Speichern
+        </button>
+        <a href="/" class="btn">
+          Abbrechen
+        </a>
+      </div>
+    </form>
+  </div>
 </div>
