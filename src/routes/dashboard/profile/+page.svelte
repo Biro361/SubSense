@@ -8,7 +8,7 @@
 
 	let showPasswordForm = $state(false);
 	let showDeleteForm = $state(false);
-	
+
 	// Toast State
 	let toastMessage = $state('');
 	let toastType = $state('success');
@@ -41,210 +41,186 @@
 	/>
 {/if}
 
-<div class="max-w-3xl mx-auto px-4 py-8">
-	<h1 class="text-3xl font-bold mb-6">Mein Profil</h1>
+<div class="mx-auto max-w-[70rem] px-6 pt-10 pb-16 max-sm:px-4 max-sm:pt-7">
+	<div class="max-w-2xl">
+		<h1 class="mb-8 text-3xl font-semibold tracking-tight">Mein Profil</h1>
 
-	<!-- Profil-Info -->
-	<div class="bg-white shadow rounded-lg p-6 mb-6">
-		<h2 class="text-xl font-semibold mb-4">Profil-Informationen</h2>
-		<dl class="space-y-3">
-			<div>
-				<dt class="text-sm font-medium text-gray-500">E-Mail</dt>
-				<dd class="text-lg">{data.user.email}</dd>
-			</div>
-			<div>
-				<dt class="text-sm font-medium text-gray-500">Name</dt>
-				<dd class="text-lg">{data.user.name}</dd>
-			</div>
-			<div>
-				<dt class="text-sm font-medium text-gray-500">Mitglied seit</dt>
-				<dd class="text-lg">
-					{new Date(data.user.createdAt).toLocaleDateString('de-CH')}
-				</dd>
-			</div>
-		</dl>
-	</div>
-
-	<!-- Name ändern -->
-	<div class="bg-white shadow rounded-lg p-6 mb-6">
-		<h2 class="text-xl font-semibold mb-4">Name ändern</h2>
-		<form method="POST" action="?/updateName" use:enhance>
-			<div class="mb-4">
-				<label for="name" class="block text-sm font-medium text-gray-700 mb-2">
-					Neuer Name
-				</label>
-				<input
-					type="text"
-					id="name"
-					name="name"
-					value={data.user.name}
-					class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-					required
-				/>
-			</div>
-			<button
-				type="submit"
-				class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
-			>
-				Name speichern
-			</button>
-		</form>
-	</div>
-
-	<!-- E-Mail ändern -->
-	<div class="bg-white shadow rounded-lg p-6 mb-6">
-		<h2 class="text-xl font-semibold mb-4">E-Mail ändern</h2>
-		<form method="POST" action="?/updateEmail" use:enhance>
-			<div class="mb-4">
-				<label for="email" class="block text-sm font-medium text-gray-700 mb-2">
-					Neue E-Mail-Adresse
-				</label>
-				<input
-					type="email"
-					id="email"
-					name="email"
-					value={data.user.email}
-					class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-					required
-				/>
-			</div>
-			<button
-				type="submit"
-				class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
-			>
-				E-Mail speichern
-			</button>
-		</form>
-	</div>
-
-	<!-- Passwort ändern -->
-	<div class="bg-white shadow rounded-lg p-6 mb-6">
-		<h2 class="text-xl font-semibold mb-4">Passwort ändern</h2>
-
-		{#if !showPasswordForm}
-			<button
-				onclick={() => (showPasswordForm = true)}
-				class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition"
-			>
-				Passwort ändern
-			</button>
-		{:else}
-			<form method="POST" action="?/updatePassword" use:enhance>
-				<div class="mb-4">
-					<label for="oldPassword" class="block text-sm font-medium text-gray-700 mb-2">
-						Altes Passwort
-					</label>
-					<input
-						type="password"
-						id="oldPassword"
-						name="oldPassword"
-						class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-						required
-					/>
+		<!-- Profil-Info -->
+		<section class="border-t border-line-strong py-6">
+			<h2 class="mb-4 font-semibold">Profil-Informationen</h2>
+			<dl class="grid gap-4 sm:grid-cols-3">
+				<div class="min-w-0">
+					<dt class="label">E-Mail</dt>
+					<dd class="[overflow-wrap:anywhere]">{data.user.email}</dd>
 				</div>
-				<div class="mb-4">
-					<label for="newPassword" class="block text-sm font-medium text-gray-700 mb-2">
-						Neues Passwort (min. 8 Zeichen)
-					</label>
-					<input
-						type="password"
-						id="newPassword"
-						name="newPassword"
-						minlength="8"
-						class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-						required
-					/>
+				<div class="min-w-0">
+					<dt class="label">Name</dt>
+					<dd>{data.user.name}</dd>
 				</div>
-				<div class="mb-4">
-					<label for="confirmPassword" class="block text-sm font-medium text-gray-700 mb-2">
-						Neues Passwort bestätigen
-					</label>
-					<input
-						type="password"
-						id="confirmPassword"
-						name="confirmPassword"
-						minlength="8"
-						class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-						required
-					/>
+				<div>
+					<dt class="label">Mitglied seit</dt>
+					<dd class="font-mono">
+						{new Date(data.user.createdAt).toLocaleDateString('de-CH')}
+					</dd>
 				</div>
-				<div class="flex gap-3">
-					<button
-						type="submit"
-						class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
-					>
-						Passwort speichern
-					</button>
-					<button
-						type="button"
-						onclick={() => (showPasswordForm = false)}
-						class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition"
-					>
-						Abbrechen
-					</button>
-				</div>
-			</form>
-		{/if}
-	</div>
+			</dl>
+		</section>
 
-	<!-- Account löschen (Danger Zone) -->
-	<div class="bg-red-50 border border-red-200 rounded-lg p-6">
-		<h2 class="text-xl font-semibold text-red-800 mb-4">Gefahrenzone</h2>
-		<p class="text-sm text-gray-700 mb-4">
-			Das Löschen deines Accounts ist <strong>unwiderruflich</strong>. Alle deine Verträge
-			werden ebenfalls gelöscht.
-		</p>
-
-		{#if !showDeleteForm}
-			<button
-				onclick={() => (showDeleteForm = true)}
-				class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition"
-			>
-				Account löschen
-			</button>
-		{:else}
-			<form method="POST" action="?/deleteAccount" use:enhance>
+		<!-- Name ändern -->
+		<section class="border-t border-line py-6">
+			<h2 class="mb-4 font-semibold">Name ändern</h2>
+			<form method="POST" action="?/updateName" use:enhance>
 				<div class="mb-4">
-					<label for="password" class="block text-sm font-medium text-gray-700 mb-2">
-						Passwort zur Bestätigung
-					</label>
-					<input
-						type="password"
-						id="password"
-						name="password"
-						class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500"
-						required
-					/>
-				</div>
-				<div class="mb-4">
-					<label for="confirmation" class="block text-sm font-medium text-gray-700 mb-2">
-						Gib "LÖSCHEN" ein, um zu bestätigen
+					<label for="name" class="label">
+						Neuer Name
 					</label>
 					<input
 						type="text"
-						id="confirmation"
-						name="confirmation"
-						class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500"
-						placeholder="LÖSCHEN"
+						id="name"
+						name="name"
+						value={data.user.name}
+						class="field"
 						required
 					/>
 				</div>
-				<div class="flex gap-3">
-					<button
-						type="submit"
-						class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition"
-					>
-						Unwiderruflich löschen
-					</button>
-					<button
-						type="button"
-						onclick={() => (showDeleteForm = false)}
-						class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition"
-					>
-						Abbrechen
-					</button>
-				</div>
+				<button type="submit" class="btn btn-primary">
+					Name speichern
+				</button>
 			</form>
-		{/if}
+		</section>
+
+		<!-- E-Mail ändern -->
+		<section class="border-t border-line py-6">
+			<h2 class="mb-4 font-semibold">E-Mail ändern</h2>
+			<form method="POST" action="?/updateEmail" use:enhance>
+				<div class="mb-4">
+					<label for="email" class="label">
+						Neue E-Mail-Adresse
+					</label>
+					<input
+						type="email"
+						id="email"
+						name="email"
+						value={data.user.email}
+						class="field"
+						required
+					/>
+				</div>
+				<button type="submit" class="btn btn-primary">
+					E-Mail speichern
+				</button>
+			</form>
+		</section>
+
+		<!-- Passwort ändern -->
+		<section class="border-t border-line py-6">
+			<h2 class="mb-4 font-semibold">Passwort ändern</h2>
+
+			{#if !showPasswordForm}
+				<button onclick={() => (showPasswordForm = true)} class="btn">
+					Passwort ändern
+				</button>
+			{:else}
+				<form method="POST" action="?/updatePassword" use:enhance class="space-y-4">
+					<div>
+						<label for="oldPassword" class="label">
+							Altes Passwort
+						</label>
+						<input
+							type="password"
+							id="oldPassword"
+							name="oldPassword"
+							class="field"
+							required
+						/>
+					</div>
+					<div>
+						<label for="newPassword" class="label">
+							Neues Passwort (min. 8 Zeichen)
+						</label>
+						<input
+							type="password"
+							id="newPassword"
+							name="newPassword"
+							minlength="8"
+							class="field"
+							required
+						/>
+					</div>
+					<div>
+						<label for="confirmPassword" class="label">
+							Neues Passwort bestätigen
+						</label>
+						<input
+							type="password"
+							id="confirmPassword"
+							name="confirmPassword"
+							minlength="8"
+							class="field"
+							required
+						/>
+					</div>
+					<div class="flex gap-2">
+						<button type="submit" class="btn btn-primary">
+							Passwort speichern
+						</button>
+						<button type="button" onclick={() => (showPasswordForm = false)} class="btn">
+							Abbrechen
+						</button>
+					</div>
+				</form>
+			{/if}
+		</section>
+
+		<!-- Account löschen (Gefahrenzone): bewusst abgesetzt, damit es nicht wie eine Nebenaktion wirkt -->
+		<section class="mt-6 rounded-card border border-crit/40 bg-crit/5 p-6">
+			<h2 class="mb-2 font-semibold text-crit">Gefahrenzone</h2>
+			<p class="mb-4 text-sm text-ink-2">
+				Das Löschen deines Accounts ist <strong class="text-ink">unwiderruflich</strong>. Alle deine Verträge
+				werden ebenfalls gelöscht.
+			</p>
+
+			{#if !showDeleteForm}
+				<button onclick={() => (showDeleteForm = true)} class="btn btn-danger">
+					Account löschen
+				</button>
+			{:else}
+				<form method="POST" action="?/deleteAccount" use:enhance class="space-y-4">
+					<div>
+						<label for="password" class="label">
+							Passwort zur Bestätigung
+						</label>
+						<input
+							type="password"
+							id="password"
+							name="password"
+							class="field"
+							required
+						/>
+					</div>
+					<div>
+						<label for="confirmation" class="label">
+							Gib "LÖSCHEN" ein, um zu bestätigen
+						</label>
+						<input
+							type="text"
+							id="confirmation"
+							name="confirmation"
+							class="field"
+							placeholder="LÖSCHEN"
+							required
+						/>
+					</div>
+					<div class="flex gap-2">
+						<button type="submit" class="btn btn-danger">
+							Unwiderruflich löschen
+						</button>
+						<button type="button" onclick={() => (showDeleteForm = false)} class="btn">
+							Abbrechen
+						</button>
+					</div>
+				</form>
+			{/if}
+		</section>
 	</div>
 </div>
