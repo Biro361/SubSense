@@ -15,6 +15,10 @@
   let instructionsText = $state(contract.cancellationInstructions || '');
   let cancellationUrl = $state(contract.cancellationUrl || '');
 
+  // Ohne reset: false leert enhance die Felder, die States behalten aber nur den Anfangswert
+  /** @type {import('@sveltejs/kit').SubmitFunction} */
+  const keepValues = () => async ({ update }) => update({ reset: false });
+
   // Kategorie-Info
   const category = $derived(getCategoryByValue(contract.category));
 
@@ -175,7 +179,7 @@
 
     <!-- Notizen Tab -->
     {#if activeTab === 'notes'}
-      <form method="POST" action="?/updateNote" use:enhance>
+      <form method="POST" action="?/updateNote" use:enhance={keepValues}>
         <div>
           <label for="notes" class="label">
             Persönliche Notizen
@@ -201,7 +205,7 @@
 
     <!-- Kündigungsanweisungen Tab -->
     {#if activeTab === 'instructions'}
-      <form method="POST" action="?/updateInstructions" use:enhance>
+      <form method="POST" action="?/updateInstructions" use:enhance={keepValues}>
         <div class="space-y-5">
           <div>
             <label for="cancellationUrl" class="label">
