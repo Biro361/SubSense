@@ -14,10 +14,11 @@ export const actions = {
 
 		// Rohwerte: validateContract nimmt nur die bekannten Felder an
 		const raw = Object.fromEntries(await request.formData());
-		const { contract, errors } = validateContract(raw);
+		const { contract, errors, warnings } = validateContract(raw);
 
-		if (!contract) {
-			return fail(400, { error: errors.join(' '), ...raw });
+		// Im Formular wird nichts still ersetzt, die Warnungen gelten hier als Fehler
+		if (!contract || warnings.length > 0) {
+			return fail(400, { error: [...errors, ...warnings].join(' '), ...raw });
 		}
 
 		try {
