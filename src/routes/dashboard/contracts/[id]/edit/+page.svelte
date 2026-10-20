@@ -5,18 +5,29 @@
   let { data, form } = $props();
   let contract = $derived(data.contract);
 
+  // Formular-State, einmalig gesetzt: zuerst die Eingabe nach einem Server-Fehler (form), sonst der gespeicherte Vertrag.
+  // Nicht aus $derived ableiten, sonst überschreibt jede Invalidierung die Eingabe.
+  // Nur der 400-Zweig liefert die Rohwerte mit; 403/500 enthalten bloss `error`.
+  const sent = /** @type {Record<string, any>} */ (form ?? {});
+  let name = $state(sent.name ?? contract.name);
+  let provider = $state(sent.provider ?? contract.provider);
+  let cancellationUrl = $state(sent.cancellationUrl ?? (contract.cancellationUrl || ""));
   // Datum für Input-Feld formatieren (YYYY-MM-DD)
-  let formattedDate = $derived(
-    contract.cancellationDate
-      ? new Date(contract.cancellationDate).toISOString().split("T")[0]
-      : "",
+  let cancellationDate = $state(
+    sent.cancellationDate ??
+      (contract.cancellationDate
+        ? new Date(contract.cancellationDate).toISOString().split("T")[0]
+        : ""),
   );
+  let cost = $state(sent.cost ?? (contract.cost || 0));
+  let billingCycle = $state(sent.billingCycle ?? (contract.billingCycle || "monthly"));
+  let status = $state(sent.status ?? contract.status);
 
   // Erinnerungstage State
-  let reminderDays = $state(contract.reminderDays || 7);
+  let reminderDays = $state(sent.reminderDays ?? (contract.reminderDays || 7));
 
   // Kategorie State
-  let category = $state(contract.category || "other");
+  let category = $state(sent.category ?? (contract.category || "other"));
 
   // Preset-Button Handler
   function setReminderPreset(days) {
@@ -50,7 +61,7 @@
           type="text"
           id="name"
           name="name"
-          value={contract.name}
+          bind:value={name}
           required
           class="field"
         />
@@ -64,7 +75,7 @@
           type="text"
           id="provider"
           name="provider"
-          value={contract.provider}
+          bind:value={provider}
           required
           class="field"
         />
@@ -79,7 +90,7 @@
           type="url"
           id="cancellationUrl"
           name="cancellationUrl"
-          value={form?.cancellationUrl || contract.cancellationUrl || ''}
+          bind:value={cancellationUrl}
           placeholder="https://www.netflix.com/cancelplan"
           pattern="https?://.+"
           class="field"
@@ -114,7 +125,7 @@
           type="date"
           id="cancellationDate"
           name="cancellationDate"
-          value={formattedDate}
+          bind:value={cancellationDate}
           required
           class="field"
         />
@@ -165,7 +176,7 @@
           type="number"
           id="cost"
           name="cost"
-          value={contract.cost || 0}
+          bind:value={cost}
           step="0.01"
           min="0"
           required
@@ -181,7 +192,7 @@
         <select
           id="billingCycle"
           name="billingCycle"
-          value={contract.billingCycle || "monthly"}
+          bind:value={billingCycle}
           class="field"
         >
           <option value="monthly">Monatlich</option>
@@ -197,7 +208,7 @@
         <select
           id="status"
           name="status"
-          value={contract.status}
+          bind:value={status}
           class="field"
         >
           <option value="active">Aktiv</option>
