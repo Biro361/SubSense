@@ -157,6 +157,10 @@
             <strong class="font-medium text-ink">Status:</strong> "active" oder "cancelled"
           </li>
           <li>
+            <strong class="font-medium text-ink">Kategorie:</strong>
+            {CATEGORIES.map((c) => `${c.value} (${c.label})`).join(', ')} – andere Werte werden zu "other"
+          </li>
+          <li>
             <strong class="font-medium text-ink">Kosten:</strong> Dezimalzahl mit Punkt (z.B. 15.90)
           </li>
           <li>
