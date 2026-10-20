@@ -13,7 +13,7 @@
 	<div class="w-full max-w-md rounded-card border border-line bg-surface p-8 max-sm:p-6">
 		<h1 class="mb-2 text-2xl font-semibold tracking-tight">Account erstellen</h1>
 		<p class="mb-6 text-sm text-ink-2">
-			Registriere dich mit deiner Email und verwalte deine Verträge persönlich.
+			Registriere dich mit deiner E-Mail und verwalte deine Verträge persönlich.
 		</p>
 
 		{#if form?.error}
@@ -38,7 +38,7 @@
 
 			<div>
 				<label class="label" for="email">
-					Email-Adresse *
+					E-Mail-Adresse *
 				</label>
 				<input
 					id="email"
