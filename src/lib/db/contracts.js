@@ -146,9 +146,10 @@ export async function getContractsWithUpcomingDeadlines(fromDate, days) {
  * Ohne userId-Filter: nur für den Erinnerungs-Endpoint.
  * @param {string} contractId
  * @param {Date} sentAt
+ * @param {Date} cancellationDate - die Frist, zu der die Mail ging
  * @returns {Promise<boolean>}
  */
-export async function markReminderSent(contractId, sentAt) {
+export async function markReminderSent(contractId, sentAt, cancellationDate) {
   if (!ObjectId.isValid(contractId)) return false;
 
   const client = await clientPromise;
@@ -156,11 +157,13 @@ export async function markReminderSent(contractId, sentAt) {
 
   try {
     // Bedingung auf null: ein paralleler Lauf überschreibt den ersten Zeitpunkt nicht.
+    // Bedingung auf die Frist: hat der User sie während des Laufs geändert, gehört die
+    // Markierung nicht zur neuen Frist, die ihre eigene Erinnerung bekommen soll.
     // updatedAt bleibt, es zeigt die letzte Änderung durch den User.
     const result = await db
       .collection(COLLECTION_NAME)
       .updateOne(
-        { _id: new ObjectId(contractId), reminderSentAt: null },
+        { _id: new ObjectId(contractId), cancellationDate, reminderSentAt: null },
         { $set: { reminderSentAt: sentAt } }
       );
 

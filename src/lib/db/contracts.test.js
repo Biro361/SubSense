@@ -56,7 +56,7 @@ describe('Schutz gegen ungültige IDs', () => {
     ['deleteContract', () => deleteContract(INVALID, 'user1')],
     ['updateNotes', () => updateNotes(INVALID, 'notiz', 'user1')],
     ['updateCancellationInstructions', () => updateCancellationInstructions(INVALID, 'a', '', 'user1')],
-    ['markReminderSent', () => markReminderSent(INVALID, new Date())],
+    ['markReminderSent', () => markReminderSent(INVALID, new Date(), new Date())],
     ['addDocument', () => addDocument(INVALID, { filename: 'x' }, 'user1')],
     ['removeDocument', () => removeDocument(INVALID, VALID_DOC, 'user1')]
   ])('%s gibt false zurück, ohne die DB zu ändern', async (_name, call) => {
@@ -177,13 +177,15 @@ describe('markReminderSent', () => {
     mocks.updateOne.mockResolvedValue({ modifiedCount: 1 });
   });
 
-  it('setzt reminderSentAt nur, wenn es noch fehlt', async () => {
+  it('setzt reminderSentAt nur, wenn es noch fehlt und die Frist unverändert ist', async () => {
     const sentAt = new Date('2026-10-21T06:00:00.000Z');
+    const deadline = new Date('2026-10-25T00:00:00.000Z');
 
-    await expect(markReminderSent(VALID_DOC, sentAt)).resolves.toBe(true);
+    await expect(markReminderSent(VALID_DOC, sentAt, deadline)).resolves.toBe(true);
 
     const [filter, update] = mocks.updateOne.mock.calls[0];
     expect(filter.reminderSentAt).toBeNull();
+    expect(filter.cancellationDate).toBe(deadline);
     expect(update).toEqual({ $set: { reminderSentAt: sentAt } });
   });
 });

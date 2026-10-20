@@ -140,7 +140,7 @@ export async function POST({ request, url }) {
           failuresInRow = 0;
           // Erst nach Erfolg markieren: ein Ausfall wird am nächsten Tag wiederholt
           try {
-            await markReminderSent(contract._id, new Date());
+            await markReminderSent(contract._id, new Date(), contract.cancellationDate);
           } catch (error) {
             // Die Mail ist schon draussen: weitermachen, sonst fallen alle übrigen für heute aus.
             // Dieser Vertrag kommt morgen ein zweites Mal.

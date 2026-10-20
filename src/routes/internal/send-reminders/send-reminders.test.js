@@ -116,7 +116,7 @@ describe('POST /internal/send-reminders', () => {
     expect(await response.json()).toMatchObject({ checked: 2, due: 1, sent: 1, failed: 0 });
     expect(mocks.sendMail).toHaveBeenCalledOnce();
     expect(mocks.sendMail.mock.calls[0][0].to).toBe('u1@example.ch');
-    expect(mocks.markReminderSent).toHaveBeenCalledWith('c1', expect.any(Date));
+    expect(mocks.markReminderSent).toHaveBeenCalledWith('c1', expect.any(Date), new Date('2026-10-25T00:00:00.000Z'));
     expect(mocks.closeMail).toHaveBeenCalledOnce();
   });
 
@@ -239,8 +239,7 @@ describe('POST /internal/send-reminders', () => {
     expect(console.warn).toHaveBeenCalledWith('Reminder run in test mode');
     expect(body).toMatchObject({ testMode: true, checked: 1, sent: 1 });
     expect(mocks.getUsersByIds).toHaveBeenCalledWith(['u1']);
-    expect(mocks.markReminderSent).toHaveBeenCalledWith('eigener', expect.any(Date));
-    expect(mocks.markReminderSent).not.toHaveBeenCalledWith('fremder', expect.anything());
+    expect(mocks.markReminderSent.mock.calls.map(([id]) => id)).toEqual(['eigener']);
   });
 
   it('macht im Testmodus ohne Testkonto nichts', async () => {
