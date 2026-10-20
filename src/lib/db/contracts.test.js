@@ -161,6 +161,26 @@ describe('getContractsWithUpcomingDeadlines', () => {
     expect(projection.userId).toBe(1);
   });
 
+  it('behandelt Altbestand ohne Status als aktiv, auch für isUrgent', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-10-21T10:00:00.000Z'));
+    mocks.toArray.mockResolvedValue([
+      {
+        _id: { toString: () => 'alt' },
+        userId: 'user1',
+        name: 'Altvertrag',
+        cancellationDate: new Date('2026-10-25T00:00:00.000Z'),
+        reminderDays: 7
+      }
+    ]);
+
+    const [contract] = await getContractsWithUpcomingDeadlines(today, 90);
+    vi.useRealTimers();
+
+    expect(contract.status).toBe('active');
+    expect(contract.isUrgent).toBe(true);
+  });
+
   it('liefert Verträge mit userId und Erinnerungs-Metadaten', async () => {
     const [contract] = await getContractsWithUpcomingDeadlines(today, 90);
 

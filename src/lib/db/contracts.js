@@ -55,8 +55,9 @@ function normalize(contract) {
     notes: contract.notes ?? '',
     cancellationInstructions: contract.cancellationInstructions ?? '',
     documents: normalizeDocuments(contract.documents),
-    // reminderDays kommt aus den Metadaten, inklusive Standardwert
-    ...calculateReminderMetadata(contract)
+    // reminderDays kommt aus den Metadaten, inklusive Standardwert. Ohne Status gilt der
+    // Vertrag als aktiv, auch für isUrgent, sonst fände ihn der Erinnerungs-Lauf nie fällig
+    ...calculateReminderMetadata({ ...contract, status: contract.status ?? 'active' })
   };
 }
 
