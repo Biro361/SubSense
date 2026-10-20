@@ -589,8 +589,9 @@
 	}
 
 	/* ===== MAIN CONTENT ===== */
+	/* Höhe kommt aus der Spalte im Root-Layout, sonst rutscht der Footer unter den Fensterrand */
 	.main-content {
-		min-height: calc(100vh - 3.75rem);
+		flex: 1;
 	}
 
 	/* ===== RESPONSIVE ===== */

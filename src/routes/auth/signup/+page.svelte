@@ -9,7 +9,7 @@
 	<title>Registrieren – SubSense</title>
 </svelte:head>
 
-<main class="flex min-h-screen items-center justify-center px-4 py-12">
+<main class="flex flex-1 items-center justify-center px-4 py-12">
 	<div class="w-full max-w-md rounded-card border border-line bg-surface p-8 max-sm:p-6">
 		<h1 class="mb-2 text-2xl font-semibold tracking-tight">Account erstellen</h1>
 		<p class="mb-6 text-sm text-ink-2">
@@ -71,6 +71,14 @@
 			>
 				Account erstellen
 			</button>
+
+			<p class="text-center text-[12.5px] text-ink-2">
+				Mit der Registrierung nimmst du die
+				<a href="/datenschutz" class="font-medium text-accent underline-offset-2 hover:underline">
+					Datenschutzerklärung
+				</a>
+				zur Kenntnis.
+			</p>
 		</form>
 
 		<p class="mt-6 text-center text-sm text-ink-2">

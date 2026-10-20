@@ -9,7 +9,7 @@
 	<title>Anmelden – SubSense</title>
 </svelte:head>
 
-<main class="flex min-h-screen items-center justify-center px-4 py-12">
+<main class="flex flex-1 items-center justify-center px-4 py-12">
 	<div class="w-full max-w-md rounded-card border border-line bg-surface p-8 max-sm:p-6">
 		<h1 class="mb-2 text-2xl font-semibold tracking-tight">Willkommen zurück</h1>
 		<p class="mb-6 text-sm text-ink-2">Melde dich an, um deine Verträge zu verwalten.</p>
