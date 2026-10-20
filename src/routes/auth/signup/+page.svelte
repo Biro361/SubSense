@@ -30,6 +30,7 @@
 				<input
 					id="name"
 					name="name"
+					autocomplete="name"
 					type="text"
 					class="field"
 					placeholder="Max Muster"
@@ -43,6 +44,7 @@
 				<input
 					id="email"
 					name="email"
+					autocomplete="email"
 					type="email"
 					required
 					class="field"
@@ -57,6 +59,7 @@
 				<input
 					id="password"
 					name="password"
+					autocomplete="new-password"
 					type="password"
 					required
 					minlength="8"
