@@ -36,11 +36,14 @@ export const actions = {
 
     // Rohwerte: validateContract nimmt nur die bekannten Felder an
     const raw = Object.fromEntries(await request.formData());
-    const { contract, errors, warnings } = validateContract(raw);
+    const { contract, warnings, fieldErrors } = validateContract(raw);
 
-    // Im Formular wird nichts still ersetzt, die Warnungen gelten hier als Fehler
+    // Im Formular wird nichts still ersetzt, die Warnungen gelten hier als Fehler.
+    // Die Meldungen stehen am Feld, oben nur die Zusammenfassung.
     if (!contract || warnings.length > 0) {
-      return fail(400, { error: [...errors, ...warnings].join(' '), ...raw });
+      const count = Object.keys(fieldErrors).length;
+      const error = `Bitte korrigiere ${count} ${count === 1 ? 'Feld' : 'Felder'}.`;
+      return fail(400, { error, fieldErrors, ...raw });
     }
 
     try {

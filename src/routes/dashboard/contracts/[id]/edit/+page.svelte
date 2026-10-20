@@ -33,6 +33,26 @@
   function setReminderPreset(days) {
     reminderDays = days;
   }
+
+  // Feldmeldungen hängen an `form`: bei Erfolg ersetzt SvelteKit es, die Meldungen verschwinden
+  let fieldErrors = $derived(/** @type {Record<string, string>} */ ((/** @type {any} */ (form))?.fieldErrors ?? {}));
+
+  /** @type {HTMLElement | undefined} */
+  let summary = $state();
+
+  // Nach dem Absenden auf die Zusammenfassung, damit ein Screenreader sie sofort vorliest
+  $effect(() => {
+    if (form?.error) summary?.focus();
+  });
+
+  /**
+   * IDs für aria-describedby: zuerst die Feldmeldung, dann weitere Beschreibungen
+   * @param {string} field
+   * @param {...string} extra
+   */
+  function describedBy(field, ...extra) {
+    return [fieldErrors[field] ? `${field}-error` : '', ...extra].filter(Boolean).join(' ') || undefined;
+  }
 </script>
 
 <svelte:head>
@@ -44,13 +64,22 @@
     <h1 class="mb-8 text-3xl font-semibold tracking-tight">Vertrag bearbeiten</h1>
 
     {#if form?.error}
+      <!-- Zusammenfassung; die Meldungen selbst stehen am Feld -->
       <div
+        bind:this={summary}
+        tabindex="-1"
         role="alert"
         class="mb-6 rounded-card border border-crit/30 bg-crit/5 px-4 py-3 text-sm text-crit"
       >
         {form.error}
       </div>
     {/if}
+
+    {#snippet fieldError(/** @type {string} */ field)}
+      {#if fieldErrors[field]}
+        <p id="{field}-error" class="field-error">{fieldErrors[field]}</p>
+      {/if}
+    {/snippet}
 
     <form method="POST" use:enhance class="space-y-6">
       <div>
@@ -60,11 +89,14 @@
         <input
           type="text"
           id="name"
+          aria-invalid={!!fieldErrors.name}
+          aria-describedby={describedBy('name')}
           name="name"
           bind:value={name}
           required
           class="field"
         />
+        {@render fieldError('name')}
       </div>
 
       <div>
@@ -74,11 +106,14 @@
         <input
           type="text"
           id="provider"
+          aria-invalid={!!fieldErrors.provider}
+          aria-describedby={describedBy('provider')}
           name="provider"
           bind:value={provider}
           required
           class="field"
         />
+        {@render fieldError('provider')}
       </div>
 
       <!-- Kündigungs-URL -->
@@ -89,13 +124,16 @@
         <input
           type="url"
           id="cancellationUrl"
+          aria-invalid={!!fieldErrors.cancellationUrl}
+          aria-describedby={describedBy('cancellationUrl', 'cancellationUrl-hint')}
           name="cancellationUrl"
           bind:value={cancellationUrl}
           placeholder="https://www.netflix.com/cancelplan"
           pattern="https?://.+"
           class="field"
         />
-        <p class="hint">
+        {@render fieldError('cancellationUrl')}
+        <p id="cancellationUrl-hint" class="hint">
           Direkter Link zur Kündigungsseite – spart Zeit beim Kündigen.
         </p>
       </div>
@@ -106,6 +144,8 @@
         </label>
         <select
           id="category"
+          aria-invalid={!!fieldErrors.category}
+          aria-describedby={describedBy('category')}
           name="category"
           bind:value={category}
           required
@@ -115,6 +155,7 @@
             <option value={cat.value}>{cat.label}</option>
           {/each}
         </select>
+        {@render fieldError('category')}
       </div>
 
       <div>
@@ -124,11 +165,14 @@
         <input
           type="date"
           id="cancellationDate"
+          aria-invalid={!!fieldErrors.cancellationDate}
+          aria-describedby={describedBy('cancellationDate')}
           name="cancellationDate"
           bind:value={cancellationDate}
           required
           class="field"
         />
+        {@render fieldError('cancellationDate')}
       </div>
 
       <!-- Erinnerung -->
@@ -154,6 +198,8 @@
         <input
           type="number"
           id="reminderDays"
+          aria-invalid={!!fieldErrors.reminderDays}
+          aria-describedby={describedBy('reminderDays', 'reminderDays-hint')}
           name="reminderDays"
           bind:value={reminderDays}
           min="1"
@@ -161,7 +207,8 @@
           required
           class="field"
         />
-        <p class="hint">
+        {@render fieldError('reminderDays')}
+        <p id="reminderDays-hint" class="hint">
           Du wirst <strong class="font-semibold text-ink-2">{reminderDays} Tage</strong> vor der Kündigungsfrist
           erinnert.
         </p>
@@ -175,6 +222,8 @@
         <input
           type="number"
           id="cost"
+          aria-invalid={!!fieldErrors.cost}
+          aria-describedby={describedBy('cost')}
           name="cost"
           bind:value={cost}
           step="0.01"
@@ -182,6 +231,7 @@
           required
           class="field font-mono"
         />
+        {@render fieldError('cost')}
       </div>
 
       <!-- Abrechnungszyklus -->
@@ -191,6 +241,8 @@
         </label>
         <select
           id="billingCycle"
+          aria-invalid={!!fieldErrors.billingCycle}
+          aria-describedby={describedBy('billingCycle')}
           name="billingCycle"
           bind:value={billingCycle}
           class="field"
@@ -199,6 +251,7 @@
           <option value="quarterly">Vierteljährlich</option>
           <option value="yearly">Jährlich</option>
         </select>
+        {@render fieldError('billingCycle')}
       </div>
 
       <div>
@@ -207,6 +260,8 @@
         </label>
         <select
           id="status"
+          aria-invalid={!!fieldErrors.status}
+          aria-describedby={describedBy('status')}
           name="status"
           bind:value={status}
           class="field"
@@ -214,6 +269,7 @@
           <option value="active">Aktiv</option>
           <option value="cancelled">Gekündigt</option>
         </select>
+        {@render fieldError('status')}
       </div>
 
       <div class="flex gap-2 pt-2">

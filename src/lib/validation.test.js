@@ -150,4 +150,23 @@ describe('validateContract', () => {
 
     expect(contract.notes).toBe('läuft noch');
   });
+
+  it('ordnet einen fehlenden Namen dem Feld zu und lässt errors unverändert', () => {
+    const result = validateContract({ ...valid, name: '  ' });
+
+    expect(result.fieldErrors).toEqual({ name: 'Name fehlt.' });
+    expect(result.errors).toEqual(['Name fehlt.']);
+  });
+
+  it('legt bei mehreren Fehlern je Feld einen Eintrag an, auch für Warnungen', () => {
+    const result = validateContract({ ...valid, provider: '', cost: '-5', cancellationUrl: 'netflix.com' });
+
+    expect(Object.keys(result.fieldErrors).sort()).toEqual(['cancellationUrl', 'cost', 'provider']);
+    expect(result.fieldErrors.cost).toBe(result.errors[1]);
+    expect(result.fieldErrors.cancellationUrl).toBe(result.warnings[0]);
+  });
+
+  it('liefert bei gültiger Eingabe keine Feldfehler', () => {
+    expect(validateContract(valid).fieldErrors).toEqual({});
+  });
 });
