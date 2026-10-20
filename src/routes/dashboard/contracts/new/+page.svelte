@@ -6,7 +6,7 @@
 
 
 	// Erinnerungstage State für Preset-Buttons
-	let reminderDays = $state(form?.reminderDays || 7);
+	let reminderDays = $state(Number(form?.reminderDays) || 7);
 
 	//Kategorie State
 	let category = $state(form?.category || 'streaming');

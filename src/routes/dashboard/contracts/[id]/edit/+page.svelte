@@ -24,7 +24,7 @@
   let status = $state(sent.status ?? contract.status);
 
   // Erinnerungstage State
-  let reminderDays = $state(sent.reminderDays ?? (contract.reminderDays || 7));
+  let reminderDays = $state(Number(sent.reminderDays ?? contract.reminderDays) || 7);
 
   // Kategorie State
   let category = $state(sent.category ?? (contract.category || "other"));
