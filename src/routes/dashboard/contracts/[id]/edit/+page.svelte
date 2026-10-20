@@ -285,7 +285,7 @@
         <button type="submit" class="btn btn-primary">
           Speichern
         </button>
-        <a href="/" class="btn">
+        <a href="/dashboard/contracts/{contract._id}" class="btn">
           Abbrechen
         </a>
       </div>

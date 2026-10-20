@@ -57,7 +57,7 @@
 
 <div class="mx-auto max-w-[70rem] px-6 pt-10 pb-16 max-sm:px-4 max-sm:pt-7">
 	<div class="max-w-2xl">
-		<a href="/" class="text-[13px] text-ink-2 hover:text-ink">
+		<a href="/dashboard" class="text-[13px] text-ink-2 hover:text-ink">
 			← Zurück zur Übersicht
 		</a>
 		<h1 class="mt-4 mb-8 text-3xl font-semibold tracking-tight">Neuer Vertrag</h1>
@@ -300,7 +300,7 @@
 				<button type="submit" class="btn btn-primary">
 					Vertrag speichern
 				</button>
-				<a href="/" class="btn">
+				<a href="/dashboard" class="btn">
 					Abbrechen
 				</a>
 			</div>

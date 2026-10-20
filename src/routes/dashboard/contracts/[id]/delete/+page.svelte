@@ -32,7 +32,7 @@
       <button type="submit" class="btn btn-danger">
         Ja, löschen
       </button>
-      <a href="/" class="btn">
+      <a href="/dashboard/contracts/{contract._id}" class="btn">
         Abbrechen
       </a>
     </form>
