@@ -5,6 +5,7 @@ import {
 	updateUserEmail,
 	updateUserPassword,
 	updateUserName,
+	updateReminderEmails,
 	deleteUser
 } from '$lib/db/users.js';
 import { clearSessionCookie, setSessionCookie } from '$lib/server/auth.js';
@@ -30,7 +31,9 @@ export async function load({ locals }) {
 			id: user._id.toString(),
 			email: user.email,
 			name: user.name,
-			createdAt: user.createdAt
+			createdAt: user.createdAt,
+			// Fehlendes Feld = an, Bestandskonten brauchen keine Migration
+			reminderEmails: user.reminderEmails !== false
 		}
 	};
 }
@@ -85,6 +88,24 @@ export const actions = {
 		setSessionCookie(cookies, locals.user.userId, email, locals.user.tokenVersion);
 
 		return { success: true, message: 'E-Mail erfolgreich aktualisiert' };
+	},
+
+	// Action: Erinnerungs-E-Mails ein- oder ausschalten
+	updateReminders: async ({ request, locals }) => {
+		if (!locals.user) {
+			return fail(401, { error: 'Nicht eingeloggt' });
+		}
+
+		// Eine nicht angehakte Checkbox fehlt im Formular ganz: fehlt = aus
+		const data = await request.formData();
+		const enabled = data.get('reminderEmails') === 'on';
+
+		await updateReminderEmails(locals.user.userId, enabled);
+
+		return {
+			success: true,
+			message: enabled ? 'Erinnerungs-E-Mails eingeschaltet' : 'Erinnerungs-E-Mails ausgeschaltet'
+		};
 	},
 
 	// Action: Passwort ändern

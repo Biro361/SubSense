@@ -22,7 +22,7 @@
 
 	<div class="max-w-2xl text-sm leading-relaxed text-ink-2">
 		<h1 class="mb-2 text-3xl font-semibold tracking-tight text-ink">Datenschutzerklärung</h1>
-		<p class="mb-4">Stand: 20. Oktober 2026</p>
+		<p class="mb-4">Stand: 21. Oktober 2026</p>
 		<p class="mb-8">
 			SubSense ist ein privates, kostenloses Angebot ohne Werbung. Hier steht, welche Daten die App
 			speichert, wo sie liegen und wie du sie löschen kannst.
@@ -42,13 +42,14 @@
 			<ul class="list-disc space-y-2 pl-5">
 				<li>
 					<strong class="font-medium text-ink">Konto:</strong> E-Mail-Adresse, Name (freiwillig; ohne Angabe
-					wird der Teil deiner E-Mail-Adresse vor dem @ als Name gespeichert), Zeitpunkt der Registrierung. Das Passwort wird nur als Hash (bcrypt) gespeichert, nie im Klartext.
+					wird der Teil deiner E-Mail-Adresse vor dem @ als Name gespeichert), Zeitpunkt der Registrierung und ob du Erinnerungs-E-Mails erhalten möchtest. Das Passwort wird nur als Hash (bcrypt) gespeichert, nie im Klartext.
 				</li>
 				<li>
 					<strong class="font-medium text-ink">Verträge:</strong> Name, Anbieter, Kosten und
 					Abrechnungsintervall, Kategorie, Status, Kündigungsfrist und Erinnerungsvorlauf, Kündigungslink,
 					Kündigungsanleitung und Notizen. Was du in die Freitextfelder schreibst (z. B. eine
-					Kundennummer), wird ebenfalls gespeichert.
+					Kundennummer), wird ebenfalls gespeichert. Dazu kommt der Zeitpunkt, an dem die
+					Erinnerungs-E-Mail zu einem Vertrag verschickt wurde.
 				</li>
 				<li>
 					<strong class="font-medium text-ink">Dokumente:</strong> die Dateien, die du zu einem Vertrag
@@ -71,7 +72,14 @@
 			<ul class="list-disc space-y-2 pl-5">
 				<li>
 					Bereitstellung der Vertragsverwaltung: dein Konto, deine Verträge und Dokumente, Fristen,
-					CSV-Import und -Export.
+					CSV-Import und -Export sowie der Kalender-Export deiner Fristen. Die Kalenderdatei enthält
+					Vertragsname, Anbieter, Frist und Kündigungslink, aber keine Notizen; sie wird nur auf dein
+					Gerät heruntergeladen.
+				</li>
+				<li>
+					Erinnerungs-E-Mails: Am Erinnerungstag erhältst du pro Vertrag eine E-Mail mit Vertragsname,
+					Anbieter, Kündigungsfrist und Links. Sie ist standardmässig eingeschaltet, weil die Erinnerung
+					der Kern des Dienstes ist, und lässt sich jederzeit im Profil unter «Erinnerungen» abbestellen.
 				</li>
 				<li>
 					Schutz vor Missbrauch: Nach zu vielen Versuchen werden Anmeldung oder Registrierung vorübergehend
@@ -86,7 +94,7 @@
 
 		<section class="border-t border-line py-6">
 			<h2 class="mb-3 text-base font-semibold text-ink">Empfänger und Speicherorte</h2>
-			<p class="mb-3">SubSense nutzt zwei Dienstleister, die die Daten im Auftrag bearbeiten:</p>
+			<p class="mb-3">SubSense nutzt drei Dienstleister, die die Daten im Auftrag bearbeiten:</p>
 			<ul class="list-disc space-y-2 pl-5">
 				<li>
 					<strong class="font-medium text-ink">MongoDB Atlas</strong> (MongoDB, Inc., USA): Datenbank
@@ -97,15 +105,24 @@
 					Ausführung der App sowie Speicherung der hochgeladenen Dokumente. Rechenzentrum in den USA
 					(Region us-east-2).
 				</li>
+				<li>
+					<strong class="font-medium text-ink">Infomaniak</strong> (Infomaniak Network SA, Genf,
+					Schweiz): Versand der Erinnerungs-E-Mails. Übermittelt werden deine E-Mail-Adresse sowie
+					Vertragsname, Anbieter, Kündigungsfrist und Kündigungslink des betroffenen Vertrags, aber
+					keine Notizen und keine Dokumente. Rechenzentren in der Schweiz. Wie lange Infomaniak
+					Versandprotokolle aufbewahrt, regelt deren Datenschutzerklärung.
+				</li>
 			</ul>
 			<p class="mt-3">
-				Weitere Empfänger gibt es nicht. Die App lädt keine Inhalte von Drittanbietern; auch die
+				Eine verschickte Erinnerung liegt danach auch bei deinem eigenen E-Mail-Anbieter; dort gelten
+				dessen Bestimmungen. Weitere Empfänger gibt es nicht. Die App lädt keine Inhalte von Drittanbietern; auch die
 				Schriften werden von SubSense selbst ausgeliefert.
 			</p>
 		</section>
 
 		<section class="border-t border-line py-6">
 			<h2 class="mb-3 text-base font-semibold text-ink">Bekanntgabe ins Ausland</h2>
+			<p class="mb-3">Der E-Mail-Versand über Infomaniak bleibt in der Schweiz.</p>
 			<ul class="list-disc space-y-2 pl-5">
 				<li>
 					<strong class="font-medium text-ink">Deutschland:</strong> Der Bundesrat anerkennt für
@@ -125,6 +142,10 @@
 				<li>Deine Daten bleiben gespeichert, solange dein Konto besteht.</li>
 				<li>Ein einzelnes Dokument kannst du jederzeit beim Vertrag löschen.</li>
 				<li>Löschst du einen Vertrag, werden auch seine Dokumente gelöscht.</li>
+				<li>
+					Den Zeitpunkt der verschickten Erinnerung entfernt SubSense, sobald du Frist oder
+					Erinnerungsvorlauf eines Vertrags änderst; dann folgt eine neue Erinnerung zur neuen Frist.
+				</li>
 				<li>
 					Mit «Account löschen» im Profil werden dein Konto, alle Verträge und alle Dokumente endgültig
 					gelöscht.
@@ -156,6 +177,7 @@
 			</p>
 			<ul class="list-disc space-y-2 pl-5">
 				<li>Name, E-Mail-Adresse und Passwort im Profil ändern</li>
+				<li>Erinnerungs-E-Mails im Profil abbestellen</li>
 				<li>Verträge bearbeiten oder löschen</li>
 				<li>alle Verträge als CSV exportieren</li>
 				<li>das ganze Konto im Profil löschen</li>

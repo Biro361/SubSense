@@ -22,6 +22,7 @@ export interface User {
 	password: string; // gehashter Wert
 	name?: string;
 	tokenVersion: number; // hochzählen = alle Sessions des Users verwerfen
+	reminderEmails?: boolean; // fehlt bei Bestandskonten und gilt dann als an
 	createdAt: Date;
 	updatedAt: Date;
 }
@@ -90,6 +91,23 @@ export async function getUserById(userId: string): Promise<User | null> {
 	return db.collection<User>('users').findOne({
 		_id: new ObjectId(userId)
 	});
+}
+
+/**
+ * Mehrere User in einer Abfrage laden, nur Adresse und Erinnerungs-Schalter.
+ * Für den Erinnerungs-Lauf: ein findOne pro Vertrag wäre eine Abfrage pro Mail.
+ */
+export async function getUsersByIds(
+	userIds: string[]
+): Promise<Pick<User, '_id' | 'email' | 'reminderEmails'>[]> {
+	const ids = userIds.filter((id) => ObjectId.isValid(id)).map((id) => new ObjectId(id));
+	if (ids.length === 0) return [];
+
+	const db = await getDatabase();
+	return db
+		.collection<User>('users')
+		.find({ _id: { $in: ids } }, { projection: { email: 1, reminderEmails: 1 } })
+		.toArray();
 }
 
 /**
@@ -185,6 +203,24 @@ export async function updateUserName(userId: string, name: string): Promise<void
 		{
 			$set: {
 				name,
+				updatedAt: new Date()
+			}
+		}
+	);
+}
+
+/**
+ * Erinnerungs-E-Mails ein- oder ausschalten.
+ */
+export async function updateReminderEmails(userId: string, enabled: boolean): Promise<void> {
+	if (!ObjectId.isValid(userId)) return;
+
+	const db = await getDatabase();
+	await db.collection<User>('users').updateOne(
+		{ _id: new ObjectId(userId) },
+		{
+			$set: {
+				reminderEmails: enabled,
 				updatedAt: new Date()
 			}
 		}

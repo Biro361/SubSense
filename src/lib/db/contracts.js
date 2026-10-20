@@ -30,7 +30,8 @@ function normalizeDocuments(documents) {
  *   reminderDate: Date,
  *   daysUntilCancellation: number,
  *   isUrgent: boolean,
- *   isOverdue: boolean
+ *   isOverdue: boolean,
+ *   reminderSentAt?: Date
  * }} ContractView
  */
 
@@ -54,8 +55,9 @@ function normalize(contract) {
     notes: contract.notes ?? '',
     cancellationInstructions: contract.cancellationInstructions ?? '',
     documents: normalizeDocuments(contract.documents),
-    // reminderDays kommt aus den Metadaten, inklusive Standardwert
-    ...calculateReminderMetadata(contract)
+    // reminderDays kommt aus den Metadaten, inklusive Standardwert. Ohne Status gilt der
+    // Vertrag als aktiv, auch für isUrgent, sonst fände ihn der Erinnerungs-Lauf nie fällig
+    ...calculateReminderMetadata({ ...contract, status: contract.status ?? 'active' })
   };
 }
 
@@ -72,6 +74,105 @@ function ensureUserIndex(db) {
       console.error('Error creating contracts index:', err);
     });
   return userIndex;
+}
+
+/** Einmal pro Prozess: der Erinnerungs-Lauf sucht über alle User nach Status und Frist */
+let reminderIndex = null;
+
+/** @param {import('mongodb').Db} db */
+function ensureReminderIndex(db) {
+  // Nur Tempo: ein Fehlschlag darf den Erinnerungs-Lauf nicht stoppen
+  reminderIndex ??= db
+    .collection(COLLECTION_NAME)
+    .createIndex({ status: 1, cancellationDate: 1 })
+    .catch((err) => {
+      reminderIndex = null;
+      console.error('Error creating reminder index:', err);
+    });
+  return reminderIndex;
+}
+
+/**
+ * Aktive Verträge ALLER User, deren Frist im Fenster liegt und die noch keine
+ * Erinnerung bekommen haben.
+ * ACHTUNG: einzige Abfrage ohne userId-Filter. Nur für den Erinnerungs-Endpoint
+ * (src/routes/internal/send-reminders), der den geheimen Schlüssel prüft.
+ * @param {Date} fromDate - heutiger Kalendertag als UTC-Mitternacht
+ * @param {number} days - Fensterlänge in Tagen (maximales reminderDays)
+ * @returns {Promise<Array<ContractView & { userId: string }>>}
+ */
+export async function getContractsWithUpcomingDeadlines(fromDate, days) {
+  const client = await clientPromise;
+  const db = client.db(DB_NAME);
+
+  const until = new Date(fromDate.getTime() + days * 24 * 60 * 60 * 1000);
+
+  try {
+    await ensureReminderIndex(db);
+
+    const contracts = await db
+      .collection(COLLECTION_NAME)
+      .find(
+        {
+          // null trifft auch Altbestand ohne Status, der als aktiv gilt
+          status: { $in: ['active', null] },
+          cancellationDate: { $gte: fromDate, $lte: until },
+          reminderSentAt: null
+        },
+        {
+          // Nur was die Mail braucht: Notizen und Dokumente bleiben in der DB
+          projection: {
+            userId: 1,
+            name: 1,
+            provider: 1,
+            status: 1,
+            cancellationDate: 1,
+            reminderDays: 1,
+            cancellationUrl: 1
+          }
+        }
+      )
+      .toArray();
+
+    return contracts.map((contract) => ({ ...normalize(contract), userId: contract.userId }));
+  } catch (error) {
+    console.error('Error fetching upcoming deadlines:', error);
+    throw error;
+  }
+}
+
+/**
+ * Erinnerung als verschickt markieren. Nur nach erfolgreichem Versand aufrufen,
+ * sonst geht die Erinnerung bei einem Mail-Ausfall verloren.
+ * Ohne userId-Filter: nur für den Erinnerungs-Endpoint.
+ * @param {string} contractId
+ * @param {Date} sentAt
+ * @param {Date} cancellationDate - die Frist, zu der die Mail ging
+ * @returns {Promise<boolean>}
+ */
+export async function markReminderSent(contractId, sentAt, cancellationDate) {
+  if (!ObjectId.isValid(contractId)) return false;
+
+  const client = await clientPromise;
+  const db = client.db(DB_NAME);
+
+  try {
+    // Bedingung auf null: ein paralleler Lauf überschreibt den ersten Zeitpunkt nicht.
+    // Bedingung auf die Frist: hat der User sie während des Laufs geändert, gehört die
+    // Markierung nicht zur neuen Frist, die ihre eigene Erinnerung bekommen soll.
+    // updatedAt bleibt, es zeigt die letzte Änderung durch den User.
+    const result = await db
+      .collection(COLLECTION_NAME)
+      .updateOne(
+        { _id: new ObjectId(contractId), cancellationDate, reminderSentAt: null },
+        { $set: { reminderSentAt: sentAt } }
+      );
+
+    return result.modifiedCount > 0;
+  } catch (error) {
+    console.error('Error marking reminder sent:', error);
+    throw error;
+  }
 }
 
 /**
@@ -225,6 +326,20 @@ export async function updateContract(id, updates, userId) {
     if (!contract) {
       throw new Error(errors.join(' '));
     }
+
+    // Neue Frist oder neuer Vorlauf = neue Erinnerung. Vor dem $set, weil danach
+    // der alte Wert fehlt; scheitert das $set, kommt höchstens eine Mail doppelt.
+    await db.collection(COLLECTION_NAME).updateOne(
+      {
+        _id: new ObjectId(id),
+        userId,
+        $or: [
+          { cancellationDate: { $ne: contract.cancellationDate } },
+          { reminderDays: { $ne: contract.reminderDays } }
+        ]
+      },
+      { $unset: { reminderSentAt: '' } }
+    );
 
     // Nur die editierbaren Felder: notes, cancellationInstructions und documents
     // haben eigene Funktionen und dürfen hier nicht überschrieben werden
