@@ -6,11 +6,19 @@
 
 
 	// Erinnerungstage State für Preset-Buttons
-	let reminderDays = $state(form?.reminderDays || 7);
+	let reminderDays = $state(Number(form?.reminderDays) || 7);
 
 	//Kategorie State
 	let category = $state(form?.category || 'streaming');
 
+	// Übrige Felder als State: ein Re-Render (z. B. Preset-Klick) setzt sonst die Startwerte zurück
+	let name = $state(form?.name || '');
+	let provider = $state(form?.provider || '');
+	let cancellationUrl = $state(form?.cancellationUrl || '');
+	let cancellationDate = $state(form?.cancellationDate || '');
+	let cost = $state(form?.cost || '');
+	let billingCycle = $state(form?.billingCycle || 'monthly');
+	let status = $state(form?.status || 'active');
 
 	// Preset-Button Handler
 	function setReminderPreset(days) {
@@ -46,7 +54,7 @@
 					type="text"
 					id="name"
 					name="name"
-					value={form?.name || ''}
+					bind:value={name}
 					placeholder="z.B. Netflix Premium"
 					required
 					class="field"
@@ -62,7 +70,7 @@
 					type="text"
 					id="provider"
 					name="provider"
-					value={form?.provider || ''}
+					bind:value={provider}
 					placeholder="z.B. Netflix Inc."
 					required
 					class="field"
@@ -78,7 +86,7 @@
 					type="url"
 					id="cancellationUrl"
 					name="cancellationUrl"
-					value={form?.cancellationUrl || ''}
+					bind:value={cancellationUrl}
 					placeholder="https://www.netflix.com/cancelplan"
 					pattern="https?://.+"
 					class="field"
@@ -118,7 +126,7 @@
 					type="date"
 					id="cancellationDate"
 					name="cancellationDate"
-					value={form?.cancellationDate || ''}
+					bind:value={cancellationDate}
 					required
 					class="field"
 				/>
@@ -172,7 +180,7 @@
 					type="number"
 					id="cost"
 					name="cost"
-					value={form?.cost || ''}
+					bind:value={cost}
 					placeholder="0.00"
 					step="0.01"
 					min="0"
@@ -192,11 +200,12 @@
 				<select
 					id="billingCycle"
 					name="billingCycle"
+					bind:value={billingCycle}
 					class="field"
 				>
-					<option value="monthly" selected={form?.billingCycle === 'monthly'}>Monatlich</option>
-					<option value="quarterly" selected={form?.billingCycle === 'quarterly'}>Vierteljährlich</option>
-					<option value="yearly" selected={form?.billingCycle === 'yearly'}>Jährlich</option>
+					<option value="monthly">Monatlich</option>
+					<option value="quarterly">Vierteljährlich</option>
+					<option value="yearly">Jährlich</option>
 				</select>
 				<p class="hint">
 					Wie oft wird der Betrag abgerechnet?
@@ -211,6 +220,7 @@
 				<select
 					id="status"
 					name="status"
+					bind:value={status}
 					class="field"
 				>
 					<option value="active">Aktiv</option>

@@ -62,7 +62,9 @@ describe('validateContract', () => {
     ['Name nur Leerzeichen', { name: '   ' }],
     ['fehlender Anbieter', { provider: '' }],
     ['fehlendes Datum', { cancellationDate: '' }],
-    ['deutsches Datum', { cancellationDate: '15.03.2026' }],
+    ['Punkt-Datum mit 31. Februar', { cancellationDate: '31.02.2026' }],
+    ['Datum mit Schrägstrich', { cancellationDate: '15/03/2026' }],
+    ['Punkt-Datum ohne führende Null', { cancellationDate: '1.3.2026' }],
     ['30. Februar', { cancellationDate: '2026-02-31' }],
     ['Monat 13', { cancellationDate: '2026-13-01' }],
     ['unbekannter Status', { status: 'geloescht' }],
@@ -120,6 +122,18 @@ describe('validateContract', () => {
     );
 
     expect(contract.cancellationDate).toBeInstanceOf(Date);
+  });
+
+  it('akzeptiert TT.MM.JJJJ', () => {
+    const contract = expectValid(validateContract({ ...valid, cancellationDate: '31.12.2026' }));
+
+    expect(contract.cancellationDate.toISOString()).toBe('2026-12-31T00:00:00.000Z');
+  });
+
+  it('nennt beide Datumsformate in der Fehlermeldung', () => {
+    const { errors } = validateContract({ ...valid, cancellationDate: '31.13.2026' });
+
+    expect(errors[0]).toContain('JJJJ-MM-TT oder TT.MM.JJJJ');
   });
 
   it('behält Notizen aus dem Import', () => {

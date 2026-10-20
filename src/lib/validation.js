@@ -6,11 +6,13 @@ export const VALID_STATUSES = ['active', 'cancelled'];
 export const VALID_BILLING_CYCLES = ['monthly', 'yearly', 'quarterly'];
 
 const DATE_SHAPE = /^\d{4}-\d{2}-\d{2}$/;
+const SWISS_DATE_SHAPE = /^(\d{2})\.(\d{2})\.(\d{4})$/;
 export const URL_SHAPE = /^https?:\/\/.+/;
 
 /**
- * Wandelt eine Eingabe in ein Datum. Erlaubt sind Date-Objekte und YYYY-MM-DD;
- * andere Schreibweisen wären mehrdeutig (03/15/2026 vs. 15.03.2026).
+ * Wandelt eine Eingabe in ein Datum. Erlaubt sind Date-Objekte, YYYY-MM-DD und
+ * TT.MM.JJJJ: Der Punkt steht im Schweizer Gebrauch immer für Tag vor Monat.
+ * Schrägstrich-Formen bleiben abgelehnt, weil sie mehrdeutig sind (03/15/2026 vs. 15/03/2026).
  * @param {unknown} value
  * @returns {Date|null}
  */
@@ -19,7 +21,9 @@ function toDate(value) {
     return Number.isNaN(value.getTime()) ? null : value;
   }
 
-  const text = String(value ?? '').trim();
+  const raw = String(value ?? '').trim();
+  const swiss = raw.match(SWISS_DATE_SHAPE);
+  const text = swiss ? `${swiss[3]}-${swiss[2]}-${swiss[1]}` : raw;
   if (!DATE_SHAPE.test(text)) {
     return null;
   }
@@ -79,7 +83,7 @@ export function validateContract(input) {
   const cancellationDate = toDate(input.cancellationDate);
   if (!cancellationDate) {
     errors.push(
-      `Ungültiges Kündigungsdatum "${String(input.cancellationDate ?? '')}" (erwartet: YYYY-MM-DD).`
+      `Ungültiges Kündigungsdatum "${String(input.cancellationDate ?? '')}" (erwartet: JJJJ-MM-TT oder TT.MM.JJJJ).`
     );
   }
 
