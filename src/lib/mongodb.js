@@ -1,13 +1,13 @@
 // src/lib/mongodb.js
 // @ts-check
 import { MongoClient } from 'mongodb';
-import { MONGODB_URI } from '$env/static/private';
+import { env } from '$env/dynamic/private';
 
-if (!MONGODB_URI) {
+// Zur Laufzeit lesen: $env/static würde die URI im Klartext ins Build-Ergebnis schreiben
+const uri = env.MONGODB_URI;
+if (!uri) {
 	throw new Error('MONGODB_URI is not defined');
 }
-
-const uri = MONGODB_URI;
 
 /** @type {import('mongodb').MongoClientOptions} */
 const options = {
