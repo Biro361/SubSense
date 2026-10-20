@@ -151,7 +151,7 @@
             <strong class="font-medium text-ink">Pflichtfelder:</strong> name, provider, cancellationDate, status
           </li>
           <li>
-            <strong class="font-medium text-ink">Datum-Format:</strong> YYYY-MM-DD (z.B. 2026-03-15)
+            <strong class="font-medium text-ink">Datum-Format:</strong> JJJJ-MM-TT oder TT.MM.JJJJ (z.B. 2026-03-15 oder 15.03.2026)
           </li>
           <li>
             <strong class="font-medium text-ink">Status:</strong> "active" oder "cancelled"

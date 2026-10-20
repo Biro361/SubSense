@@ -109,11 +109,27 @@ describe('CSV Round-Trip', () => {
       [
         'name,provider,cancellationDate,status',
         'Gut,Acme,2026-03-15,active',
-        'Schlecht,Acme,15.03.2026,active'
+        'Schlecht,Acme,31.13.2026,active'
       ].join('\n')
     );
 
     expect(contracts).toHaveLength(1);
     expect(errors[0]).toContain('Zeile 3');
+  });
+
+  it('liest ISO- und Punkt-Datum in derselben Datei', () => {
+    const { contracts, errors } = parseCSV(
+      [
+        'name,provider,cancellationDate,status',
+        'Spotify,Spotify AB,2026-12-01,active',
+        'Fitnesspark,Migros,31.12.2026,active'
+      ].join('\n')
+    );
+
+    expect(errors).toEqual([]);
+    expect(contracts.map((c) => c.cancellationDate.toISOString().slice(0, 10))).toEqual([
+      '2026-12-01',
+      '2026-12-31'
+    ]);
   });
 });
