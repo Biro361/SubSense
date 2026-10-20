@@ -30,7 +30,8 @@ function normalizeDocuments(documents) {
  *   reminderDate: Date,
  *   daysUntilCancellation: number,
  *   isUrgent: boolean,
- *   isOverdue: boolean
+ *   isOverdue: boolean,
+ *   reminderSentAt?: Date
  * }} ContractView
  */
 

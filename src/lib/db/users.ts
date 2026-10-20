@@ -94,6 +94,23 @@ export async function getUserById(userId: string): Promise<User | null> {
 }
 
 /**
+ * Mehrere User in einer Abfrage laden, nur Adresse und Erinnerungs-Schalter.
+ * Für den Erinnerungs-Lauf: ein findOne pro Vertrag wäre eine Abfrage pro Mail.
+ */
+export async function getUsersByIds(
+	userIds: string[]
+): Promise<Pick<User, '_id' | 'email' | 'reminderEmails'>[]> {
+	const ids = userIds.filter((id) => ObjectId.isValid(id)).map((id) => new ObjectId(id));
+	if (ids.length === 0) return [];
+
+	const db = await getDatabase();
+	return db
+		.collection<User>('users')
+		.find({ _id: { $in: ids } }, { projection: { email: 1, reminderEmails: 1 } })
+		.toArray();
+}
+
+/**
  * E-Mail aktualisieren.
  * Gibt true zurück bei Erfolg, false wenn E-Mail bereits existiert.
  */
