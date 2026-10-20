@@ -22,6 +22,7 @@ export interface User {
 	password: string; // gehashter Wert
 	name?: string;
 	tokenVersion: number; // hochzählen = alle Sessions des Users verwerfen
+	reminderEmails?: boolean; // fehlt bei Bestandskonten und gilt dann als an
 	createdAt: Date;
 	updatedAt: Date;
 }
@@ -185,6 +186,24 @@ export async function updateUserName(userId: string, name: string): Promise<void
 		{
 			$set: {
 				name,
+				updatedAt: new Date()
+			}
+		}
+	);
+}
+
+/**
+ * Erinnerungs-E-Mails ein- oder ausschalten.
+ */
+export async function updateReminderEmails(userId: string, enabled: boolean): Promise<void> {
+	if (!ObjectId.isValid(userId)) return;
+
+	const db = await getDatabase();
+	await db.collection<User>('users').updateOne(
+		{ _id: new ObjectId(userId) },
+		{
+			$set: {
+				reminderEmails: enabled,
 				updatedAt: new Date()
 			}
 		}

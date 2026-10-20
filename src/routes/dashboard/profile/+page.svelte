@@ -7,6 +7,10 @@
 	let { data, form } = $props();
 
 	let showPasswordForm = $state(false);
+
+	// Ohne reset: false setzt enhance die Checkbox nach dem Speichern auf den Anfangswert zurück
+	/** @type {import('@sveltejs/kit').SubmitFunction} */
+	const keepValues = () => async ({ update }) => update({ reset: false });
 	let showDeleteForm = $state(false);
 
 	// Toast State
@@ -175,6 +179,32 @@
 					</div>
 				</form>
 			{/if}
+		</section>
+
+		<!-- Erinnerungen -->
+		<section class="border-t border-line py-6">
+			<h2 class="mb-4 font-semibold">Erinnerungen</h2>
+			<form method="POST" action="?/updateReminders" use:enhance={keepValues}>
+				<div class="mb-4 flex items-start gap-3">
+					<input
+						type="checkbox"
+						id="reminderEmails"
+						name="reminderEmails"
+						checked={data.user.reminderEmails}
+						aria-describedby="reminderEmails-hint"
+						class="mt-1 size-4 shrink-0 accent-accent"
+					/>
+					<div>
+						<label for="reminderEmails">Erinnerungs-E-Mails vor Kündigungsfristen erhalten</label>
+						<p id="reminderEmails-hint" class="mt-1 text-sm text-ink-3">
+							Eine E-Mail pro Vertrag am Erinnerungstag. Keine Werbung.
+						</p>
+					</div>
+				</div>
+				<button type="submit" class="btn btn-primary">
+					Einstellung speichern
+				</button>
+			</form>
 		</section>
 
 		<!-- Account löschen (Gefahrenzone): bewusst abgesetzt, damit es nicht wie eine Nebenaktion wirkt -->
