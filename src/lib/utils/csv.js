@@ -121,7 +121,7 @@ export function parseCSV(csvContent) {
       contracts: [],
       errors: [
         `Fehlende Pflichtfelder im CSV-Header: ${missingFields.join(', ')}`,
-        `Erwarteter Header: ${FIELDS.join(',')}`
+        `Erwarteter Header: ${FIELDS.join(DELIMITER)}`
       ],
       warnings: []
     };
