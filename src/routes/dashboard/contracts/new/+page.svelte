@@ -68,7 +68,6 @@
 			<div
 				bind:this={summary}
 				tabindex="-1"
-				role="alert"
 				class="mb-6 rounded-card border border-crit/30 bg-crit/5 px-4 py-3 text-sm text-crit"
 			>
 				{form.error}
