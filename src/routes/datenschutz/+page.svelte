@@ -22,7 +22,7 @@
 
 	<div class="max-w-2xl text-sm leading-relaxed text-ink-2">
 		<h1 class="mb-2 text-3xl font-semibold tracking-tight text-ink">Datenschutzerklärung</h1>
-		<p class="mb-4">Stand: [BETREIBER: Datum der Freigabe eintragen]</p>
+		<p class="mb-4">Stand: 20. Oktober 2026</p>
 		<p class="mb-8">
 			SubSense ist ein privates, kostenloses Angebot ohne Werbung. Hier steht, welche Daten die App
 			speichert, wo sie liegen und wie du sie löschen kannst.
