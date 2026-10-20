@@ -43,7 +43,9 @@ export function monthlyCost(contract) {
   return cost;
 }
 
-const amountFormat = new Intl.NumberFormat('de-CH', {
+// Nicht 'de-CH': dessen Tausenderzeichen hängt von den ICU-Daten ab (Node 22: ’, Chrome 155: '),
+// Server-Rendering und Browser würden sich widersprechen. en-US gruppiert überall mit Komma.
+const amountFormat = new Intl.NumberFormat('en-US', {
   minimumFractionDigits: 2,
   maximumFractionDigits: 2
 });
@@ -55,7 +57,7 @@ const amountFormat = new Intl.NumberFormat('de-CH', {
  * @returns {string}
  */
 export function formatAmount(value) {
-  return amountFormat.format(value || 0);
+  return amountFormat.format(value || 0).replaceAll(',', '’');
 }
 
 export const PASSWORD_MIN_LENGTH = 8;
