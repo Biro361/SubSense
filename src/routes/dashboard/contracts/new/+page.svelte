@@ -23,8 +23,8 @@
 
 	// Kalendertag der Nutzer: Server und Browser sind sich einig, kein Sprung um Mitternacht UTC
 	const today = todayInZurich();
-	// Nur ein Hinweis: abgelaufene oder gekündigte Verträge nachzutragen ist erlaubt
-	let isPast = $derived(!!cancellationDate && cancellationDate < today);
+	// Nur ein Hinweis und nur für aktive Verträge: gekündigte nachzutragen ist erlaubt
+	let isPast = $derived(status === 'active' && !!cancellationDate && cancellationDate < today);
 
 	// Preset-Button Handler
 	function setReminderPreset(days) {

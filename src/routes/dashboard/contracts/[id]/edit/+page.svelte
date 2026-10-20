@@ -13,21 +13,22 @@
   let name = $state(sent.name ?? contract.name);
   let provider = $state(sent.provider ?? contract.provider);
   let cancellationUrl = $state(sent.cancellationUrl ?? (contract.cancellationUrl || ""));
-  // Datum für Input-Feld formatieren (YYYY-MM-DD)
-  let cancellationDate = $state(
-    sent.cancellationDate ??
-      (contract.cancellationDate
-        ? new Date(contract.cancellationDate).toISOString().split("T")[0]
-        : ""),
-  );
+  // Gespeichertes Datum im Format des Input-Felds (YYYY-MM-DD)
+  const savedDate = contract.cancellationDate
+    ? new Date(contract.cancellationDate).toISOString().split("T")[0]
+    : "";
+  let cancellationDate = $state(sent.cancellationDate ?? savedDate);
   let cost = $state(sent.cost ?? (contract.cost || 0));
   let billingCycle = $state(sent.billingCycle ?? (contract.billingCycle || "monthly"));
   let status = $state(sent.status ?? contract.status);
 
   // Kalendertag der Nutzer: Server und Browser sind sich einig, kein Sprung um Mitternacht UTC
   const today = todayInZurich();
-  // Nur ein Hinweis: abgelaufene oder gekündigte Verträge nachzutragen ist erlaubt
-  let isPast = $derived(!!cancellationDate && cancellationDate < today);
+  // Nur ein Hinweis, nur für aktive Verträge und nur bei geänderter Frist:
+  // eine überfällige Frist ist schon gespeichert und kein Tippfehler von eben
+  let isPast = $derived(
+    status === "active" && !!cancellationDate && cancellationDate !== savedDate && cancellationDate < today,
+  );
 
   // Erinnerungstage State
   let reminderDays = $state(Number(sent.reminderDays ?? contract.reminderDays) || 7);
