@@ -6,7 +6,8 @@
 const TIMEOUT_MS = 25_000;
 
 export default async () => {
-  const siteUrl = process.env.SITE_URL;
+  // Ohne Schrägstrich am Ende: aus «…app/» würde sonst «…app//internal/…», und die Route passt nicht
+  const siteUrl = process.env.SITE_URL?.replace(/\/+$/, '');
   const secret = process.env.CRON_SECRET;
 
   if (!siteUrl || !secret) {
