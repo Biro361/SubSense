@@ -71,6 +71,14 @@
 			>
 				Account erstellen
 			</button>
+
+			<p class="text-center text-[12.5px] text-ink-2">
+				Mit der Registrierung nimmst du die
+				<a href="/datenschutz" class="font-medium text-accent underline-offset-2 hover:underline">
+					Datenschutzerklärung
+				</a>
+				zur Kenntnis.
+			</p>
 		</form>
 
 		<p class="mt-6 text-center text-sm text-ink-2">
