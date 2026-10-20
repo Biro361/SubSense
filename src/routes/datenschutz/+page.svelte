@@ -41,8 +41,8 @@
 			<h2 class="mb-3 text-base font-semibold text-ink">Welche Daten bearbeitet werden</h2>
 			<ul class="list-disc space-y-2 pl-5">
 				<li>
-					<strong class="font-medium text-ink">Konto:</strong> E-Mail-Adresse, Name (freiwillig), Zeitpunkt
-					der Registrierung. Das Passwort wird nur als Hash (bcrypt) gespeichert, nie im Klartext.
+					<strong class="font-medium text-ink">Konto:</strong> E-Mail-Adresse, Name (freiwillig; ohne Angabe
+					wird der Teil deiner E-Mail-Adresse vor dem @ als Name gespeichert), Zeitpunkt der Registrierung. Das Passwort wird nur als Hash (bcrypt) gespeichert, nie im Klartext.
 				</li>
 				<li>
 					<strong class="font-medium text-ink">Verträge:</strong> Name, Anbieter, Kosten und
@@ -131,8 +131,8 @@
 				</li>
 				<li>
 					Die Zähler gegen Missbrauch verfallen nach 15 Minuten (Anmeldung) bzw. 60 Minuten
-					(Registrierung) und werden danach automatisch gelöscht; nach einer erfolgreichen Anmeldung
-					sofort.
+					(Registrierung) und werden danach automatisch gelöscht. Nach einer erfolgreichen Anmeldung wird
+					der Zähler für deine E-Mail-Adresse sofort gelöscht.
 				</li>
 			</ul>
 		</section>
@@ -140,9 +140,10 @@
 		<section class="border-t border-line py-6">
 			<h2 class="mb-3 text-base font-semibold text-ink">Cookies</h2>
 			<p>
-				Nach der Anmeldung setzt SubSense ein einziges Cookie namens <code class="font-mono">session</code>.
-				Es hält dich angemeldet, ist für Skripte nicht lesbar (HttpOnly), wird nur von SubSense selbst
-				gesendet (SameSite=Lax) und läuft nach 30 Tagen ab. Beim Abmelden wird es gelöscht. Das Cookie
+				Nach der Registrierung oder Anmeldung setzt SubSense ein einziges Cookie namens
+				<code class="font-mono">session</code>. Es hält dich angemeldet, ist für Skripte nicht lesbar
+				(HttpOnly), wird bei Anfragen von fremden Websites nur beim Öffnen eines Links mitgesendet
+				(SameSite=Lax) und läuft nach 30 Tagen ab. Beim Abmelden wird es gelöscht. Das Cookie
 				ist technisch notwendig. Tracking-, Analyse- oder Werbe-Cookies gibt es nicht.
 			</p>
 		</section>
