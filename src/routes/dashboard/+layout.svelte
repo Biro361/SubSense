@@ -109,6 +109,18 @@
 					<span class="btn-text">Export</span>
 				</button>
 
+				<!-- download: Router greift nicht ein, der Browser lädt die Datei direkt -->
+				<a
+					href="/api/calendar"
+					download
+					class="btn"
+					aria-label="Fristen in Kalender exportieren"
+					title="Kündigungsfristen als Kalenderdatei (.ics) exportieren"
+				>
+					<Icon name="calendar" size={15} />
+					<span class="btn-text">Kalender</span>
+				</a>
+
 				<a
 					href="/dashboard/import"
 					class="btn"
@@ -182,6 +194,16 @@
 										: "Als CSV exportieren"}</span
 								>
 							</button>
+
+							<a
+								href="/api/calendar"
+								download
+								class="dropdown-item"
+								onclick={() => (showUserMenu = false)}
+							>
+								<Icon name="calendar" />
+								<span>Fristen in Kalender exportieren</span>
+							</a>
 
 							<a
 								href="/dashboard/import"
@@ -468,7 +490,8 @@
 	}
 
 	/* ===== RESPONSIVE ===== */
-	@media (max-width: 768px) {
+	/* 860 statt 768: mit dem Kalender-Button lief der Header bis ~820 px über */
+	@media (max-width: 860px) {
 		/* Kein Platz im Header – die Aktionen wandern ins User-Dropdown */
 		.csv-actions {
 			display: none;
