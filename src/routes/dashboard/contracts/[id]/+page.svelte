@@ -1,7 +1,7 @@
 <!-- src/routes/dashboard/contracts/[id]/+page.svelte -->
 <script>
   import { enhance } from '$app/forms';
-  import { getCategoryByValue } from '$lib/constants';
+  import { formatAmount, getCategoryByValue } from '$lib/constants';
   import Icon from '$lib/components/Icon.svelte';
 
   let { data, form } = $props();
@@ -143,7 +143,7 @@
         <div>
           <dt class="label">Kosten</dt>
           <dd class="font-mono text-lg font-semibold">
-            {contract.cost?.toFixed(2) || '0.00'}
+            {formatAmount(contract.cost)}
             <span class="font-sans text-sm font-normal text-ink-3">CHF / {contract.billingCycle === 'monthly' ? 'Monat' : contract.billingCycle === 'yearly' ? 'Jahr' : 'Quartal'}</span>
           </dd>
         </div>
@@ -194,7 +194,7 @@
             rows="10"
             bind:value={notesText}
             class="field"
-            placeholder="Hier kannst du Notizen zu diesem Vertrag speichern...\n\nBeispielsweise:\n- Testphase endet am 15. Februar\n- Kündigung per E-Mail an kuendigung@anbieter.ch\n- Kundennummer: 12345"
+            placeholder={"Hier kannst du Notizen zu diesem Vertrag speichern…\n\nBeispielsweise:\n- Testphase endet am 15. Februar\n- Kündigung per E-Mail an kuendigung@anbieter.ch\n- Kundennummer: 12345"}
           ></textarea>
           <p class="hint">
             Notiere wichtige Details wie Kundennummern, Kontaktdaten oder Kündigungshinweise.
@@ -235,7 +235,7 @@
               rows="10"
               bind:value={instructionsText}
               class="field"
-              placeholder="Schritt-für-Schritt Anleitung zur Kündigung...\n\n1. Auf der Webseite einloggen\n2. Menü 'Mein Konto' öffnen\n3. Unter 'Verträge' die Option 'Kündigen' wählen\n4. Kündigungsbestätigung per E-Mail abwarten"
+              placeholder={"Schritt-für-Schritt Anleitung zur Kündigung…\n\n1. Auf der Webseite einloggen\n2. Menü 'Mein Konto' öffnen\n3. Unter 'Verträge' die Option 'Kündigen' wählen\n4. Kündigungsbestätigung per E-Mail abwarten"}
             ></textarea>
             <p class="hint">
               Halte die Schritte fest, damit du beim nächsten Mal schnell weisst, wie die Kündigung funktioniert.

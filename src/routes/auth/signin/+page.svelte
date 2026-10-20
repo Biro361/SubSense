@@ -23,7 +23,7 @@
 		<form method="POST" use:enhance class="space-y-4">
 			<div>
 				<label class="label" for="email">
-					Email-Adresse
+					E-Mail-Adresse
 				</label>
 				<input
 					id="email"

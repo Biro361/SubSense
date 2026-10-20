@@ -1,6 +1,6 @@
 <script>
   import { enhance } from '$app/forms';
-  import { CATEGORIES, getCategoryByValue } from '$lib/constants';
+  import { CATEGORIES, formatAmount, getCategoryByValue } from '$lib/constants';
   import Icon from '$lib/components/Icon.svelte';
 
   /** @type {{ form: import('./$types').ActionData }} */
@@ -157,6 +157,10 @@
             <strong class="font-medium text-ink">Status:</strong> "active" oder "cancelled"
           </li>
           <li>
+            <strong class="font-medium text-ink">Kategorie:</strong>
+            {CATEGORIES.map((c) => `${c.value} (${c.label})`).join(', ')} – andere Werte werden zu "other"
+          </li>
+          <li>
             <strong class="font-medium text-ink">Kosten:</strong> Dezimalzahl mit Punkt (z.B. 15.90)
           </li>
           <li>
@@ -253,7 +257,7 @@
                 </td>
                 <td class="px-3 py-3 text-right whitespace-nowrap">
                   {#if contract.cost > 0}
-                    <span class="font-mono">{contract.cost.toFixed(2)}</span>
+                    <span class="font-mono">{formatAmount(contract.cost)}</span>
                     <span class="text-xs text-ink-3">CHF / {formatBillingCycle(contract.billingCycle)}</span>
                   {:else}
                     <span class="text-xs text-ink-3">Keine Angabe</span>

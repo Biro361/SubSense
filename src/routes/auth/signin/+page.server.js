@@ -18,7 +18,7 @@ export const actions = {
 		const password = formData.get('password');
 
 		if (!email || !password) {
-			return fail(400, { error: 'Email und Passwort sind erforderlich.' });
+			return fail(400, { error: 'E-Mail und Passwort sind erforderlich.' });
 		}
 
 		// IP und Email getrennt zählen: sonst reicht ein Botnetz oder eine Wortliste
@@ -40,12 +40,12 @@ export const actions = {
 			const user = await getUserByEmail(email.toString());
 
 			if (!user || !user.password) {
-				return fail(401, { error: 'Email oder Passwort ist falsch.' });
+				return fail(401, { error: 'E-Mail oder Passwort ist falsch.' });
 			}
 
 			const isValid = await bcrypt.compare(password.toString(), user.password);
 			if (!isValid) {
-				return fail(401, { error: 'Email oder Passwort ist falsch.' });
+				return fail(401, { error: 'E-Mail oder Passwort ist falsch.' });
 			}
 
 			// Nur den Email-Zähler: sonst setzt ein Login ins eigene Konto das IP-Limit zurück

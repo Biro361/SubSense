@@ -109,7 +109,7 @@ export function validateContract(input) {
   if (!Number.isFinite(reminderDays)) {
     reminderDays = 7;
   } else if (reminderDays < 1 || reminderDays > 90) {
-    warnings.push(`Erinnerungstage (${reminderDays}) außerhalb 1-90, verwende 7.`);
+    warnings.push(`Erinnerungstage (${reminderDays}) ausserhalb 1-90, verwende 7.`);
     reminderDays = 7;
   }
 

@@ -22,7 +22,7 @@ export const actions = {
 
 		// Grundvalidierung
 		if (!email || !password) {
-			return fail(400, { error: 'Email und Passwort sind erforderlich.' });
+			return fail(400, { error: 'E-Mail und Passwort sind erforderlich.' });
 		}
 
 		const passwordError = validatePassword(password);
@@ -33,7 +33,7 @@ export const actions = {
 		// Email-Format grob prüfen
 		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 		if (!emailRegex.test(email)) {
-			return fail(400, { error: 'Bitte gib eine gültige Email-Adresse ein.' });
+			return fail(400, { error: 'Bitte gib eine gültige E-Mail-Adresse ein.' });
 		}
 
 		try {
@@ -51,7 +51,7 @@ export const actions = {
 
 			const userId = await createUser({ email, password, name });
 			if (!userId) {
-				return fail(400, { error: 'Diese Email-Adresse ist bereits registriert.' });
+				return fail(400, { error: 'Diese E-Mail-Adresse ist bereits registriert.' });
 			}
 
 			// Session-Cookie setzen (Auto-Login)

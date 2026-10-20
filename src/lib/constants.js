@@ -8,7 +8,9 @@ export const CATEGORIES = [
   { value: 'streaming', label: 'Streaming' },
   { value: 'fitness', label: 'Fitness' },
   { value: 'software', label: 'Software' },
+  { value: 'telecom', label: 'Mobilfunk & Internet' },
   { value: 'transport', label: 'Transport' },
+  { value: 'health-insurance', label: 'Krankenkasse' },
   { value: 'insurance', label: 'Versicherung' },
   { value: 'other', label: 'Sonstiges' }
 ];
@@ -39,6 +41,23 @@ export function monthlyCost(contract) {
   if (contract.billingCycle === 'yearly') return cost / 12;
   if (contract.billingCycle === 'quarterly') return cost / 3;
   return cost;
+}
+
+// Nicht 'de-CH': dessen Tausenderzeichen hängt von den ICU-Daten ab (Node 22: ’, Chrome 155: '),
+// Server-Rendering und Browser würden sich widersprechen. en-US gruppiert überall mit Komma.
+const amountFormat = new Intl.NumberFormat('en-US', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2
+});
+
+/**
+ * Betrag für die Anzeige im Schweizer Format, ohne Währung (z.B. "4’593.80").
+ * Nur fürs Markup – das Ergebnis nie wieder mit parseFloat lesen.
+ * @param {number | undefined} value
+ * @returns {string}
+ */
+export function formatAmount(value) {
+  return amountFormat.format(value || 0).replaceAll(',', '’');
 }
 
 export const PASSWORD_MIN_LENGTH = 8;

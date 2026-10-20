@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { contractsToCSV, parseCSV } from './csv.js';
+import { contractsToCSV, generateTemplateCSV, parseCSV } from './csv.js';
 
 const base = {
   provider: 'Acme',
@@ -131,5 +131,36 @@ describe('CSV Round-Trip', () => {
       '2026-12-01',
       '2026-12-31'
     ]);
+  });
+
+  it('exportiert mit Semikolon, damit Excel Schweiz die Spalten trennt', () => {
+    const csv = contractsToCSV([{ ...base, name: 'Netflix' }]);
+
+    expect(csv.startsWith('﻿name;provider;cancellationDate;status')).toBe(true);
+    expect(csv.split('\n')[1]).toMatch(/^Netflix;Acme;2026-03-15;active;/);
+  });
+
+  it('übersteht Semikolons und Umlaute im Round-Trip', () => {
+    const originals = [
+      { ...base, name: 'Zürich; Süd', notes: 'Kündigung; per "Brief", bitte' },
+      { ...base, name: 'Krankenkasse Öko', notes: 'äöü ÄÖÜ é' }
+    ];
+
+    const { contracts, errors } = parseCSV(contractsToCSV(originals));
+
+    expect(errors).toEqual([]);
+    expect(contracts.map((c) => [c.name, c.notes])).toEqual(
+      originals.map((o) => [o.name, o.notes])
+    );
+  });
+
+  it('liefert ein Template mit BOM und Semikolon, das sich wieder einlesen lässt', () => {
+    const template = generateTemplateCSV();
+
+    expect(template.startsWith('﻿name;provider;')).toBe(true);
+
+    const { contracts, errors } = parseCSV(template);
+    expect(errors).toEqual([]);
+    expect(contracts.length).toBeGreaterThan(0);
   });
 });

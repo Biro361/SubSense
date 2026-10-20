@@ -34,7 +34,7 @@ export const actions = {
     const MAX_SIZE = 4 * 1024 * 1024;
     if (file.size > MAX_SIZE) {
       return fail(400, {
-        error: `Datei zu groß (${(file.size / 1024 / 1024).toFixed(2)} MB). Maximum: 4 MB`
+        error: `Datei zu gross (${(file.size / 1024 / 1024).toFixed(2)} MB). Maximum: 4 MB`
       });
     }
 
