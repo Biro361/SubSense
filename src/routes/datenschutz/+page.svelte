@@ -9,7 +9,7 @@
 	<title>Datenschutz – SubSense</title>
 </svelte:head>
 
-<main class="mx-auto w-full max-w-[70rem] px-6 pt-10 pb-16 max-sm:px-4 max-sm:pt-7">
+<main id="main" tabindex="-1" class="mx-auto w-full max-w-[70rem] px-6 pt-10 pb-16 max-sm:px-4 max-sm:pt-7">
 	<a href="/" class="mb-10 inline-flex items-center gap-2.5">
 		<span class="grid size-8 shrink-0 place-items-center rounded-card bg-accent text-surface">
 			<Icon name="doc" size={18} />

@@ -61,47 +61,64 @@ function toDate(value) {
  * Das Ergebnis enthält nur bekannte Felder, ein `_id` aus einem CSV-Header
  * erreicht die Datenbank also nicht.
  *
+ * `fieldErrors` ordnet jede Meldung (Fehler wie Warnung) ihrem Feldnamen zu, damit das
+ * Formular sie am Feld zeigen kann. `errors` und `warnings` bleiben die Listen für den CSV-Import.
+ *
  * @param {Record<string, unknown>} input - Rohwerte aus Formular oder CSV
- * @returns {{ contract: ValidatedContract|null, errors: string[], warnings: string[] }}
+ * @returns {{ contract: ValidatedContract|null, errors: string[], warnings: string[], fieldErrors: Record<string, string> }}
  */
 export function validateContract(input) {
   /** @type {string[]} */
   const errors = [];
   /** @type {string[]} */
   const warnings = [];
+  /** @type {Record<string, string>} */
+  const fieldErrors = {};
+
+  /**
+   * @param {string[]} list
+   * @param {string} field
+   * @param {string} message
+   */
+  function report(list, field, message) {
+    list.push(message);
+    fieldErrors[field] = message;
+  }
 
   const name = String(input.name ?? '').trim();
   if (!name) {
-    errors.push('Name fehlt.');
+    report(errors, 'name', 'Name fehlt.');
   }
 
   const provider = String(input.provider ?? '').trim();
   if (!provider) {
-    errors.push('Anbieter fehlt.');
+    report(errors, 'provider', 'Anbieter fehlt.');
   }
 
   const cancellationDate = toDate(input.cancellationDate);
   if (!cancellationDate) {
-    errors.push(
+    report(
+      errors,
+      'cancellationDate',
       `Ungültiges Kündigungsdatum "${String(input.cancellationDate ?? '')}" (erwartet: JJJJ-MM-TT oder TT.MM.JJJJ).`
     );
   }
 
   const status = String(input.status ?? '').trim() || 'active';
   if (!VALID_STATUSES.includes(status)) {
-    errors.push(`Ungültiger Status "${status}" (erlaubt: ${VALID_STATUSES.join(', ')}).`);
+    report(errors, 'status', `Ungültiger Status "${status}" (erlaubt: ${VALID_STATUSES.join(', ')}).`);
   }
 
   const rawCost = String(input.cost ?? '').trim();
   // Number statt parseFloat: "15,90" wurde sonst still zu 15, "12abc" zu 12
   const cost = Number(rawCost.replace(',', '.'));
   if (!Number.isFinite(cost) || cost < 0) {
-    errors.push(`Ungültige Kosten "${rawCost}" (Zahl ab 0 erwartet).`);
+    report(errors, 'cost', `Ungültige Kosten "${rawCost}" (Zahl ab 0 erwartet).`);
   }
 
   let billingCycle = String(input.billingCycle ?? '').trim() || 'monthly';
   if (!VALID_BILLING_CYCLES.includes(billingCycle)) {
-    warnings.push(`Ungültiger Abrechnungszyklus "${billingCycle}", verwende "monthly".`);
+    report(warnings, 'billingCycle', `Ungültiger Abrechnungszyklus "${billingCycle}", verwende "monthly".`);
     billingCycle = 'monthly';
   }
 
@@ -109,24 +126,24 @@ export function validateContract(input) {
   if (!Number.isFinite(reminderDays)) {
     reminderDays = 7;
   } else if (reminderDays < 1 || reminderDays > 90) {
-    warnings.push(`Erinnerungstage (${reminderDays}) ausserhalb 1-90, verwende 7.`);
+    report(warnings, 'reminderDays', `Erinnerungstage (${reminderDays}) ausserhalb 1-90, verwende 7.`);
     reminderDays = 7;
   }
 
   let category = String(input.category ?? '').trim() || 'other';
   if (!VALID_CATEGORIES.includes(category)) {
-    warnings.push(`Unbekannte Kategorie "${category}", verwende "other".`);
+    report(warnings, 'category', `Unbekannte Kategorie "${category}", verwende "other".`);
     category = 'other';
   }
 
   let cancellationUrl = String(input.cancellationUrl ?? '').trim() || null;
   if (cancellationUrl && !URL_SHAPE.test(cancellationUrl)) {
-    warnings.push(`Ungültige URL "${cancellationUrl}" (muss mit http:// oder https:// beginnen).`);
+    report(warnings, 'cancellationUrl', `Ungültige URL "${cancellationUrl}" (muss mit http:// oder https:// beginnen).`);
     cancellationUrl = null;
   }
 
   if (errors.length > 0 || !cancellationDate) {
-    return { contract: null, errors, warnings };
+    return { contract: null, errors, warnings, fieldErrors };
   }
 
   return {
@@ -144,6 +161,7 @@ export function validateContract(input) {
       cancellationInstructions: String(input.cancellationInstructions ?? '')
     },
     errors,
-    warnings
+    warnings,
+    fieldErrors
   };
 }

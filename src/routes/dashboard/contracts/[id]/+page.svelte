@@ -54,6 +54,19 @@
     { id: 'instructions', label: 'Kündigungsanweisungen' },
     { id: 'documents', label: 'Dokumente' }
   ];
+
+  // Tastatur nach WAI-ARIA-Tabs: Pfeiltasten wechseln (mit Umlauf), Pos1/Ende springen an den Rand
+  /** @param {KeyboardEvent} event */
+  function onTabKeydown(event) {
+    const index = TABS.findIndex((tab) => tab.id === activeTab);
+    const next = { ArrowRight: index + 1, ArrowLeft: index - 1, Home: 0, End: TABS.length - 1 }[event.key];
+    if (next === undefined) return;
+
+    event.preventDefault();
+    const tab = TABS[(next + TABS.length) % TABS.length];
+    activeTab = tab.id;
+    document.getElementById(`tab-${tab.id}`)?.focus();
+  }
 </script>
 
 <svelte:head>
@@ -99,10 +112,17 @@
 
   <!-- Tabs -->
   <div class="mb-6 border-b border-line-strong">
-    <nav class="-mb-px flex gap-5 overflow-x-auto">
+    <div role="tablist" aria-label="Vertragsbereiche" class="-mb-px flex gap-5 overflow-x-auto">
       {#each TABS as tab}
         <button
+          type="button"
+          role="tab"
+          id="tab-{tab.id}"
+          aria-selected={activeTab === tab.id}
+          aria-controls="tabpanel"
+          tabindex={activeTab === tab.id ? 0 : -1}
           onclick={() => activeTab = tab.id}
+          onkeydown={onTabKeydown}
           class="whitespace-nowrap border-b-2 px-0.5 pb-3 text-sm font-medium transition-colors {activeTab === tab.id ? 'border-accent text-ink' : 'border-transparent text-ink-3 hover:text-ink'}"
         >
           {tab.label}
@@ -111,11 +131,11 @@
           {/if}
         </button>
       {/each}
-    </nav>
+    </div>
   </div>
 
-  <!-- Tab-Content -->
-  <div class="max-w-2xl">
+  <!-- Tab-Content: ein Panel, dessen Inhalt mit dem aktiven Tab wechselt -->
+  <div id="tabpanel" role="tabpanel" aria-labelledby="tab-{activeTab}" tabindex="0" class="max-w-2xl">
 
     <!-- Details Tab -->
     {#if activeTab === 'details'}

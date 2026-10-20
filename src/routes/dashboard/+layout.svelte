@@ -7,9 +7,6 @@
 	// User-Dropdown State
 	let showUserMenu = $state(false);
 
-	// Logout-Bestätigung State
-	let showLogoutConfirm = $state(false);
-
 	// CSV-Export State
 	let isExporting = $state(false);
 
@@ -42,17 +39,6 @@
 		}
 	}
 
-	// Logout-Flow starten
-	function handleLogoutClick() {
-		showUserMenu = false; // Dropdown schliessen
-		showLogoutConfirm = true; // Bestätigung anzeigen
-	}
-
-	// Logout abbrechen
-	function cancelLogout() {
-		showLogoutConfirm = false;
-	}
-
 	// Click-Outside-Handler für Dropdown
 	function handleClickOutside(event) {
 		const target = event.target;
@@ -61,12 +47,9 @@
 		}
 	}
 
-	// Keyboard-Handler für Modal und Dropdown (Escape-Taste)
+	// Escape schliesst das Dropdown
 	function handleKeydown(event) {
-		if (event.key !== "Escape") return;
-		if (showLogoutConfirm) {
-			cancelLogout();
-		} else if (showUserMenu) {
+		if (event.key === "Escape" && showUserMenu) {
 			showUserMenu = false;
 		}
 	}
@@ -224,13 +207,13 @@
 
 						<div class="dropdown-divider"></div>
 
-						<button
-							onclick={handleLogoutClick}
-							class="dropdown-item dropdown-item-danger"
-						>
-							<Icon name="logout" />
-							<span>Abmelden</span>
-						</button>
+						<!-- Direkt abmelden, ohne Rückfrage; POST wegen des CSRF-Schutzes von SvelteKit -->
+						<form method="POST" action="/auth/logout">
+							<button type="submit" class="dropdown-item dropdown-item-danger">
+								<Icon name="logout" />
+								<span>Abmelden</span>
+							</button>
+						</form>
 					</div>
 				{/if}
 			</div>
@@ -238,55 +221,8 @@
 	</div>
 </header>
 
-<!-- Logout-Bestätigung Modal -->
-{#if showLogoutConfirm}
-	<!-- svelte-ignore a11y_click_events_have_key_events -->
-	<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
-	<div
-		class="modal-overlay"
-		onclick={cancelLogout}
-		role="dialog"
-		aria-modal="true"
-		aria-labelledby="logout-modal-title"
-		tabindex="-1"
-	>
-		<!-- svelte-ignore a11y_click_events_have_key_events -->
-		<div
-			class="modal-content"
-			onclick={(e) => e.stopPropagation()}
-			role="document"
-		>
-			<!-- Modal-Header -->
-			<div class="modal-header">
-				<div class="modal-icon"><Icon name="logout" size={24} /></div>
-				<h3 id="logout-modal-title" class="modal-title">
-					Wirklich abmelden?
-				</h3>
-				<p class="modal-description">
-					Du wirst zur Startseite weitergeleitet und musst dich erneut
-					anmelden, um deine Verträge zu verwalten.
-				</p>
-			</div>
-
-			<!-- Modal-Actions -->
-			<div class="modal-actions">
-				<form method="POST" action="/auth/logout">
-					<button type="submit" class="btn btn-danger modal-btn">
-						<Icon name="check" />
-						Ja, abmelden
-					</button>
-				</form>
-				<button onclick={cancelLogout} class="btn modal-btn">
-					<Icon name="x" />
-					Abbrechen
-				</button>
-			</div>
-		</div>
-	</div>
-{/if}
-
 <!-- Main Content Area -->
-<main class="main-content">
+<main id="main" tabindex="-1" class="main-content">
 	{@render children()}
 </main>
 
@@ -523,69 +459,6 @@
 	/* CSV im Dropdown nur, solange der Header die Buttons nicht zeigt */
 	.dropdown-csv {
 		display: none;
-	}
-
-	/* ===== MODAL ===== */
-	.modal-overlay {
-		position: fixed;
-		inset: 0;
-		background: rgba(0, 0, 0, 0.4);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		z-index: 60;
-		padding: 1rem;
-		animation: dropdown-fade-in 0.15s ease;
-	}
-
-	.modal-content {
-		width: 100%;
-		max-width: 26rem;
-		padding: 1.5rem;
-		background: var(--color-surface);
-		border: 1px solid var(--color-line-strong);
-		border-radius: var(--radius-card);
-	}
-
-	.modal-header {
-		text-align: center;
-		margin-bottom: 1.5rem;
-	}
-
-	.modal-icon {
-		display: grid;
-		place-items: center;
-		width: 3rem;
-		height: 3rem;
-		margin: 0 auto 1rem;
-		border-radius: 999px;
-		background: color-mix(in srgb, var(--color-crit) 8%, transparent);
-		color: var(--color-crit);
-	}
-
-	.modal-title {
-		font-size: 18px;
-		font-weight: 600;
-		margin: 0 0 0.5rem;
-	}
-
-	.modal-description {
-		font-size: 14px;
-		color: var(--color-ink-2);
-		line-height: 1.5;
-		margin: 0;
-	}
-
-	.modal-actions {
-		display: flex;
-		flex-direction: column;
-		gap: 0.625rem;
-	}
-
-	.modal-btn {
-		width: 100%;
-		justify-content: center;
-		padding: 0.75rem 1rem;
 	}
 
 	/* ===== MAIN CONTENT ===== */

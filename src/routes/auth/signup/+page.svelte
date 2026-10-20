@@ -9,7 +9,7 @@
 	<title>Registrieren – SubSense</title>
 </svelte:head>
 
-<main class="flex flex-1 items-center justify-center px-4 py-12">
+<main id="main" tabindex="-1" class="flex flex-1 items-center justify-center px-4 py-12">
 	<div class="w-full max-w-md rounded-card border border-line bg-surface p-8 max-sm:p-6">
 		<h1 class="mb-2 text-2xl font-semibold tracking-tight">Account erstellen</h1>
 		<p class="mb-6 text-sm text-ink-2">
@@ -30,6 +30,7 @@
 				<input
 					id="name"
 					name="name"
+					autocomplete="name"
 					type="text"
 					class="field"
 					placeholder="Max Muster"
@@ -43,6 +44,7 @@
 				<input
 					id="email"
 					name="email"
+					autocomplete="email"
 					type="email"
 					required
 					class="field"
@@ -57,6 +59,7 @@
 				<input
 					id="password"
 					name="password"
+					autocomplete="new-password"
 					type="password"
 					required
 					minlength="8"

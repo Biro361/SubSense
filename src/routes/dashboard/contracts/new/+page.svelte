@@ -1,6 +1,7 @@
 <script>
 	import { enhance } from '$app/forms';
 	import { CATEGORIES } from '$lib/constants';
+	import { todayInZurich } from '$lib/reminders.js';
 
 	let { form } = $props();
 
@@ -20,9 +21,34 @@
 	let billingCycle = $state(form?.billingCycle || 'monthly');
 	let status = $state(form?.status || 'active');
 
+	// Kalendertag der Nutzer: Server und Browser sind sich einig, kein Sprung um Mitternacht UTC
+	const today = todayInZurich();
+	// Nur ein Hinweis und nur für aktive Verträge: gekündigte nachzutragen ist erlaubt
+	let isPast = $derived(status === 'active' && !!cancellationDate && cancellationDate < today);
+
 	// Preset-Button Handler
 	function setReminderPreset(days) {
 		reminderDays = days;
+	}
+
+	// Feldmeldungen hängen an `form`: bei Erfolg ersetzt SvelteKit es, die Meldungen verschwinden
+	let fieldErrors = $derived(/** @type {Record<string, string>} */ ((/** @type {any} */ (form))?.fieldErrors ?? {}));
+
+	/** @type {HTMLElement | undefined} */
+	let summary = $state();
+
+	// Nach dem Absenden auf die Zusammenfassung, damit ein Screenreader sie sofort vorliest
+	$effect(() => {
+		if (form?.error) summary?.focus();
+	});
+
+	/**
+	 * IDs für aria-describedby: zuerst die Feldmeldung, dann weitere Beschreibungen
+	 * @param {string} field
+	 * @param {...string} extra
+	 */
+	function describedBy(field, ...extra) {
+		return [fieldErrors[field] ? `${field}-error` : '', ...extra].filter(Boolean).join(' ') || undefined;
 	}
 </script>
 
@@ -32,17 +58,27 @@
 
 <div class="mx-auto max-w-[70rem] px-6 pt-10 pb-16 max-sm:px-4 max-sm:pt-7">
 	<div class="max-w-2xl">
-		<a href="/" class="text-[13px] text-ink-2 hover:text-ink">
+		<a href="/dashboard" class="text-[13px] text-ink-2 hover:text-ink">
 			← Zurück zur Übersicht
 		</a>
 		<h1 class="mt-4 mb-8 text-3xl font-semibold tracking-tight">Neuer Vertrag</h1>
 
 		{#if form?.error}
-			<!-- Fehlermeldung -->
-			<div role="alert" class="mb-6 rounded-card border border-crit/30 bg-crit/5 px-4 py-3 text-sm text-crit">
+			<!-- Zusammenfassung; die Meldungen selbst stehen am Feld -->
+			<div
+				bind:this={summary}
+				tabindex="-1"
+				class="mb-6 rounded-card border border-crit/30 bg-crit/5 px-4 py-3 text-sm text-crit"
+			>
 				{form.error}
 			</div>
 		{/if}
+
+		{#snippet fieldError(/** @type {string} */ field)}
+			{#if fieldErrors[field]}
+				<p id="{field}-error" class="field-error">{fieldErrors[field]}</p>
+			{/if}
+		{/snippet}
 
 		<form method="POST" use:enhance class="space-y-6">
 			<!-- Vertragsname -->
@@ -53,12 +89,15 @@
 				<input
 					type="text"
 					id="name"
+					aria-invalid={!!fieldErrors.name}
+					aria-describedby={describedBy('name')}
 					name="name"
 					bind:value={name}
 					placeholder="z.B. Netflix Premium"
 					required
 					class="field"
 				/>
+				{@render fieldError('name')}
 			</div>
 
 			<!-- Anbieter -->
@@ -69,12 +108,15 @@
 				<input
 					type="text"
 					id="provider"
+					aria-invalid={!!fieldErrors.provider}
+					aria-describedby={describedBy('provider')}
 					name="provider"
 					bind:value={provider}
 					placeholder="z.B. Netflix Inc."
 					required
 					class="field"
 				/>
+				{@render fieldError('provider')}
 			</div>
 
 			<!-- Kündigungs-URL -->
@@ -85,13 +127,16 @@
 				<input
 					type="url"
 					id="cancellationUrl"
+					aria-invalid={!!fieldErrors.cancellationUrl}
+					aria-describedby={describedBy('cancellationUrl', 'cancellationUrl-hint')}
 					name="cancellationUrl"
 					bind:value={cancellationUrl}
 					placeholder="https://www.netflix.com/cancelplan"
 					pattern="https?://.+"
 					class="field"
 				/>
-				<p class="hint">
+				{@render fieldError('cancellationUrl')}
+				<p id="cancellationUrl-hint" class="hint">
 					Direkter Link zur Kündigungsseite – spart Zeit beim Kündigen.
 				</p>
 			</div>
@@ -103,6 +148,8 @@
 				</label>
 				<select
 					id="category"
+					aria-invalid={!!fieldErrors.category}
+					aria-describedby={describedBy('category', 'category-hint')}
 					name="category"
 					bind:value={category}
 					required
@@ -112,7 +159,8 @@
 						<option value={cat.value}>{cat.label}</option>
 					{/each}
 				</select>
-				<p class="hint">
+				{@render fieldError('category')}
+				<p id="category-hint" class="hint">
 					Hilft dir, deine Verträge zu organisieren
 				</p>
 			</div>
@@ -125,12 +173,19 @@
 				<input
 					type="date"
 					id="cancellationDate"
+					aria-invalid={!!fieldErrors.cancellationDate}
+					aria-describedby={describedBy('cancellationDate', 'cancellationDate-past', 'cancellationDate-hint')}
 					name="cancellationDate"
 					bind:value={cancellationDate}
 					required
 					class="field"
 				/>
-				<p class="hint">
+				{@render fieldError('cancellationDate')}
+				<!-- Immer im DOM, damit aria-live den Wechsel ansagt -->
+				<p id="cancellationDate-past" class="hint text-warn empty:mt-0" aria-live="polite">
+					{#if isPast}Diese Frist liegt in der Vergangenheit. Prüfe das Jahr.{/if}
+				</p>
+				<p id="cancellationDate-hint" class="hint">
 					Bis wann kannst du den Vertrag kündigen?
 				</p>
 			</div>
@@ -158,6 +213,8 @@
 				<input
 					type="number"
 					id="reminderDays"
+					aria-invalid={!!fieldErrors.reminderDays}
+					aria-describedby={describedBy('reminderDays', 'reminderDays-hint')}
 					name="reminderDays"
 					bind:value={reminderDays}
 					min="1"
@@ -165,7 +222,8 @@
 					required
 					class="field"
 				/>
-				<p class="hint">
+				{@render fieldError('reminderDays')}
+				<p id="reminderDays-hint" class="hint">
 					Du wirst <strong class="font-semibold text-ink-2">{reminderDays} Tage</strong> vor der Kündigungsfrist erinnert.
 					Praktisch für Test-Abos oder wichtige Fristen.
 				</p>
@@ -179,6 +237,8 @@
 				<input
 					type="number"
 					id="cost"
+					aria-invalid={!!fieldErrors.cost}
+					aria-describedby={describedBy('cost', 'cost-hint')}
 					name="cost"
 					bind:value={cost}
 					placeholder="0.00"
@@ -187,7 +247,8 @@
 					required
 					class="field font-mono"
 				/>
-				<p class="hint">
+				{@render fieldError('cost')}
+				<p id="cost-hint" class="hint">
 					Wie viel kostet der Vertrag pro Abrechnungsperiode?
 				</p>
 			</div>
@@ -199,6 +260,8 @@
 				</label>
 				<select
 					id="billingCycle"
+					aria-invalid={!!fieldErrors.billingCycle}
+					aria-describedby={describedBy('billingCycle', 'billingCycle-hint')}
 					name="billingCycle"
 					bind:value={billingCycle}
 					class="field"
@@ -207,7 +270,8 @@
 					<option value="quarterly">Vierteljährlich</option>
 					<option value="yearly">Jährlich</option>
 				</select>
-				<p class="hint">
+				{@render fieldError('billingCycle')}
+				<p id="billingCycle-hint" class="hint">
 					Wie oft wird der Betrag abgerechnet?
 				</p>
 			</div>
@@ -219,6 +283,8 @@
 				</label>
 				<select
 					id="status"
+					aria-invalid={!!fieldErrors.status}
+					aria-describedby={describedBy('status')}
 					name="status"
 					bind:value={status}
 					class="field"
@@ -226,6 +292,7 @@
 					<option value="active">Aktiv</option>
 					<option value="cancelled">Gekündigt</option>
 				</select>
+				{@render fieldError('status')}
 			</div>
 
 			<!-- Buttons -->
@@ -233,7 +300,7 @@
 				<button type="submit" class="btn btn-primary">
 					Vertrag speichern
 				</button>
-				<a href="/" class="btn">
+				<a href="/dashboard" class="btn">
 					Abbrechen
 				</a>
 			</div>

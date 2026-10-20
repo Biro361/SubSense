@@ -78,6 +78,7 @@
 						type="text"
 						id="name"
 						name="name"
+						autocomplete="name"
 						value={data.user.name}
 						class="field"
 						required
@@ -101,6 +102,7 @@
 						type="email"
 						id="email"
 						name="email"
+						autocomplete="email"
 						value={data.user.email}
 						class="field"
 						required
@@ -130,6 +132,7 @@
 							type="password"
 							id="oldPassword"
 							name="oldPassword"
+							autocomplete="current-password"
 							class="field"
 							required
 						/>
@@ -142,6 +145,7 @@
 							type="password"
 							id="newPassword"
 							name="newPassword"
+							autocomplete="new-password"
 							minlength="8"
 							class="field"
 							required
@@ -155,6 +159,7 @@
 							type="password"
 							id="confirmPassword"
 							name="confirmPassword"
+							autocomplete="new-password"
 							minlength="8"
 							class="field"
 							required
@@ -194,6 +199,7 @@
 							type="password"
 							id="password"
 							name="password"
+							autocomplete="current-password"
 							class="field"
 							required
 						/>
