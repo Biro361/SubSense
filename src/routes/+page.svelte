@@ -41,7 +41,7 @@
 	<Toast message="Du wurdest erfolgreich abgemeldet." onClose={() => (showToast = false)} />
 {/if}
 
-<main class="flex min-h-screen items-center justify-center px-4 py-12">
+<main class="flex flex-1 items-center justify-center px-4 py-12">
 	<div class="w-full max-w-md">
 		<div class="mb-8 flex items-center gap-2.5">
 			<span class="grid size-8 shrink-0 place-items-center rounded-card bg-accent text-surface">
