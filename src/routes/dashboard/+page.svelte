@@ -374,8 +374,8 @@
                   Gekündigt
                 {:else if contract.isOverdue}
                   Frist überschritten – Vertrag läuft evtl. weiter
-                {:else if contract.isUrgent}
-                  Erinnerung war am {formatDate(contract.reminderDate)}
+                {:else if contract.daysUntilCancellation < contract.reminderDays}
+                  Erinnerungsdatum {formatDate(contract.reminderDate)} (vorbei)
                 {:else}
                   Erinnerung am {formatDate(contract.reminderDate)}
                 {/if}
