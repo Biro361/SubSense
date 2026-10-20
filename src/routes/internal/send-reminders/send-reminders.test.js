@@ -169,6 +169,19 @@ describe('POST /internal/send-reminders', () => {
     expect(body).toMatchObject({ failed: 3, deferred: 2 });
   });
 
+  it('läuft weiter, wenn das Markieren scheitert', async () => {
+    mocks.getContractsWithUpcomingDeadlines.mockResolvedValue(['c1', 'c2', 'c3'].map((id) => contract(id)));
+    mocks.markReminderSent.mockRejectedValueOnce(new Error('Mongo timeout'));
+
+    const response = await call();
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(mocks.sendMail).toHaveBeenCalledTimes(3);
+    expect(body).toMatchObject({ sent: 3, unmarked: 1 });
+    expect(mocks.closeMail).toHaveBeenCalledOnce();
+  });
+
   it('läuft bei abgelehnten Empfängern weiter, statt abzubrechen', async () => {
     mocks.getContractsWithUpcomingDeadlines.mockResolvedValue(
       ['c1', 'c2', 'c3', 'c4', 'c5'].map((id) => contract(id))

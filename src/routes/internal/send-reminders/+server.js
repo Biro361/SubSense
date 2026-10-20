@@ -86,7 +86,7 @@ export async function POST({ request, url }) {
   }
 
   const started = Date.now();
-  const summary = { checked: 0, due: 0, sent: 0, failed: 0, skipped: 0, deferred: 0, testMode: false };
+  const summary = { checked: 0, due: 0, sent: 0, failed: 0, skipped: 0, deferred: 0, unmarked: 0, testMode: false };
 
   try {
     // Testläufe arbeiten mit der Produktionsdatenbank: nur Verträge des Testkontos anfassen
@@ -136,10 +136,17 @@ export async function POST({ request, url }) {
 
         const result = await sendMail(buildReminderMail(contract, user.email, url.origin));
         if (result === 'sent') {
-          // Erst nach Erfolg markieren: ein Ausfall wird am nächsten Tag wiederholt
-          await markReminderSent(contract._id, new Date());
           summary.sent++;
           failuresInRow = 0;
+          // Erst nach Erfolg markieren: ein Ausfall wird am nächsten Tag wiederholt
+          try {
+            await markReminderSent(contract._id, new Date());
+          } catch (error) {
+            // Die Mail ist schon draussen: weitermachen, sonst fallen alle übrigen für heute aus.
+            // Dieser Vertrag kommt morgen ein zweites Mal.
+            console.error('Reminder mark error:', error);
+            summary.unmarked++;
+          }
         } else {
           summary.failed++;
           if (result === 'failed') failuresInRow++;
