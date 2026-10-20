@@ -21,7 +21,7 @@ export const actions = {
 		if (!contract || warnings.length > 0) {
 			const count = Object.keys(fieldErrors).length;
 			const error = `Bitte korrigiere ${count} ${count === 1 ? 'Feld' : 'Felder'}.`;
-			return fail(400, { error, fieldErrors, ...raw });
+			return fail(400, { ...raw, error, fieldErrors });
 		}
 
 		try {
@@ -34,7 +34,7 @@ export const actions = {
 			if (error.status === 303) throw error;
 
 			console.error('Fehler beim Erstellen:', error);
-			return fail(500, { error: 'Vertrag konnte nicht gespeichert werden', ...raw });
+			return fail(500, { ...raw, error: 'Vertrag konnte nicht gespeichert werden' });
 		}
 	}
 };
