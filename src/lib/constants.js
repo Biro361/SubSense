@@ -41,6 +41,21 @@ export function monthlyCost(contract) {
   return cost;
 }
 
+const amountFormat = new Intl.NumberFormat('de-CH', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2
+});
+
+/**
+ * Betrag für die Anzeige im Schweizer Format, ohne Währung (z.B. "4’593.80").
+ * Nur fürs Markup – das Ergebnis nie wieder mit parseFloat lesen.
+ * @param {number | undefined} value
+ * @returns {string}
+ */
+export function formatAmount(value) {
+  return amountFormat.format(value || 0);
+}
+
 export const PASSWORD_MIN_LENGTH = 8;
 
 // bcrypt schneidet alles über 72 Byte stillschweigend ab

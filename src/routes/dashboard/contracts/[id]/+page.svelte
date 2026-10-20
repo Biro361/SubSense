@@ -1,7 +1,7 @@
 <!-- src/routes/dashboard/contracts/[id]/+page.svelte -->
 <script>
   import { enhance } from '$app/forms';
-  import { getCategoryByValue } from '$lib/constants';
+  import { formatAmount, getCategoryByValue } from '$lib/constants';
   import Icon from '$lib/components/Icon.svelte';
 
   let { data, form } = $props();
@@ -143,7 +143,7 @@
         <div>
           <dt class="label">Kosten</dt>
           <dd class="font-mono text-lg font-semibold">
-            {contract.cost?.toFixed(2) || '0.00'}
+            {formatAmount(contract.cost)}
             <span class="font-sans text-sm font-normal text-ink-3">CHF / {contract.billingCycle === 'monthly' ? 'Monat' : contract.billingCycle === 'yearly' ? 'Jahr' : 'Quartal'}</span>
           </dd>
         </div>

@@ -3,7 +3,7 @@
   import { page } from "$app/stores";
   import { onMount, tick } from "svelte";
   import { replaceState } from "$app/navigation";
-  import { CATEGORIES, getCategoryByValue, monthlyCost } from "$lib/constants";
+  import { CATEGORIES, formatAmount, getCategoryByValue, monthlyCost } from "$lib/constants";
   import { compareByDeadline } from "$lib/reminders.js";
   import Toast from "$lib/components/Toast.svelte";
   import Icon from "$lib/components/Icon.svelte";
@@ -189,14 +189,14 @@
     <section class="lead">
       <p class="kicker">Laufende Kosten</p>
       <p class="figure">
-        {totalMonthlyCost.toFixed(2)} <i>CHF / Monat</i>
+        {formatAmount(totalMonthlyCost)} <i>CHF / Monat</i>
       </p>
       <p class="sub">
         <b
           >{activeContracts.length}
           {activeContracts.length === 1 ? "aktiver Vertrag" : "aktive Verträge"}</b
         >
-        · {totalYearlyCost.toFixed(2)} CHF im Jahr
+        · {formatAmount(totalYearlyCost)} CHF im Jahr
         {#if overdueContracts.length > 0}
           · <b class="text-crit"
             >{overdueContracts.length}
@@ -249,7 +249,7 @@
       <article class="tile">
         <p class="tile-label">Teuerste Kategorie</p>
         {#if topCategory && parseFloat(topCategory.monthlyCost) > 0}
-          <p class="tile-value">{topCategory.monthlyCost} <i>CHF</i></p>
+          <p class="tile-value">{formatAmount(Number(topCategory.monthlyCost))} <i>CHF</i></p>
           <p class="tile-note">
             {topCategory.label} · {Math.round(
               (parseFloat(topCategory.monthlyCost) / totalMonthlyCost) * 100,
@@ -391,7 +391,7 @@
 
             <div class="cost">
               {#if contract.cost && contract.cost > 0}
-                <p class="c-amt">{contract.cost.toFixed(2)}</p>
+                <p class="c-amt">{formatAmount(contract.cost)}</p>
                 <p class="c-cycle">
                   CHF / {formatBillingCycle(contract.billingCycle)}
                 </p>
