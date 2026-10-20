@@ -142,7 +142,7 @@
       return {
         ...cat,
         count,
-        monthlyCost: categoryMonthlyCost.toFixed(2),
+        monthlyCost: categoryMonthlyCost,
       };
     }),
   );
@@ -155,7 +155,7 @@
   // Teuerste Kategorie, für die Kennzahl neben der Leitzahl
   let topCategory = $derived(
     [...categoryStats].sort(
-      (a, b) => parseFloat(b.monthlyCost) - parseFloat(a.monthlyCost),
+      (a, b) => b.monthlyCost - a.monthlyCost,
     )[0] ?? null,
   );
 
@@ -248,11 +248,11 @@
 
       <article class="tile">
         <p class="tile-label">Teuerste Kategorie</p>
-        {#if topCategory && parseFloat(topCategory.monthlyCost) > 0}
-          <p class="tile-value">{formatAmount(Number(topCategory.monthlyCost))} <i>CHF</i></p>
+        {#if topCategory && topCategory.monthlyCost > 0}
+          <p class="tile-value">{formatAmount(topCategory.monthlyCost)} <i>CHF</i></p>
           <p class="tile-note">
             {topCategory.label} · {Math.round(
-              (parseFloat(topCategory.monthlyCost) / totalMonthlyCost) * 100,
+              (topCategory.monthlyCost / totalMonthlyCost) * 100,
             )} % der Monatskosten
           </p>
         {:else}
