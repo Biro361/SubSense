@@ -20,6 +20,9 @@ const FIELDS = [
   'cancellationInstructions'
 ];
 
+// Listentrennzeichen von Excel mit Region Deutsch (Schweiz)
+const DELIMITER = ';';
+
 // Excel und Sheets führen Werte aus, die mit einem dieser Zeichen beginnen
 const FORMULA_START = /^[=+\-@\t\r]/;
 
@@ -37,8 +40,9 @@ function escapeCSVValue(value) {
     text = `'${text}`;
   }
 
-  // Quotes, Kommas, Umbrüche und Rand-Leerzeichen müssen in Anführungszeichen
-  if (/[",\n\r]/.test(text) || text !== text.trim()) {
+  // Quotes, Trennzeichen, Umbrüche und Rand-Leerzeichen müssen in Anführungszeichen.
+  // Kommas weiterhin quoten, damit auch Komma-Parser die Datei korrekt lesen.
+  if (/[";,\n\r]/.test(text) || text !== text.trim()) {
     return `"${text.replace(/"/g, '""')}"`;
   }
 
@@ -52,7 +56,7 @@ function escapeCSVValue(value) {
  */
 export function contractsToCSV(contracts) {
   // Header-Zeile
-  const header = FIELDS.join(',');
+  const header = FIELDS.join(DELIMITER);
 
   // Daten-Zeilen
   const rows = contracts.map((contract) => {
@@ -67,7 +71,7 @@ export function contractsToCSV(contracts) {
 
         return escapeCSVValue(value);
       })
-      .join(',');
+      .join(DELIMITER);
   });
 
   // UTF-8 BOM hinzufügen für korrekte Excel-Darstellung von Umlauten
@@ -227,11 +231,11 @@ function parseCSVRows(text, delimiter) {
  * @returns {string} CSV-String für Template-Download
  */
 export function generateTemplateCSV() {
-  const header = FIELDS.join(',');
+  const header = FIELDS.join(DELIMITER);
   const examples = [
-    'Netflix Premium,Netflix Inc.,2026-03-15,active,15.90,monthly,7,streaming,https://netflix.com/cancel,Test-Abo läuft noch',
-    'Spotify Family,Spotify AB,2026-06-30,cancelled,16.90,monthly,14,streaming,,Bereits gekündigt am 01.12.2025',
-    'Fitness Studio,FitX,2027-01-01,active,29.90,monthly,30,fitness,https://fitx.de/kuendigen,Jahresvertrag bis Ende 2026'
+    'Netflix Premium;Netflix Inc.;2026-03-15;active;15.90;monthly;7;streaming;https://netflix.com/cancel;Test-Abo läuft noch',
+    'Spotify Family;Spotify AB;2026-06-30;cancelled;16.90;monthly;14;streaming;;Bereits gekündigt am 01.12.2025',
+    'Fitness Studio;FitX;2027-01-01;active;29.90;monthly;30;fitness;https://fitx.de/kuendigen;Jahresvertrag bis Ende 2026'
   ];
 
   const bom = '\uFEFF'; // UTF-8 BOM für Excel
