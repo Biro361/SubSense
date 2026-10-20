@@ -194,7 +194,7 @@
             rows="10"
             bind:value={notesText}
             class="field"
-            placeholder="Hier kannst du Notizen zu diesem Vertrag speichern...\n\nBeispielsweise:\n- Testphase endet am 15. Februar\n- Kündigung per E-Mail an kuendigung@anbieter.ch\n- Kundennummer: 12345"
+            placeholder={"Hier kannst du Notizen zu diesem Vertrag speichern…\n\nBeispielsweise:\n- Testphase endet am 15. Februar\n- Kündigung per E-Mail an kuendigung@anbieter.ch\n- Kundennummer: 12345"}
           ></textarea>
           <p class="hint">
             Notiere wichtige Details wie Kundennummern, Kontaktdaten oder Kündigungshinweise.
@@ -235,7 +235,7 @@
               rows="10"
               bind:value={instructionsText}
               class="field"
-              placeholder="Schritt-für-Schritt Anleitung zur Kündigung...\n\n1. Auf der Webseite einloggen\n2. Menü 'Mein Konto' öffnen\n3. Unter 'Verträge' die Option 'Kündigen' wählen\n4. Kündigungsbestätigung per E-Mail abwarten"
+              placeholder={"Schritt-für-Schritt Anleitung zur Kündigung…\n\n1. Auf der Webseite einloggen\n2. Menü 'Mein Konto' öffnen\n3. Unter 'Verträge' die Option 'Kündigen' wählen\n4. Kündigungsbestätigung per E-Mail abwarten"}
             ></textarea>
             <p class="hint">
               Halte die Schritte fest, damit du beim nächsten Mal schnell weisst, wie die Kündigung funktioniert.
