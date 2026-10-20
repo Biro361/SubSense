@@ -8,7 +8,9 @@ export const CATEGORIES = [
   { value: 'streaming', label: 'Streaming' },
   { value: 'fitness', label: 'Fitness' },
   { value: 'software', label: 'Software' },
+  { value: 'telecom', label: 'Mobilfunk & Internet' },
   { value: 'transport', label: 'Transport' },
+  { value: 'health-insurance', label: 'Krankenkasse' },
   { value: 'insurance', label: 'Versicherung' },
   { value: 'other', label: 'Sonstiges' }
 ];

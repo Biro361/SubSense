@@ -95,6 +95,15 @@ describe('validateContract', () => {
     expect(contract.cancellationUrl).toBeNull();
   });
 
+  it('akzeptiert die Kategorien Mobilfunk & Internet und Krankenkasse', () => {
+    for (const category of ['telecom', 'health-insurance']) {
+      const result = validateContract({ ...valid, category });
+
+      expect(result.warnings).toEqual([]);
+      expect(expectValid(result).category).toBe(category);
+    }
+  });
+
   it('liest ein Dezimalkomma als Dezimalpunkt', () => {
     const { contract } = validateContract({ ...valid, cost: '15,90' });
 
