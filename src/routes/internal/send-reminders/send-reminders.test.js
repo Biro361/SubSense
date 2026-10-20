@@ -148,13 +148,24 @@ describe('POST /internal/send-reminders', () => {
     expect(mocks.sendMail).not.toHaveBeenCalled();
   });
 
-  it('markiert bei einem Versandfehler nichts', async () => {
+  it('markiert bei einem Versandfehler nichts und meldet 502, wenn nichts rausging', async () => {
     mocks.sendMail.mockResolvedValue('failed');
 
-    const body = await (await call()).json();
+    const response = await call();
+    const body = await response.json();
 
+    expect(response.status).toBe(502);
     expect(body).toMatchObject({ sent: 0, failed: 1 });
     expect(mocks.markReminderSent).not.toHaveBeenCalled();
+  });
+
+  it('meldet 200, wenn neben Fehlern etwas verschickt wurde oder nichts fällig war', async () => {
+    mocks.getContractsWithUpcomingDeadlines.mockResolvedValue([contract('c1'), contract('c2')]);
+    mocks.sendMail.mockResolvedValueOnce('failed').mockResolvedValueOnce('sent');
+    expect((await call()).status).toBe(200);
+
+    mocks.getContractsWithUpcomingDeadlines.mockResolvedValue([]);
+    expect((await call()).status).toBe(200);
   });
 
   it('bricht nach drei Fehlschlägen in Folge ab', async () => {

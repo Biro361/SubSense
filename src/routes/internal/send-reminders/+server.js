@@ -157,7 +157,10 @@ export async function POST({ request, url }) {
     }
 
     console.log('Reminder run:', JSON.stringify({ ...summary, durationMs: Date.now() - started }));
-    return json(summary);
+    // Nichts verschickt, aber Fehler: als Fehler melden, sonst sieht ein toter Versand
+    // (falsches Passwort, gesperrte Adresse) im Log wie ein erfolgreicher Lauf aus
+    const nothingWentOut = summary.sent === 0 && summary.failed > 0;
+    return json(summary, { status: nothingWentOut ? 502 : 200 });
   } catch (error) {
     console.error('Reminder run error:', error);
     return json({ error: 'Erinnerungs-Lauf fehlgeschlagen' }, { status: 500 });
