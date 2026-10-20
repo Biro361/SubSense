@@ -23,6 +23,11 @@
   let billingCycle = $state(sent.billingCycle ?? (contract.billingCycle || "monthly"));
   let status = $state(sent.status ?? contract.status);
 
+  // Kalendertag in Zürich wie in reminders.js: Server und Browser sind sich einig, kein Sprung um Mitternacht UTC
+  const today = new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Zurich" });
+  // Nur ein Hinweis: abgelaufene oder gekündigte Verträge nachzutragen ist erlaubt
+  let isPast = $derived(!!cancellationDate && cancellationDate < today);
+
   // Erinnerungstage State
   let reminderDays = $state(Number(sent.reminderDays ?? contract.reminderDays) || 7);
 
@@ -166,13 +171,17 @@
           type="date"
           id="cancellationDate"
           aria-invalid={!!fieldErrors.cancellationDate}
-          aria-describedby={describedBy('cancellationDate')}
+          aria-describedby={describedBy('cancellationDate', 'cancellationDate-past')}
           name="cancellationDate"
           bind:value={cancellationDate}
           required
           class="field"
         />
         {@render fieldError('cancellationDate')}
+        <!-- Immer im DOM, damit aria-live den Wechsel ansagt -->
+        <p id="cancellationDate-past" class="hint text-warn empty:mt-0" aria-live="polite">
+          {#if isPast}Diese Frist liegt in der Vergangenheit. Prüfe das Jahr.{/if}
+        </p>
       </div>
 
       <!-- Erinnerung -->
