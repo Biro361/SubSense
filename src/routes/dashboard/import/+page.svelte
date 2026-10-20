@@ -8,6 +8,8 @@
 
   let uploading = $state(false);
   let showPreview = $derived(form?.preview === true);
+  // Übersprungene Zeilen liefert nur die Vorschau (`errors`); im Fehlerzweig heissen sie `validationErrors`
+  let skipped = $derived(form?.errors ?? []);
 
   // Abrechnungszyklus formatieren
   function formatBillingCycle(cycle) {
@@ -168,13 +170,32 @@
     <div role="status" class="mb-6 flex items-start gap-3 rounded-card border border-ok/30 bg-ok/5 px-4 py-3 text-sm text-ok">
       <Icon name="check" class="mt-0.5 shrink-0" />
       <div>
-        <p class="font-semibold">CSV-Datei erfolgreich gelesen</p>
+        <p class="font-semibold">{skipped.length > 0 ? 'CSV-Datei gelesen' : 'CSV-Datei erfolgreich gelesen'}</p>
         <p class="mt-1">
-          {form.totalContracts} Verträge gefunden. Überprüfe die Daten vor dem
+          {form.totalContracts} {form?.totalContracts === 1 ? 'Vertrag' : 'Verträge'} gefunden. Überprüfe die Daten vor dem
           Import.
         </p>
       </div>
     </div>
+
+    <!-- Übersprungene Zeilen (Import trotzdem möglich) -->
+    {#if skipped.length > 0}
+      <div role="alert" class="mb-6 rounded-card border border-warn/30 bg-warn/5 px-4 py-3 text-sm text-warn">
+        <p class="mb-2 flex items-center gap-2 font-semibold">
+          <Icon name="alert" />
+          {skipped.length} {skipped.length === 1 ? 'Zeile' : 'Zeilen'} übersprungen
+        </p>
+        <ul class="list-inside list-disc space-y-1">
+          {#each skipped as err}
+            <li>{err}</li>
+          {/each}
+        </ul>
+        <p class="mt-2 text-xs">
+          Übersprungene Zeilen werden nicht importiert. Korrigiere die Datei und
+          lade sie erneut hoch, um sie zu übernehmen.
+        </p>
+      </div>
+    {/if}
 
     <!-- Warnungen anzeigen (falls vorhanden) -->
     {#if form.warnings && form.warnings.length > 0}
@@ -273,7 +294,7 @@
             Verträge werden importiert …
           {:else}
             <Icon name="check" size={15} />
-            {form.totalContracts} Verträge importieren
+            {form.totalContracts} {form?.totalContracts === 1 ? 'Vertrag' : 'Verträge'} importieren
           {/if}
         </button>
 
