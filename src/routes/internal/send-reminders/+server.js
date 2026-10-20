@@ -15,7 +15,8 @@ const WINDOW_DAYS = 90;
 const MAX_MAILS_PER_RUN = 150;
 const TIME_BUDGET_MS = 20_000;
 
-// Drei Fehlschläge in Folge heissen: Server weg, Passwort falsch oder Adresse gesperrt
+// Drei Systemfehler in Folge heissen: Server weg, Passwort falsch oder Adresse gesperrt.
+// Abgelehnte Empfänger zählen nicht, sonst hielten drei falsche Adressen den Lauf jeden Tag an.
 const MAX_FAILURES_IN_ROW = 3;
 
 // Ein kurzer Schlüssel ist so gut wie keiner
@@ -133,15 +134,15 @@ export async function POST({ request, url }) {
           continue;
         }
 
-        const sent = await sendMail(buildReminderMail(contract, user.email, url.origin));
-        if (sent) {
+        const result = await sendMail(buildReminderMail(contract, user.email, url.origin));
+        if (result === 'sent') {
           // Erst nach Erfolg markieren: ein Ausfall wird am nächsten Tag wiederholt
           await markReminderSent(contract._id, new Date());
           summary.sent++;
           failuresInRow = 0;
         } else {
           summary.failed++;
-          failuresInRow++;
+          if (result === 'failed') failuresInRow++;
         }
       }
     } finally {

@@ -37,7 +37,7 @@ describe('sendMail', () => {
   });
 
   it('verschickt über Infomaniak mit STARTTLS auf Port 587', async () => {
-    await expect(sendMail(MAIL)).resolves.toBe(true);
+    await expect(sendMail(MAIL)).resolves.toBe('sent');
 
     expect(mocks.createTransport).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -69,7 +69,7 @@ describe('sendMail', () => {
     expect(mocks.createTransport).toHaveBeenCalledTimes(2);
   });
 
-  it('gibt bei einem Fehler false zurück und loggt nur die Codes', async () => {
+  it('meldet einen abgelehnten Empfänger als rejected und loggt nur die Codes', async () => {
     mocks.send.mockRejectedValue(
       Object.assign(new Error('Recipient address rejected: nutzer@example.ch'), {
         code: 'EENVELOPE',
@@ -77,16 +77,24 @@ describe('sendMail', () => {
       })
     );
 
-    await expect(sendMail(MAIL)).resolves.toBe(false);
+    await expect(sendMail(MAIL)).resolves.toBe('rejected');
 
     expect(console.error).toHaveBeenCalledWith('Mail error:', 'EENVELOPE', 550);
     expect(JSON.stringify(vi.mocked(console.error).mock.calls)).not.toContain('nutzer@example.ch');
   });
 
-  it('gibt ohne Konfiguration false zurück, ohne einen Transport anzulegen', async () => {
+  it('meldet Zugangs- und Verbindungsfehler als failed', async () => {
+    mocks.send.mockRejectedValueOnce(Object.assign(new Error('Invalid login'), { code: 'EAUTH', responseCode: 535 }));
+    await expect(sendMail(MAIL)).resolves.toBe('failed');
+
+    mocks.send.mockRejectedValueOnce(Object.assign(new Error('Timeout'), { code: 'ETIMEDOUT' }));
+    await expect(sendMail(MAIL)).resolves.toBe('failed');
+  });
+
+  it('gibt ohne Konfiguration failed zurück, ohne einen Transport anzulegen', async () => {
     delete mocks.env.SMTP_PASSWORD;
 
-    await expect(sendMail(MAIL)).resolves.toBe(false);
+    await expect(sendMail(MAIL)).resolves.toBe('failed');
 
     expect(mocks.createTransport).not.toHaveBeenCalled();
     expect(mocks.send).not.toHaveBeenCalled();
@@ -95,7 +103,7 @@ describe('sendMail', () => {
   it('schreibt im Testmodus keinen fremden Empfänger an', async () => {
     mocks.env.MAIL_TEST_RECIPIENT = 'test@example.ch';
 
-    await expect(sendMail(MAIL)).resolves.toBe(false);
+    await expect(sendMail(MAIL)).resolves.toBe('rejected');
 
     expect(mocks.send).not.toHaveBeenCalled();
     expect(console.warn).toHaveBeenCalledWith('Mail skipped (test mode)');
@@ -104,7 +112,7 @@ describe('sendMail', () => {
   it('verschickt im Testmodus an die Testadresse, ohne auf Gross-/Kleinschreibung zu achten', async () => {
     mocks.env.MAIL_TEST_RECIPIENT = 'Test@Example.ch ';
 
-    await expect(sendMail({ ...MAIL, to: 'test@example.CH' })).resolves.toBe(true);
+    await expect(sendMail({ ...MAIL, to: 'test@example.CH' })).resolves.toBe('sent');
 
     expect(mocks.send).toHaveBeenCalledOnce();
   });

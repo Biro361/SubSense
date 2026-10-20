@@ -65,7 +65,7 @@ describe('POST /internal/send-reminders', () => {
     mocks.env.CRON_SECRET = SECRET;
     mocks.getContractsWithUpcomingDeadlines.mockResolvedValue([contract('c1')]);
     mocks.getUsersByIds.mockResolvedValue([user('u1')]);
-    mocks.sendMail.mockResolvedValue(true);
+    mocks.sendMail.mockResolvedValue('sent');
     mocks.markReminderSent.mockResolvedValue(true);
     vi.spyOn(console, 'log').mockImplementation(() => {});
     vi.spyOn(console, 'warn').mockImplementation(() => {});
@@ -149,7 +149,7 @@ describe('POST /internal/send-reminders', () => {
   });
 
   it('markiert bei einem Versandfehler nichts', async () => {
-    mocks.sendMail.mockResolvedValue(false);
+    mocks.sendMail.mockResolvedValue('failed');
 
     const body = await (await call()).json();
 
@@ -161,12 +161,30 @@ describe('POST /internal/send-reminders', () => {
     mocks.getContractsWithUpcomingDeadlines.mockResolvedValue(
       ['c1', 'c2', 'c3', 'c4', 'c5'].map((id) => contract(id))
     );
-    mocks.sendMail.mockResolvedValue(false);
+    mocks.sendMail.mockResolvedValue('failed');
 
     const body = await (await call()).json();
 
     expect(mocks.sendMail).toHaveBeenCalledTimes(3);
     expect(body).toMatchObject({ failed: 3, deferred: 2 });
+  });
+
+  it('läuft bei abgelehnten Empfängern weiter, statt abzubrechen', async () => {
+    mocks.getContractsWithUpcomingDeadlines.mockResolvedValue(
+      ['c1', 'c2', 'c3', 'c4', 'c5'].map((id) => contract(id))
+    );
+    mocks.sendMail
+      .mockResolvedValueOnce('rejected')
+      .mockResolvedValueOnce('rejected')
+      .mockResolvedValueOnce('rejected')
+      .mockResolvedValueOnce('rejected')
+      .mockResolvedValueOnce('sent');
+
+    const body = await (await call()).json();
+
+    expect(mocks.sendMail).toHaveBeenCalledTimes(5);
+    expect(body).toMatchObject({ failed: 4, sent: 1, deferred: 0 });
+    expect(mocks.markReminderSent).toHaveBeenCalledOnce();
   });
 
   it('schickt höchstens 150 Mails pro Lauf', async () => {
@@ -187,7 +205,7 @@ describe('POST /internal/send-reminders', () => {
     // Jede Mail dauert 15 s
     mocks.sendMail.mockImplementation(async () => {
       now += 15_000;
-      return true;
+      return 'sent';
     });
 
     const body = await (await call()).json();

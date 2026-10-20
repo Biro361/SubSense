@@ -35,7 +35,8 @@ function getTransporter() {
  * Ist MAIL_TEST_RECIPIENT gesetzt, geht nur an genau diese Adresse etwas raus:
  * Testläufe arbeiten mit der Produktionsdatenbank und dürfen echte Nutzer nicht anschreiben.
  * @param {{ to: string, subject: string, text: string, html?: string }} mail
- * @returns {Promise<boolean>} true, wenn der Server die Mail angenommen hat
+ * @returns {Promise<'sent' | 'rejected' | 'failed'>} rejected: nur dieser Empfänger geht nicht
+ *   (abgelehnt oder Testmodus); failed: Server, Zugang oder Konfiguration
  */
 export async function sendMail({ to, subject, text, html }) {
   if (!env.SMTP_USER || !env.SMTP_PASSWORD || !env.MAIL_FROM) {
@@ -44,23 +45,24 @@ export async function sendMail({ to, subject, text, html }) {
       console.error('Mail error: SMTP_USER, SMTP_PASSWORD or MAIL_FROM is missing');
       missingConfigLogged = true;
     }
-    return false;
+    return 'failed';
   }
 
   const testRecipient = env.MAIL_TEST_RECIPIENT?.trim().toLowerCase();
   if (testRecipient && to.trim().toLowerCase() !== testRecipient) {
     console.warn('Mail skipped (test mode)');
-    return false;
+    return 'rejected';
   }
 
   try {
     await getTransporter().sendMail({ from: env.MAIL_FROM, to, subject, text, html });
-    return true;
+    return 'sent';
   } catch (error) {
     // Nur Codes: die Meldung des Servers kann die Empfängeradresse enthalten
     const { code, responseCode } = /** @type {{ code?: string, responseCode?: number }} */ (error ?? {});
     console.error('Mail error:', code, responseCode);
-    return false;
+    // EENVELOPE: der Server lehnt den Empfänger ab, nicht die Verbindung
+    return code === 'EENVELOPE' ? 'rejected' : 'failed';
   }
 }
 
