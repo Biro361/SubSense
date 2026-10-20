@@ -1,6 +1,7 @@
 <script>
 	import { enhance } from '$app/forms';
 	import { CATEGORIES } from '$lib/constants';
+	import { todayInZurich } from '$lib/reminders.js';
 
 	let { form } = $props();
 
@@ -20,8 +21,8 @@
 	let billingCycle = $state(form?.billingCycle || 'monthly');
 	let status = $state(form?.status || 'active');
 
-	// Kalendertag in Zürich wie in reminders.js: Server und Browser sind sich einig, kein Sprung um Mitternacht UTC
-	const today = new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Zurich' });
+	// Kalendertag der Nutzer: Server und Browser sind sich einig, kein Sprung um Mitternacht UTC
+	const today = todayInZurich();
 	// Nur ein Hinweis: abgelaufene oder gekündigte Verträge nachzutragen ist erlaubt
 	let isPast = $derived(!!cancellationDate && cancellationDate < today);
 

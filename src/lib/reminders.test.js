@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { calculateReminderMetadata, compareByDeadline } from './reminders.js';
+import { calculateReminderMetadata, compareByDeadline, todayInZurich } from './reminders.js';
 
 /**
  * Lokaler Kalendertag relativ zu heute
@@ -125,6 +125,20 @@ describe('calculateReminderMetadata', () => {
     });
 
     expect(result.reminderDate.getTime()).toBe(dayOffset(16).getTime());
+  });
+});
+
+describe('todayInZurich', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('liefert kurz nach Mitternacht Schweizer Zeit schon den neuen Tag als JJJJ-MM-TT', () => {
+    vi.useFakeTimers();
+    // 22:30 UTC am 20.10. ist 00:30 am 21.10. in Zürich
+    vi.setSystemTime(new Date('2026-10-20T22:30:00.000Z'));
+
+    expect(todayInZurich()).toBe('2026-10-21');
   });
 });
 
