@@ -286,7 +286,7 @@
 {/if}
 
 <!-- Main Content Area -->
-<main class="main-content">
+<main id="main" tabindex="-1" class="main-content">
 	{@render children()}
 </main>
 

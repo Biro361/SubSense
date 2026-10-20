@@ -12,6 +12,8 @@
 
 <!-- Spalte über die ganze Fensterhöhe: auf kurzen Seiten sitzt der Footer am unteren Rand -->
 <div class="flex min-h-screen flex-col">
+	<!-- Erstes Tab-Ziel jeder Seite; jede Seite hat ein <main id="main"> -->
+	<a href="#main" class="skip-link">Zum Inhalt springen</a>
 	<div class="flex flex-1 flex-col">
 		{@render children()}
 	</div>

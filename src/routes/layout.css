@@ -156,6 +156,28 @@
 		color: var(--color-crit);
 	}
 
+	/* Skip-Link: ausserhalb des Bildes, bei Tastaturfokus oben links sichtbar */
+	.skip-link {
+		position: absolute;
+		top: 0.75rem;
+		left: 1rem;
+		z-index: 100;
+		padding: 0.55rem 0.8rem;
+		font-size: 13.5px;
+		font-weight: 600;
+		color: var(--color-surface);
+		background: var(--color-accent);
+		border-radius: var(--radius-card);
+		transform: translateY(-200%);
+	}
+	.skip-link:focus {
+		transform: none;
+	}
+	/* Ziel des Skip-Links: nur Sprungziel, kein Rahmen um die ganze Seite */
+	#main:focus {
+		outline: none;
+	}
+
 	/* Kategorie- und Statuslabel in Kapitälchen; ersetzt die Emoji-Pills */
 	.cat {
 		padding: 0.25rem 0.45rem;
