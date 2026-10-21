@@ -24,17 +24,18 @@ export const VALID_CATEGORIES = CATEGORIES.map(c => c.value);
 /**
  * Typische Schweizer Abos fürs Onboarding: befüllen nur das Formular vor.
  * Bewusst ohne Kündigungs-Links der Anbieter – die veralten und wären ungeprüft.
- * @type {Array<{label: string, name: string, provider: string, category: string}>}
+ * Leerer `provider`: Nutzer muss den echten Anbieter eintragen (Pflichtfeld).
+ * @type {Array<{label: string, name: string, provider: string, category: string, billingCycle: string}>}
  */
 export const CONTRACT_SUGGESTIONS = [
-  { label: 'Swisscom', name: 'Mobile Abo', provider: 'Swisscom', category: 'telecom' },
-  { label: 'Sunrise', name: 'Mobile Abo', provider: 'Sunrise', category: 'telecom' },
-  { label: 'Salt', name: 'Mobile Abo', provider: 'Salt', category: 'telecom' },
-  { label: 'SBB Halbtax', name: 'Halbtax', provider: 'SBB', category: 'transport' },
-  { label: 'SBB GA', name: 'GA', provider: 'SBB', category: 'transport' },
-  { label: 'Netflix', name: 'Netflix', provider: 'Netflix', category: 'streaming' },
-  { label: 'Spotify', name: 'Spotify', provider: 'Spotify', category: 'streaming' },
-  { label: 'Krankenkasse', name: 'Grundversicherung', provider: 'Krankenkasse', category: 'health-insurance' }
+  { label: 'Swisscom', name: 'Mobile Abo', provider: 'Swisscom', category: 'telecom', billingCycle: 'monthly' },
+  { label: 'Sunrise', name: 'Mobile Abo', provider: 'Sunrise', category: 'telecom', billingCycle: 'monthly' },
+  { label: 'Salt', name: 'Mobile Abo', provider: 'Salt', category: 'telecom', billingCycle: 'monthly' },
+  { label: 'SBB Halbtax', name: 'Halbtax', provider: 'SBB', category: 'transport', billingCycle: 'yearly' },
+  { label: 'SBB GA', name: 'GA', provider: 'SBB', category: 'transport', billingCycle: 'yearly' },
+  { label: 'Netflix', name: 'Netflix', provider: 'Netflix', category: 'streaming', billingCycle: 'monthly' },
+  { label: 'Spotify', name: 'Spotify', provider: 'Spotify', category: 'streaming', billingCycle: 'monthly' },
+  { label: 'Krankenkasse', name: 'Grundversicherung', provider: '', category: 'health-insurance', billingCycle: 'monthly' }
 ];
 
 /**

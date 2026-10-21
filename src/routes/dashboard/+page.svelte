@@ -182,7 +182,12 @@
 {/if}
 
 <div class="page">
-  {#if contracts.length === 0}
+  {#if data.error}
+    <!-- Ladefehler: kein Onboarding, sonst erfassen bestehende Nutzer ihre Verträge doppelt -->
+    <div class="empty" role="alert">
+      <p>{data.error}. Lade die Seite in einem Moment neu.</p>
+    </div>
+  {:else if contracts.length === 0}
     <!-- Onboarding: Vorschläge befüllen nur das Formular vor, gespeichert wird erst dort -->
     <section class="empty onboarding" aria-labelledby="onboarding-title">
       <p class="kicker">Erste Schritte</p>
@@ -200,6 +205,7 @@
                 name: s.name,
                 provider: s.provider,
                 category: s.category,
+                billingCycle: s.billingCycle,
               })}">{s.label}</a
             >
           </li>

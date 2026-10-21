@@ -1,15 +1,22 @@
 import { describe, it, expect } from 'vitest';
 import { CONTRACT_SUGGESTIONS, VALID_CATEGORIES, formatAmount, monthlyCost } from './constants.js';
+import { VALID_BILLING_CYCLES } from './validation.js';
 
 describe('CONTRACT_SUGGESTIONS', () => {
-  it('hat nur gültige Kategorien und keine leeren Texte', () => {
+  it('hat nur gültige Kategorien und Zyklen und keine leeren Namen', () => {
     expect(CONTRACT_SUGGESTIONS.length).toBeGreaterThanOrEqual(6);
     for (const s of CONTRACT_SUGGESTIONS) {
       expect(VALID_CATEGORIES).toContain(s.category);
+      expect(VALID_BILLING_CYCLES).toContain(s.billingCycle);
       expect(s.label.trim()).not.toBe('');
       expect(s.name.trim()).not.toBe('');
-      expect(s.provider.trim()).not.toBe('');
+      expect(typeof s.provider).toBe('string');
     }
+  });
+
+  it('rechnet Jahres-Abos jährlich ab', () => {
+    const ga = CONTRACT_SUGGESTIONS.find((s) => s.label === 'SBB GA');
+    expect(ga?.billingCycle).toBe('yearly');
   });
 });
 
