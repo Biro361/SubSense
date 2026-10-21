@@ -7,7 +7,9 @@ import {
 	recordAttempt,
 	RESET_MAX_REQUESTS,
 	RESET_IP_MAX_REQUESTS,
-	RESET_WINDOW_MINUTES
+	RESET_WINDOW_MINUTES,
+	RESET_MAILS_MAX_PER_DAY,
+	RESET_MAILS_WINDOW_MINUTES
 } from '$lib/db/rateLimit.js';
 import { sendMail, closeMail } from '$lib/server/mail';
 
@@ -49,6 +51,13 @@ async function sendResetLink(email) {
 
 	const user = await getUserByEmail(email);
 	if (!user) return;
+
+	// Erst hier zählen: Anfragen für unbekannte Adressen dürfen das Kontingent nicht aufbrauchen
+	const [mailsToday] = await recordAttempt(['reset:mails:all'], RESET_MAILS_WINDOW_MINUTES);
+	if (mailsToday > RESET_MAILS_MAX_PER_DAY) {
+		console.error('Password reset error: daily mail limit reached');
+		return;
+	}
 
 	const token = await createPasswordReset(user._id.toString());
 	try {

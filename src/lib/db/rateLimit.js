@@ -16,6 +16,10 @@ export const SIGNUP_WINDOW_MINUTES = 60;
 export const RESET_MAX_REQUESTS = 5;
 export const RESET_IP_MAX_REQUESTS = 20;
 export const RESET_WINDOW_MINUTES = 60;
+// Über alle Adressen: der Erinnerungs-Lauf lässt 50 der 200 Mails frei, ein Ansturm auf
+// Reset-Mails darf die Erinnerungen nicht verdrängen
+export const RESET_MAILS_MAX_PER_DAY = 40;
+export const RESET_MAILS_WINDOW_MINUTES = 24 * 60;
 
 /**
  * Der Schlüssel ist die _id, deshalb ein eigener Dokumenttyp (Default wäre ObjectId)

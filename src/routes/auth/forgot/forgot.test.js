@@ -1,6 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { actions, _MIN_RESPONSE_MS } from './+page.server.js';
-import { RESET_MAX_REQUESTS, RESET_IP_MAX_REQUESTS } from '$lib/db/rateLimit.js';
+import {
+  RESET_MAX_REQUESTS,
+  RESET_IP_MAX_REQUESTS,
+  RESET_MAILS_MAX_PER_DAY
+} from '$lib/db/rateLimit.js';
 
 const mocks = vi.hoisted(() => ({
   env: /** @type {Record<string, string | undefined>} */ ({}),
@@ -150,6 +154,27 @@ describe('Passwort vergessen', () => {
 
     mocks.recordAttempt.mockResolvedValue([RESET_IP_MAX_REQUESTS + 1, 1]);
     expect((await forgot(KNOWN)).status).toBe(429);
+  });
+
+  it('verschickt über dem Tageslimit aller Reset-Mails nichts, antwortet aber gleich', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    mocks.recordAttempt
+      .mockResolvedValueOnce([1, 1])
+      .mockResolvedValueOnce([RESET_MAILS_MAX_PER_DAY + 1]);
+
+    const limited = await timedForgot(KNOWN);
+
+    expect(limited).toEqual({ result: { sent: true }, settledEarly: false, settled: true });
+    expect(mocks.createPasswordReset).not.toHaveBeenCalled();
+    expect(mocks.sendMail).not.toHaveBeenCalled();
+    consoleError.mockRestore();
+  });
+
+  it('zählt für das Tageslimit nur Anfragen, die eine Mail auslösen', async () => {
+    await timedForgot('niemand@example.com');
+
+    expect(mocks.recordAttempt).toHaveBeenCalledOnce();
+    expect(mocks.recordAttempt.mock.calls[0][0]).not.toContain('reset:mails:all');
   });
 
   it('verlangt eine E-Mail-Adresse', async () => {
