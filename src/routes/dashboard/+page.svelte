@@ -3,7 +3,13 @@
   import { page } from "$app/stores";
   import { onMount, tick } from "svelte";
   import { replaceState } from "$app/navigation";
-  import { CATEGORIES, formatAmount, getCategoryByValue, monthlyCost } from "$lib/constants";
+  import {
+    CATEGORIES,
+    CONTRACT_SUGGESTIONS,
+    formatAmount,
+    getCategoryByValue,
+    monthlyCost,
+  } from "$lib/constants";
   import { compareByDeadline } from "$lib/reminders.js";
   import Toast from "$lib/components/Toast.svelte";
   import Icon from "$lib/components/Icon.svelte";
@@ -176,14 +182,45 @@
 {/if}
 
 <div class="page">
-  {#if contracts.length === 0}
-    <div class="empty">
-      <p>Noch keine Verträge vorhanden.</p>
-      <a href="/dashboard/contracts/new" class="btn btn-primary">
-        <Icon name="plus" size={15} />
-        Ersten Vertrag erstellen
-      </a>
+  {#if data.error}
+    <!-- Ladefehler: kein Onboarding, sonst erfassen bestehende Nutzer ihre Verträge doppelt -->
+    <div class="empty" role="alert">
+      <p>{data.error}. Lade die Seite in einem Moment neu.</p>
     </div>
+  {:else if contracts.length === 0}
+    <!-- Onboarding: Vorschläge befüllen nur das Formular vor, gespeichert wird erst dort -->
+    <section class="empty onboarding" aria-labelledby="onboarding-title">
+      <p class="kicker">Erste Schritte</p>
+      <h2 id="onboarding-title" class="onb-title">Willkommen bei SubSense</h2>
+      <p>
+        Erfasse dein erstes Abo – oder wähle eines der häufigsten. Frist und Kosten ergänzt du im
+        Formular.
+      </p>
+      <ul class="chips onb-chips" aria-label="Häufige Abos">
+        {#each CONTRACT_SUGGESTIONS as s (s.label)}
+          <li>
+            <a
+              class="chip"
+              href="/dashboard/contracts/new?{new URLSearchParams({
+                name: s.name,
+                provider: s.provider,
+                category: s.category,
+                billingCycle: s.billingCycle,
+              })}">{s.label}</a
+            >
+          </li>
+        {/each}
+      </ul>
+      <div class="onb-actions">
+        <a href="/dashboard/contracts/new" class="btn btn-primary">
+          <Icon name="plus" size={15} />
+          Eigenen Vertrag erstellen
+        </a>
+        <a href="/dashboard/import" class="onb-import">
+          Liste schon in Excel? <span>CSV importieren</span>
+        </a>
+      </div>
+    </section>
   {:else}
     <!-- Leitzahl: die eine Information, die zählt -->
     <section class="lead">
@@ -826,6 +863,55 @@
     padding: 3rem 1rem;
     color: var(--color-ink-2);
     text-align: center;
+  }
+
+  .onboarding {
+    max-width: 40rem;
+    margin: 0 auto;
+    gap: 0.875rem;
+  }
+
+  .onboarding .kicker {
+    margin-bottom: 0;
+  }
+
+  .onb-title {
+    font-size: 26px;
+    font-weight: 600;
+    line-height: 1.15;
+    letter-spacing: -0.03em;
+    color: var(--color-ink);
+  }
+
+  .onb-chips {
+    justify-content: center;
+    margin: 0.5rem 0;
+  }
+
+  a.chip {
+    display: inline-block;
+    text-decoration: none;
+  }
+
+  .onb-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem 1.25rem;
+  }
+
+  .onb-import {
+    font-size: 13.5px;
+    color: var(--color-ink-2);
+    text-decoration: none;
+  }
+
+  .onb-import span {
+    color: var(--color-accent);
+    font-weight: 500;
+    text-decoration: underline;
+    text-underline-offset: 2px;
   }
 
   /* === Responsive === */
