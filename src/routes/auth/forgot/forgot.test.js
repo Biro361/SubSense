@@ -108,11 +108,24 @@ describe('Passwort vergessen', () => {
     expect(text).not.toContain('boese.example');
   });
 
-  it('antwortet bei einem Versandfehler gleich und gleich lang', async () => {
+  it('antwortet bei einem Versandfehler gleich und gleich lang und loggt ihn ohne Adresse', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
     mocks.sendMail.mockResolvedValue('failed');
     const failed = await timedForgot(KNOWN);
 
     expect(failed).toEqual({ result: { sent: true }, settledEarly: false, settled: true });
+    expect(consoleError).toHaveBeenCalledWith('Password reset mail not sent:', 'failed');
+    expect(JSON.stringify(consoleError.mock.calls)).not.toContain(KNOWN);
+    consoleError.mockRestore();
+  });
+
+  it('loggt nichts, wenn die Mail rausgeht', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    await timedForgot(KNOWN);
+
+    expect(consoleError).not.toHaveBeenCalled();
+    consoleError.mockRestore();
   });
 
   it('antwortet bei einem Datenbankfehler gleich und loggt ohne Adresse', async () => {

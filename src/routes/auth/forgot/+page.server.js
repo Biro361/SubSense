@@ -61,9 +61,10 @@ async function sendResetLink(email) {
 
 	const token = await createPasswordReset(user._id.toString());
 	try {
-		// Abwarten: nach der Antwort friert Netlify die Function ein, die Mail ginge verloren.
-		// Fehler loggt sendMail selbst, ohne Adresse.
-		await sendMail(buildResetMail(user.email, `${siteUrl}/auth/reset?token=${token}`));
+		// Abwarten: nach der Antwort friert Netlify die Function ein, die Mail ginge verloren
+		const result = await sendMail(buildResetMail(user.email, `${siteUrl}/auth/reset?token=${token}`));
+		// sendMail meldet fehlende Konfiguration nur einmal pro Prozess: hier jedes Mal, ohne Adresse
+		if (result !== 'sent') console.error('Password reset mail not sent:', result);
 	} finally {
 		// Eine offene Verbindung wäre beim nächsten Aufruf der eingefrorenen Function tot
 		closeMail();
