@@ -9,6 +9,7 @@ import {
 	RESET_IP_MAX_REQUESTS,
 	RESET_WINDOW_MINUTES,
 	RESET_MAILS_MAX_PER_DAY,
+	RESET_MAILS_MAX_PER_ACCOUNT,
 	RESET_MAILS_WINDOW_MINUTES
 } from '$lib/db/rateLimit.js';
 import { sendMail, closeMail } from '$lib/server/mail';
@@ -52,14 +53,26 @@ async function sendResetLink(email) {
 	const user = await getUserByEmail(email);
 	if (!user) return;
 
-	// Erst hier zählen: Anfragen für unbekannte Adressen dürfen das Kontingent nicht aufbrauchen
+	const userId = user._id.toString();
+
+	// Erst hier zählen: Anfragen für unbekannte Adressen dürfen das Kontingent nicht aufbrauchen.
+	// Getrennt und zuerst pro Konto: ein gesperrtes Konto zählt so nicht mehr aufs Limit aller.
+	const [accountMailsToday] = await recordAttempt(
+		[`reset:mails:user:${userId}`],
+		RESET_MAILS_WINDOW_MINUTES
+	);
+	if (accountMailsToday > RESET_MAILS_MAX_PER_ACCOUNT) {
+		console.error('Password reset error: daily mail limit per account reached');
+		return;
+	}
+
 	const [mailsToday] = await recordAttempt(['reset:mails:all'], RESET_MAILS_WINDOW_MINUTES);
 	if (mailsToday > RESET_MAILS_MAX_PER_DAY) {
 		console.error('Password reset error: daily mail limit reached');
 		return;
 	}
 
-	const token = await createPasswordReset(user._id.toString());
+	const token = await createPasswordReset(userId);
 	try {
 		// Abwarten: nach der Antwort friert Netlify die Function ein, die Mail ginge verloren
 		const result = await sendMail(buildResetMail(user.email, `${siteUrl}/auth/reset?token=${token}`));

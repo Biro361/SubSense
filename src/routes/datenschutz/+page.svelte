@@ -170,7 +170,8 @@
 				</li>
 				<li>
 					Die Zähler gegen Missbrauch verfallen nach 15 Minuten (Anmeldung) bzw. 60 Minuten
-					(Registrierung, Zurücksetzen des Passworts) und werden danach automatisch gelöscht. Nach einer
+					(Registrierung, Zurücksetzen des Passworts) und werden danach automatisch gelöscht. Der Zähler,
+					wie viele Links zum Zurücksetzen dein Konto heute erhalten hat, verfällt nach 24 Stunden. Nach einer
 					erfolgreichen Anmeldung wird der Zähler für deine E-Mail-Adresse sofort gelöscht.
 				</li>
 			</ul>
