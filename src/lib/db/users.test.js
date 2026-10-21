@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { ObjectId } from 'mongodb';
 import bcrypt from 'bcryptjs';
-import { deleteUser, resetUserPassword } from './users.js';
+import { MongoServerError } from 'mongodb';
+import { deleteUser, resetUserPassword, updateUserEmail, updateUserPassword } from './users.js';
 import { deleteAllContractDocuments } from '$lib/storage.js';
 
 // Geprüft wird der Filter, mit dem deleteUser arbeitet - genau dort lag der Bug:
@@ -10,14 +11,18 @@ const mocks = vi.hoisted(() => ({
   deleteMany: vi.fn(),
   deleteOne: vi.fn(),
   updateOne: vi.fn(),
+  findOne: vi.fn(),
   toArray: vi.fn(),
-  deleteAllContractDocuments: vi.fn()
+  deleteAllContractDocuments: vi.fn(),
+  deletePasswordResets: vi.fn()
 }));
 
 vi.mock('$lib/mongodb', () => ({
   getDatabase: vi.fn(async () => ({
     collection: () => ({
       find: () => ({ toArray: mocks.toArray }),
+      findOne: mocks.findOne,
+      createIndex: async () => 'email_1',
       deleteMany: mocks.deleteMany,
       deleteOne: mocks.deleteOne,
       updateOne: mocks.updateOne
@@ -27,6 +32,10 @@ vi.mock('$lib/mongodb', () => ({
 
 vi.mock('$lib/storage.js', () => ({
   deleteAllContractDocuments: mocks.deleteAllContractDocuments
+}));
+
+vi.mock('$lib/db/passwordResets.js', () => ({
+  deletePasswordResets: mocks.deletePasswordResets
 }));
 
 const USER_ID = '507f1f77bcf86cd799439011';
@@ -119,5 +128,46 @@ describe('resetUserPassword', () => {
   it('ändert bei einer ungültigen ID nichts', async () => {
     expect(await resetUserPassword('keine-objectid', 'neuesPasswort1')).toBe(false);
     expect(mocks.updateOne).not.toHaveBeenCalled();
+  });
+});
+
+describe('offene Reset-Links nach Konto-Änderungen', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.toArray.mockResolvedValue([]);
+    mocks.updateOne.mockResolvedValue({ matchedCount: 1 });
+  });
+
+  it('verwirft sie nach einer neuen E-Mail-Adresse', async () => {
+    expect(await updateUserEmail(USER_ID, 'neu@example.com')).toBe(true);
+
+    expect(mocks.deletePasswordResets).toHaveBeenCalledWith(USER_ID);
+  });
+
+  it('lässt sie stehen, wenn die neue Adresse schon vergeben ist', async () => {
+    mocks.updateOne.mockRejectedValue(new MongoServerError({ code: 11000, errmsg: 'duplicate' }));
+
+    expect(await updateUserEmail(USER_ID, 'vergeben@example.com')).toBe(false);
+    expect(mocks.deletePasswordResets).not.toHaveBeenCalled();
+  });
+
+  it('verwirft sie nach einem neuen Passwort im Profil', async () => {
+    mocks.findOne.mockResolvedValue({ password: await bcrypt.hash('altesPasswort1', 4) });
+
+    expect(await updateUserPassword(USER_ID, 'altesPasswort1', 'neuesPasswort1')).toBe(true);
+    expect(mocks.deletePasswordResets).toHaveBeenCalledWith(USER_ID);
+  });
+
+  it('lässt sie stehen, wenn das alte Passwort falsch ist', async () => {
+    mocks.findOne.mockResolvedValue({ password: await bcrypt.hash('altesPasswort1', 4) });
+
+    expect(await updateUserPassword(USER_ID, 'falsch', 'neuesPasswort1')).toBe(false);
+    expect(mocks.deletePasswordResets).not.toHaveBeenCalled();
+  });
+
+  it('verwirft sie beim Löschen des Kontos', async () => {
+    await deleteUser(USER_ID);
+
+    expect(mocks.deletePasswordResets).toHaveBeenCalledWith(USER_ID);
   });
 });

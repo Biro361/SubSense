@@ -3,6 +3,7 @@ import { getDatabase } from '$lib/mongodb';
 import { ObjectId, MongoServerError, type Db } from 'mongodb';
 import bcrypt from 'bcryptjs';
 import { deleteAllContractDocuments } from '$lib/storage.js';
+import { deletePasswordResets } from '$lib/db/passwordResets.js';
 
 /** Einmal pro Prozess: ohne den Index sind doppelte Emails nicht verhindert */
 let emailIndex: Promise<string> | null = null;
@@ -135,8 +136,6 @@ export async function updateUserEmail(
 				}
 			}
 		);
-
-		return true;
 	} catch (err) {
 		// Email gehört einem anderen User
 		if (err instanceof MongoServerError && err.code === 11000) {
@@ -145,6 +144,10 @@ export async function updateUserEmail(
 
 		throw err;
 	}
+
+	// Ein Reset-Link im alten Postfach darf das Konto nicht mehr öffnen
+	await deletePasswordResets(userId);
+	return true;
 }
 
 /**
@@ -188,6 +191,8 @@ export async function updateUserPassword(
 		}
 	);
 
+	// Wie die Sessions: ein offener Reset-Link soll das neue Passwort nicht überschreiben
+	await deletePasswordResets(userId);
 	return true;
 }
 
@@ -272,6 +277,7 @@ export async function deleteUser(userId: string): Promise<void> {
 
 	// userId liegt in contracts als String, nicht als ObjectId
 	await db.collection('contracts').deleteMany({ userId });
+	await deletePasswordResets(userId);
 
 	// Dann User löschen
 	await db.collection<User>('users').deleteOne({

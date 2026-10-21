@@ -65,6 +65,16 @@ export async function createPasswordReset(userId) {
 }
 
 /**
+ * Offene Reset-Tokens eines Users verwerfen. Nach Änderung von Adresse oder Passwort darf
+ * ein Link im alten Postfach nicht mehr gelten.
+ * @param {string} userId
+ */
+export async function deletePasswordResets(userId) {
+  const collection = await getCollection();
+  await collection.deleteMany({ userId });
+}
+
+/**
  * Token einlösen. Gelingt nur einmal und nur vor dem Ablauf.
  * @param {string} token
  * @returns {Promise<string | null>} userId oder null

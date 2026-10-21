@@ -164,8 +164,9 @@
 					gelöscht.
 				</li>
 				<li>
-					Der Code zum Zurücksetzen des Passworts wird gelöscht, sobald du den Link benutzt oder einen
-					neuen anforderst, spätestens aber nach 30 Minuten automatisch.
+					Der Code zum Zurücksetzen des Passworts wird gelöscht, sobald du den Link benutzt, einen neuen
+					anforderst, deine E-Mail-Adresse oder dein Passwort änderst oder dein Konto löschst, spätestens
+					aber nach 30 Minuten automatisch.
 				</li>
 				<li>
 					Die Zähler gegen Missbrauch verfallen nach 15 Minuten (Anmeldung) bzw. 60 Minuten
