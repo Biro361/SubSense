@@ -12,6 +12,17 @@ export const LOGIN_WINDOW_MINUTES = 15;
 export const SIGNUP_IP_MAX_ATTEMPTS = 20;
 export const SIGNUP_WINDOW_MINUTES = 60;
 
+// Reset-Mails teilen sich das Tageslimit von Infomaniak (200) mit den Erinnerungen
+export const RESET_MAX_REQUESTS = 5;
+export const RESET_IP_MAX_REQUESTS = 20;
+export const RESET_WINDOW_MINUTES = 60;
+// Über alle Adressen: der Erinnerungs-Lauf lässt 50 der 200 Mails frei, ein Ansturm auf
+// Reset-Mails darf die Erinnerungen nicht verdrängen
+export const RESET_MAILS_MAX_PER_DAY = 40;
+// Pro Konto: sonst füllt ein einzelnes eigenes Konto mit 5 Anfragen pro Stunde das Limit aller
+export const RESET_MAILS_MAX_PER_ACCOUNT = 3;
+export const RESET_MAILS_WINDOW_MINUTES = 24 * 60;
+
 /**
  * Der Schlüssel ist die _id, deshalb ein eigener Dokumenttyp (Default wäre ObjectId)
  * @typedef {{ _id: string, attempts: number, expiresAt: Date }} RateLimitDoc

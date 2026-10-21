@@ -56,9 +56,15 @@
 					hochlädst, mit Dateiname, Dateityp, Grösse und Zeitpunkt des Uploads.
 				</li>
 				<li>
+					<strong class="font-medium text-ink">Passwort zurücksetzen:</strong> Forderst du einen Link an,
+					wird zu deinem Konto ein einmaliger Code mit Ablaufzeit gespeichert, nur als Hash und nie im
+					Klartext.
+				</li>
+				<li>
 					<strong class="font-medium text-ink">Schutz vor Missbrauch:</strong> Bei einem Anmeldeversuch
-					werden deine IP-Adresse und die eingegebene E-Mail-Adresse mit der Anzahl Versuche gespeichert,
-					bei einer Registrierung die IP-Adresse.
+					und bei einer Anfrage zum Zurücksetzen des Passworts werden deine IP-Adresse und die
+					eingegebene E-Mail-Adresse mit der Anzahl Versuche gespeichert, bei einer Registrierung die
+					IP-Adresse.
 				</li>
 				<li>
 					<strong class="font-medium text-ink">Verbindungsdaten:</strong> Beim Aufruf der Seite
@@ -82,8 +88,13 @@
 					der Kern des Dienstes ist, und lässt sich jederzeit im Profil unter «Erinnerungen» abbestellen.
 				</li>
 				<li>
-					Schutz vor Missbrauch: Nach zu vielen Versuchen werden Anmeldung oder Registrierung vorübergehend
-					gesperrt.
+					Passwort zurücksetzen: Auf Anfrage erhältst du eine E-Mail mit einem Link, über den du ein neues
+					Passwort setzt. Der Link ist 30 Minuten gültig und funktioniert nur einmal; danach werden alle
+					bestehenden Anmeldungen beendet. Ob es zu einer Adresse ein Konto gibt, zeigt die Seite nicht an.
+				</li>
+				<li>
+					Schutz vor Missbrauch: Nach zu vielen Versuchen werden Anmeldung, Registrierung oder das
+					Zurücksetzen des Passworts vorübergehend gesperrt.
 				</li>
 			</ul>
 			<p class="mt-3">
@@ -98,7 +109,8 @@
 			<ul class="list-disc space-y-2 pl-5">
 				<li>
 					<strong class="font-medium text-ink">MongoDB Atlas</strong> (MongoDB, Inc., USA): Datenbank
-					für Konto, Verträge und die Zähler gegen Missbrauch. Rechenzentrum in Frankfurt, Deutschland.
+					für Konto, Verträge, Codes zum Zurücksetzen des Passworts und die Zähler gegen Missbrauch.
+					Rechenzentrum in Frankfurt, Deutschland.
 				</li>
 				<li>
 					<strong class="font-medium text-ink">Netlify</strong> (Netlify, Inc., USA): Hosting und
@@ -109,12 +121,13 @@
 					<strong class="font-medium text-ink">Infomaniak</strong> (Infomaniak Network SA, Genf,
 					Schweiz): Versand der Erinnerungs-E-Mails. Übermittelt werden deine E-Mail-Adresse sowie
 					Vertragsname, Anbieter, Kündigungsfrist und Kündigungslink des betroffenen Vertrags, aber
-					keine Notizen und keine Dokumente. Rechenzentren in der Schweiz. Wie lange Infomaniak
+					keine Notizen und keine Dokumente. Für das Zurücksetzen des Passworts werden nur deine
+					E-Mail-Adresse und der Link übermittelt. Rechenzentren in der Schweiz. Wie lange Infomaniak
 					Versandprotokolle aufbewahrt, regelt deren Datenschutzerklärung.
 				</li>
 			</ul>
 			<p class="mt-3">
-				Eine verschickte Erinnerung liegt danach auch bei deinem eigenen E-Mail-Anbieter; dort gelten
+				Eine verschickte E-Mail liegt danach auch bei deinem eigenen E-Mail-Anbieter; dort gelten
 				dessen Bestimmungen. Weitere Empfänger gibt es nicht. Die App lädt keine Inhalte von Drittanbietern; auch die
 				Schriften werden von SubSense selbst ausgeliefert.
 			</p>
@@ -151,9 +164,15 @@
 					gelöscht.
 				</li>
 				<li>
+					Der Code zum Zurücksetzen des Passworts wird gelöscht, sobald du den Link benutzt, einen neuen
+					anforderst, deine E-Mail-Adresse oder dein Passwort änderst oder dein Konto löschst, spätestens
+					aber nach 30 Minuten automatisch.
+				</li>
+				<li>
 					Die Zähler gegen Missbrauch verfallen nach 15 Minuten (Anmeldung) bzw. 60 Minuten
-					(Registrierung) und werden danach automatisch gelöscht. Nach einer erfolgreichen Anmeldung wird
-					der Zähler für deine E-Mail-Adresse sofort gelöscht.
+					(Registrierung, Zurücksetzen des Passworts) und werden danach automatisch gelöscht. Der Zähler,
+					wie viele Links zum Zurücksetzen dein Konto heute erhalten hat, verfällt nach 24 Stunden. Nach einer
+					erfolgreichen Anmeldung wird der Zähler für deine E-Mail-Adresse sofort gelöscht.
 				</li>
 			</ul>
 		</section>
@@ -176,7 +195,7 @@
 				herausverlangen. Vieles kannst du direkt in der App erledigen:
 			</p>
 			<ul class="list-disc space-y-2 pl-5">
-				<li>Name, E-Mail-Adresse und Passwort im Profil ändern</li>
+				<li>Name, E-Mail-Adresse und Passwort im Profil ändern, ein vergessenes Passwort zurücksetzen</li>
 				<li>Erinnerungs-E-Mails im Profil abbestellen</li>
 				<li>Verträge bearbeiten oder löschen</li>
 				<li>alle Verträge als CSV exportieren</li>

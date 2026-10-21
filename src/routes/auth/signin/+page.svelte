@@ -1,13 +1,35 @@
 <!-- src/routes/auth/signin/+page.svelte -->
 <script>
+	import { onMount, tick } from 'svelte';
 	import { enhance } from '$app/forms';
+	import { replaceState } from '$app/navigation';
+	import { page } from '$app/stores';
+	import Toast from '$lib/components/Toast.svelte';
 
 	let { form } = $props();
+
+	let showResetToast = $state(false);
+
+	onMount(async () => {
+		if ($page.url.searchParams.get('message') !== 'password-reset') return;
+		showResetToast = true;
+
+		// URL bereinigen, sonst erscheint die Meldung beim Neuladen wieder
+		const url = new URL(window.location.href);
+		url.searchParams.delete('message');
+		// Erst nach tick(): beim ersten Laden ist der Router in onMount noch nicht bereit
+		await tick();
+		replaceState(url, {});
+	});
 </script>
 
 <svelte:head>
 	<title>Anmelden – SubSense</title>
 </svelte:head>
+
+{#if showResetToast}
+	<Toast message="Passwort geändert. Bitte melde dich an." onClose={() => (showResetToast = false)} />
+{/if}
 
 <main id="main" tabindex="-1" class="flex flex-1 items-center justify-center px-4 py-12">
 	<div class="w-full max-w-md rounded-card border border-line bg-surface p-8 max-sm:p-6">
@@ -57,6 +79,13 @@
 			>
 				Anmelden
 			</button>
+
+			<!-- Nach dem Button: sonst springt Tab vom Passwort auf den Link statt auf «Anmelden» -->
+			<p class="text-center text-sm">
+				<a href="/auth/forgot" class="font-medium text-accent underline-offset-2 hover:underline">
+					Passwort vergessen?
+				</a>
+			</p>
 		</form>
 
 		<p class="mt-6 text-center text-sm text-ink-2">
