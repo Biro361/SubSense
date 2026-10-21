@@ -1,10 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { actions, load } from './+page.server.js';
 
-const mocks = vi.hoisted(() => ({ consumePasswordReset: vi.fn(), resetUserPassword: vi.fn() }));
+const mocks = vi.hoisted(() => ({
+  consumePasswordReset: vi.fn(),
+  resetUserPassword: vi.fn(),
+  clearAttempts: vi.fn()
+}));
 
 vi.mock('$lib/db/passwordResets.js', () => ({ consumePasswordReset: mocks.consumePasswordReset }));
 vi.mock('$lib/db/users', () => ({ resetUserPassword: mocks.resetUserPassword }));
+vi.mock('$lib/db/rateLimit.js', () => ({ clearAttempts: mocks.clearAttempts }));
 vi.mock('$lib/mongodb', () => ({ getDatabase: vi.fn() }));
 
 const USER_ID = '507f1f77bcf86cd799439011';
@@ -28,7 +33,34 @@ describe('Neues Passwort', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.consumePasswordReset.mockResolvedValue(USER_ID);
-    mocks.resetUserPassword.mockResolvedValue(true);
+    mocks.resetUserPassword.mockResolvedValue('konto@example.com');
+    mocks.clearAttempts.mockResolvedValue(undefined);
+  });
+
+  it('hebt nach dem Reset die Login-Sperre der Adresse auf', async () => {
+    await expect(reset(VALID)).rejects.toMatchObject({ status: 303 });
+
+    // Gleicher Schlüssel wie in signin/+page.server.js
+    expect(mocks.clearAttempts).toHaveBeenCalledWith(['login:mail:konto@example.com']);
+  });
+
+  it('leitet auch weiter, wenn das Aufheben der Sperre scheitert', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    mocks.clearAttempts.mockRejectedValue(new Error('db down'));
+
+    await expect(reset(VALID)).rejects.toMatchObject({
+      status: 303,
+      location: '/auth/signin?message=password-reset'
+    });
+    consoleError.mockRestore();
+  });
+
+  it('hebt bei ungültigem Link keine Sperre auf', async () => {
+    mocks.consumePasswordReset.mockResolvedValue(null);
+
+    await reset(VALID);
+
+    expect(mocks.clearAttempts).not.toHaveBeenCalled();
   });
 
   it('löst das Token beim Laden der Seite nicht ein', () => {
@@ -78,7 +110,7 @@ describe('Neues Passwort', () => {
   });
 
   it('meldet einen gelöschten User als ungültigen Link', async () => {
-    mocks.resetUserPassword.mockResolvedValue(false);
+    mocks.resetUserPassword.mockResolvedValue(null);
 
     const result = await reset(VALID);
 

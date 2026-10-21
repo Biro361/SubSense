@@ -12,6 +12,7 @@ const mocks = vi.hoisted(() => ({
   deleteOne: vi.fn(),
   updateOne: vi.fn(),
   findOne: vi.fn(),
+  findOneAndUpdate: vi.fn(),
   toArray: vi.fn(),
   deleteAllContractDocuments: vi.fn(),
   deletePasswordResets: vi.fn()
@@ -22,6 +23,7 @@ vi.mock('$lib/mongodb', () => ({
     collection: () => ({
       find: () => ({ toArray: mocks.toArray }),
       findOne: mocks.findOne,
+      findOneAndUpdate: mocks.findOneAndUpdate,
       createIndex: async () => 'email_1',
       deleteMany: mocks.deleteMany,
       deleteOne: mocks.deleteOne,
@@ -101,13 +103,13 @@ describe('deleteUser', () => {
 describe('resetUserPassword', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mocks.updateOne.mockResolvedValue({ matchedCount: 1 });
+    mocks.findOneAndUpdate.mockResolvedValue({ email: 'konto@example.com' });
   });
 
-  it('setzt das neue Passwort gehasht', async () => {
-    expect(await resetUserPassword(USER_ID, 'neuesPasswort1')).toBe(true);
+  it('setzt das neue Passwort gehasht und gibt die Adresse zurück', async () => {
+    expect(await resetUserPassword(USER_ID, 'neuesPasswort1')).toBe('konto@example.com');
 
-    const [filter, update] = mocks.updateOne.mock.calls[0];
+    const [filter, update] = mocks.findOneAndUpdate.mock.calls[0];
     expect(filter).toEqual({ _id: new ObjectId(USER_ID) });
     expect(update.$set.password).not.toBe('neuesPasswort1');
     expect(await bcrypt.compare('neuesPasswort1', update.$set.password)).toBe(true);
@@ -116,18 +118,18 @@ describe('resetUserPassword', () => {
   it('erhöht tokenVersion, damit alle Sessions enden', async () => {
     await resetUserPassword(USER_ID, 'neuesPasswort1');
 
-    expect(mocks.updateOne.mock.calls[0][1].$inc).toEqual({ tokenVersion: 1 });
+    expect(mocks.findOneAndUpdate.mock.calls[0][1].$inc).toEqual({ tokenVersion: 1 });
   });
 
-  it('meldet false, wenn es den User nicht mehr gibt', async () => {
-    mocks.updateOne.mockResolvedValue({ matchedCount: 0 });
+  it('meldet null, wenn es den User nicht mehr gibt', async () => {
+    mocks.findOneAndUpdate.mockResolvedValue(null);
 
-    expect(await resetUserPassword(USER_ID, 'neuesPasswort1')).toBe(false);
+    expect(await resetUserPassword(USER_ID, 'neuesPasswort1')).toBeNull();
   });
 
   it('ändert bei einer ungültigen ID nichts', async () => {
-    expect(await resetUserPassword('keine-objectid', 'neuesPasswort1')).toBe(false);
-    expect(mocks.updateOne).not.toHaveBeenCalled();
+    expect(await resetUserPassword('keine-objectid', 'neuesPasswort1')).toBeNull();
+    expect(mocks.findOneAndUpdate).not.toHaveBeenCalled();
   });
 });
 
