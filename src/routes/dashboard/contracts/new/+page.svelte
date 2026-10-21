@@ -1,20 +1,28 @@
 <script>
 	import { enhance } from '$app/forms';
-	import { CATEGORIES } from '$lib/constants';
+	import { page } from '$app/state';
+	import { CATEGORIES, VALID_CATEGORIES } from '$lib/constants';
 	import { todayInZurich } from '$lib/reminders.js';
 
 	let { form } = $props();
 
+	// Vorbelegung aus den Onboarding-Vorschlägen (?name=…): nur Startwert, gekürzt; der Server validiert
+	const query = page.url.searchParams;
+	/** @param {string} key */
+	const fromQuery = (key) => (query.get(key) ?? '').slice(0, 100);
+	const queryCategory = query.get('category') ?? '';
 
 	// Erinnerungstage State für Preset-Buttons
 	let reminderDays = $state(Number(form?.reminderDays) || 7);
 
 	//Kategorie State
-	let category = $state(form?.category || 'streaming');
+	let category = $state(
+		form?.category || (VALID_CATEGORIES.includes(queryCategory) ? queryCategory : 'streaming')
+	);
 
 	// Übrige Felder als State: ein Re-Render (z. B. Preset-Klick) setzt sonst die Startwerte zurück
-	let name = $state(form?.name || '');
-	let provider = $state(form?.provider || '');
+	let name = $state(form?.name || fromQuery('name'));
+	let provider = $state(form?.provider || fromQuery('provider'));
 	let cancellationUrl = $state(form?.cancellationUrl || '');
 	let cancellationDate = $state(form?.cancellationDate || '');
 	let cost = $state(form?.cost || '');

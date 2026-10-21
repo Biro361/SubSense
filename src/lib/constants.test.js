@@ -1,5 +1,17 @@
 import { describe, it, expect } from 'vitest';
-import { formatAmount, monthlyCost } from './constants.js';
+import { CONTRACT_SUGGESTIONS, VALID_CATEGORIES, formatAmount, monthlyCost } from './constants.js';
+
+describe('CONTRACT_SUGGESTIONS', () => {
+  it('hat nur gültige Kategorien und keine leeren Texte', () => {
+    expect(CONTRACT_SUGGESTIONS.length).toBeGreaterThanOrEqual(6);
+    for (const s of CONTRACT_SUGGESTIONS) {
+      expect(VALID_CATEGORIES).toContain(s.category);
+      expect(s.label.trim()).not.toBe('');
+      expect(s.name.trim()).not.toBe('');
+      expect(s.provider.trim()).not.toBe('');
+    }
+  });
+});
 
 describe('monthlyCost', () => {
   it('rechnet jeden Zyklus auf einen Monat um', () => {

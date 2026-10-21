@@ -22,6 +22,22 @@ export const CATEGORIES = [
 export const VALID_CATEGORIES = CATEGORIES.map(c => c.value);
 
 /**
+ * Typische Schweizer Abos fürs Onboarding: befüllen nur das Formular vor.
+ * Bewusst ohne Kündigungs-Links der Anbieter – die veralten und wären ungeprüft.
+ * @type {Array<{label: string, name: string, provider: string, category: string}>}
+ */
+export const CONTRACT_SUGGESTIONS = [
+  { label: 'Swisscom', name: 'Mobile Abo', provider: 'Swisscom', category: 'telecom' },
+  { label: 'Sunrise', name: 'Mobile Abo', provider: 'Sunrise', category: 'telecom' },
+  { label: 'Salt', name: 'Mobile Abo', provider: 'Salt', category: 'telecom' },
+  { label: 'SBB Halbtax', name: 'Halbtax', provider: 'SBB', category: 'transport' },
+  { label: 'SBB GA', name: 'GA', provider: 'SBB', category: 'transport' },
+  { label: 'Netflix', name: 'Netflix', provider: 'Netflix', category: 'streaming' },
+  { label: 'Spotify', name: 'Spotify', provider: 'Spotify', category: 'streaming' },
+  { label: 'Krankenkasse', name: 'Grundversicherung', provider: 'Krankenkasse', category: 'health-insurance' }
+];
+
+/**
  * Hilfsfunktion: Kategorie-Objekt anhand Wert finden
  * @param {string} value - Kategorie-Wert (z.B. "streaming")
  * @returns {object|null}
