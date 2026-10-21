@@ -3,11 +3,21 @@
 	import { page } from '$app/state';
 	import Icon from '$lib/components/Icon.svelte';
 
-	let notFound = $derived(page.status === 404);
-	// page.error.message bewusst nicht anzeigen: bei 500ern kann sie interne Details enthalten
-	let heading = $derived(notFound ? 'Seite nicht gefunden' : 'Etwas ist schiefgelaufen');
+	// page.error.message bewusst nicht anzeigen: bei 500ern kann sie interne Details enthalten.
+	// «Erneut versuchen» nur bei Serverfehlern; bei anderen 4xx hilft Wiederholen nicht.
+	let heading = $derived(
+		page.status === 404
+			? 'Seite nicht gefunden'
+			: page.status >= 500
+				? 'Etwas ist schiefgelaufen'
+				: 'Das hat nicht geklappt'
+	);
 	let text = $derived(
-		notFound ? 'Diese Adresse gibt es nicht (mehr).' : 'Versuche es in einem Moment erneut.'
+		page.status === 404
+			? 'Diese Adresse gibt es nicht (mehr).'
+			: page.status >= 500
+				? 'Versuche es in einem Moment erneut.'
+				: 'Diese Anfrage kann SubSense nicht ausführen.'
 	);
 </script>
 
