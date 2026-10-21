@@ -192,6 +192,31 @@ export async function updateUserPassword(
 }
 
 /**
+ * Passwort ohne das alte setzen (nach eingelöstem Reset-Link).
+ * Beendet alle Sessions des Users. Gibt false zurück, wenn es den User nicht gibt.
+ */
+export async function resetUserPassword(userId: string, newPassword: string): Promise<boolean> {
+	if (!ObjectId.isValid(userId)) return false;
+
+	const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+	const db = await getDatabase();
+	const result = await db.collection<User>('users').updateOne(
+		{ _id: new ObjectId(userId) },
+		{
+			$set: {
+				password: hashedPassword,
+				updatedAt: new Date()
+			},
+			// Sessions widerrufen: auch ein gestohlenes Cookie gilt danach nicht mehr
+			$inc: { tokenVersion: 1 }
+		}
+	);
+
+	return result.matchedCount === 1;
+}
+
+/**
  * Name aktualisieren.
  */
 export async function updateUserName(userId: string, name: string): Promise<void> {
