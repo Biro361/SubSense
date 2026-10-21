@@ -32,6 +32,10 @@
 		}
 	});
 
+	// Suchmaschinen und Link-Vorschau; höchstens 155 Zeichen, sonst wird gekürzt
+	const DESCRIPTION =
+		'Behalte Abos, Kosten und Kündigungsfristen im Blick. SubSense erinnert dich per E-Mail vor jeder Frist – kostenlos, ohne Bankverbindung.';
+
 	// Nur belegbare Aussagen (UWG): keine Standort-, Sicherheits- oder Nutzerzahlen
 	/** @type {Array<{icon: 'calendar' | 'bell' | 'external', title: string, text: string}>} */
 	const BENEFITS = [
@@ -55,6 +59,11 @@
 
 <svelte:head>
 	<title>SubSense – Verträge und Fristen im Blick</title>
+	<!-- Nur auf der Landing: geschützte Seiten brauchen keine Link-Vorschau -->
+	<meta name="description" content={DESCRIPTION} />
+	<meta property="og:type" content="website" />
+	<meta property="og:title" content="SubSense – Verträge und Fristen im Blick" />
+	<meta property="og:description" content={DESCRIPTION} />
 </svelte:head>
 
 {#if showToast}
