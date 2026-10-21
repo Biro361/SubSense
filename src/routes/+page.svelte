@@ -47,7 +47,7 @@
 		{
 			icon: 'bell',
 			title: 'Erinnerung vor jeder Frist',
-			text: 'Per E-Mail so viele Tage vor der Frist, wie du willst – oder als Datei für deinen Kalender.'
+			text: 'Per E-Mail bis zu 90 Tage vor der Frist – oder als Datei für deinen Kalender.'
 		},
 		{
 			icon: 'external',
@@ -116,8 +116,8 @@
 				</div>
 
 				<ul class="pv-rows">
-					<li><span>Netflix <span class="cat">Streaming</span></span><b>15.90</b></li>
-					<li><span>Halbtax <span class="cat">Transport</span></span><b>190.00</b></li>
+					<li><span>Netflix <span class="cat">Streaming</span></span><b>15.90 <i>/ Monat</i></b></li>
+					<li><span>Halbtax <span class="cat">Transport</span></span><b>190.00 <i>/ Jahr</i></b></li>
 				</ul>
 			</div>
 			<p class="mt-3 text-[12.5px] text-ink-3">
@@ -240,6 +240,14 @@
 
 	.pv-rows b {
 		font: 600 14px var(--font-mono);
+		white-space: nowrap;
+	}
+
+	.pv-rows b i {
+		font-style: normal;
+		font-size: 12px;
+		font-weight: 400;
+		color: var(--color-ink-3);
 	}
 
 	.benefits {
